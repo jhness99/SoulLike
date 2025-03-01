@@ -6,7 +6,7 @@
 
 ASoulLikeCharacterBase::ASoulLikeCharacterBase()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 }
 
@@ -15,16 +15,3 @@ void ASoulLikeCharacterBase::BeginPlay()
 	Super::BeginPlay();
 	
 }
-
-void ASoulLikeCharacterBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
-void ASoulLikeCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
-
