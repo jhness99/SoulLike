@@ -6,6 +6,9 @@
 #include "Character/SoulLikeCharacterBase.h"
 #include "SoulLikeCharacter.generated.h"
 
+class USpringArmComponent;
+class UCameraComponent;
+
 /**
  * 
  */
@@ -14,4 +17,18 @@ class SOULLIKE_API ASoulLikeCharacter : public ASoulLikeCharacterBase
 {
 	GENERATED_BODY()
 	
+public:
+
+	ASoulLikeCharacter();
+
+protected:
+
+
+private:
+    
+	UPROPERTY(VisibleAnywhere, Category = Camera)
+	TObjectPtr<USpringArmComponent> CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, Category = Camera)
+	TObjectPtr<UCameraComponent> CameraComponent;
 };
