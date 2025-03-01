@@ -1,0 +1,26 @@
+[
+	{
+		"file": "C:\\UnrealStudy\\SoulLike\\Source\\SoulLike\\SoulLike.Build.cs",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\bin\\Hostx64\\x64\\cl.exe",
+			"@C:\\UnrealStudy\\SoulLike\\.vscode\\compileCommands_Default\\SoulLike.1.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.4\\Engine\\Source"
+	},
+	{
+		"file": "C:\\UnrealStudy\\SoulLike\\Source\\SoulLike\\SoulLike.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\bin\\Hostx64\\x64\\cl.exe",
+			"@C:\\UnrealStudy\\SoulLike\\.vscode\\compileCommands_Default\\SoulLike.1.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.4\\Engine\\Source"
+	},
+	{
+		"file": "C:\\UnrealStudy\\SoulLike\\Source\\SoulLike\\SoulLike.h",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.38.33130\\bin\\Hostx64\\x64\\cl.exe",
+			"@C:\\UnrealStudy\\SoulLike\\.vscode\\compileCommands_Default\\SoulLike.1.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.4\\Engine\\Source"
+	}
+]
