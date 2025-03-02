@@ -10,6 +10,16 @@ ASoulLikeCharacterBase::ASoulLikeCharacterBase()
 
 }
 
+UAbilitySystemComponent* ASoulLikeCharacterBase::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+void ASoulLikeCharacterBase::InitAbilityActorInfo()
+{
+	
+}
+
 void ASoulLikeCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
