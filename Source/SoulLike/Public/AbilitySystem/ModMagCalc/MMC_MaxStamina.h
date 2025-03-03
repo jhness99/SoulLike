@@ -13,5 +13,19 @@ UCLASS()
 class SOULLIKE_API UMMC_MaxStamina : public UGameplayModMagnitudeCalculation
 {
 	GENERATED_BODY()
+
+public:
+
+	UMMC_MaxStamina();
+
+	virtual float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const override;
+
+protected:
+
+	UPROPERTY(EditDefaultsOnly)
+	FScalableFloat Curve;
+
+private:
 	
+	FGameplayEffectAttributeCaptureDefinition EnduranceDef;
 };

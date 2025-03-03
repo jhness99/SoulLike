@@ -9,6 +9,7 @@
 
 class UAbilitySystemComponent;
 class UAttributeSet;
+class UGameplayEffect;
 
 UCLASS()
 class SOULLIKE_API ASoulLikeCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -24,7 +25,23 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+
+	/**
+	 * Ability의 기본 설정을 하는 함수
+	 */
 	virtual void InitAbilityActorInfo();
+
+	/**
+	 * Attribute를 Init하는 함수
+	 */
+	void InitializeDefaultAttributes() const;
+
+	/**
+	 * 자기자신에게 Effect를 Apply하는 함수
+	 * @param GameplayEffectClass Effct의 Class
+	 * @param Level Effect의 Level
+	 */
+	void ApplyEffectToSelf(const TSubclassOf<UGameplayEffect>& GameplayEffectClass, float Level) const;
 
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -32,6 +49,14 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
 	
-public:	
+private:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
 };

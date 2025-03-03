@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/ModMagCalc/MMC_Secondary.h"
+#include "AbilitySystem/ModMagCalc/MMC_MaxHealth.h"
 #include "AbilitySystem/SoulLikeAttributeSet.h"
 
 
-UMMC_Secondary::UMMC_Secondary()
+UMMC_MaxHealth::UMMC_MaxHealth()
 {
 	VigorDef.AttributeToCapture = USoulLikeAttributeSet::GetVigorAttribute();
 	VigorDef.AttributeSource = EGameplayEffectAttributeCaptureSource::Target;
@@ -14,7 +14,7 @@ UMMC_Secondary::UMMC_Secondary()
 	RelevantAttributesToCapture.Add(VigorDef);
 }
 
-float UMMC_Secondary::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UMMC_MaxHealth::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
 	const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();

@@ -5,6 +5,8 @@
 
 #include "AbilitySystemGlobals.h"
 
+#include "SoulLikeGameplayTags.h"
+
 USoulLikeAssetManager* USoulLikeAssetManager::Get()
 {
 	check(GEngine);
@@ -17,5 +19,6 @@ void USoulLikeAssetManager::StartInitialLoading()
 {
 	Super::StartInitialLoading();
 
+	FSoulLikeGameplayTags::InitializeNativeGameplayTags();
 	UAbilitySystemGlobals::Get().InitGlobalData();
 }
