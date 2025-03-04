@@ -30,6 +30,12 @@ USoulLikeAttributeSet::USoulLikeAttributeSet()
 	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxHealth, GetMaxHealthAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Stamina, GetStaminaAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxStamina, GetMaxStaminaAttribute);
+
+	/**
+	 * Boost Attribute
+	 */
+	TagsToAttributes.Add(GameplayTags.Attributes_Boost_HealthBoost, GetHealthBoostAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Boost_StaminaBoost, GetStaminaBoostAttribute);
 }
 
 void USoulLikeAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
@@ -116,6 +122,16 @@ void USoulLikeAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldMa
 	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, MaxStamina, OldMaxStamina);
 }
 
+void USoulLikeAttributeSet::OnRep_HealthBoost(const FGameplayAttributeData& OldHealthBoost) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, HealthBoost, OldHealthBoost);
+}
+
+void USoulLikeAttributeSet::OnRep_StaminaBoost(const FGameplayAttributeData& OldStaminaBoost) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, StaminaBoost, OldStaminaBoost);
+}
+
 void USoulLikeAttributeSet::OnRep_Vigor(const FGameplayAttributeData& OldVigor) const
 {
     GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, Vigor, OldVigor);
@@ -189,4 +205,7 @@ void USoulLikeAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePro
 	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
+	
+	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, HealthBoost, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, StaminaBoost, COND_None, REPNOTIFY_Always);
 }

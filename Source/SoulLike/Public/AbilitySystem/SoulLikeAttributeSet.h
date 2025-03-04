@@ -94,7 +94,8 @@ public:
 
 	/**
 	 * Attribute의 값이 바뀐 후 실행되는 Callback함수
-	 * @param Attribute 
+	 * @param Attribute
+	 * @param OldValue
 	 * @param NewValue 
 	 */
 	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
@@ -106,27 +107,27 @@ public:
 	 */
 	static TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Vigor, Category = "Primary Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Vigor, Category = "Primary Attributes")
 	FGameplayAttributeData Vigor;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Vigor)
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Mind, Category = "Primary Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Mind, Category = "Primary Attributes")
 	FGameplayAttributeData Mind;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Mind)
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Endurance, Category = "Primary Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Endurance, Category = "Primary Attributes")
 	FGameplayAttributeData Endurance;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Endurance)
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Strength, Category = "Primary Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Strength, Category = "Primary Attributes")
 	FGameplayAttributeData Strength;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Strength)
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Dexterity, Category = "Primary Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Dexterity, Category = "Primary Attributes")
 	FGameplayAttributeData Dexterity;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Dexterity)
 	
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Intelligence, Category = "Primary Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Intelligence, Category = "Primary Attributes")
 	FGameplayAttributeData Intelligence;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Intelligence)
 	
@@ -135,21 +136,33 @@ public:
 	 * Vital Attribute
 	 */
 	
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Health, Category = "Vital Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Health, Category = "Vital Attributes")
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Health)
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "Vital Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "Vital Attributes")
 	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, MaxHealth)
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Stamina, Category = "Vital Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Stamina, Category = "Vital Attributes")
 	FGameplayAttributeData Stamina;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Stamina)
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxStamina, Category = "Vital Attrubutes")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxStamina, Category = "Vital Attributes")
 	FGameplayAttributeData MaxStamina;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, MaxStamina)
+
+	/**
+	 * Boost Attribute
+	 */
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_HealthBoost, Category = "Boost Attributes")
+	FGameplayAttributeData HealthBoost;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, HealthBoost)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_StaminaBoost, Category = "Boost Attributes")
+	FGameplayAttributeData StaminaBoost;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, StaminaBoost)
 
 	UFUNCTION()
 	void OnRep_Vigor(const FGameplayAttributeData& OldVigor) const;
@@ -180,6 +193,12 @@ public:
     	
 	UFUNCTION()
 	void OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina) const;
+
+	UFUNCTION()
+	void OnRep_HealthBoost(const FGameplayAttributeData& OldHealthBoost) const;
+
+	UFUNCTION()
+	void OnRep_StaminaBoost(const FGameplayAttributeData& OldStaminaBoost) const;
 
 private:
 

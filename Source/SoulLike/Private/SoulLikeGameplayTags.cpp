@@ -56,5 +56,15 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FString("Maximum Stamina Point")
 	);
 
+	GameplayTags.Attributes_Boost_HealthBoost = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Boost.HealthBoost"),
+		FString("MaxHealth Boost")
+	);
+
+	GameplayTags.Attributes_Boost_StaminaBoost = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Boost.StaminaBoost"),
+		FString("MaxStamina Boost")
+	);
+
 	GameplayTags.bInit = true;
 }

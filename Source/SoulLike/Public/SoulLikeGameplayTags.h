@@ -34,6 +34,12 @@ public:
 	FGameplayTag Attributes_Secondary_MaxHealth;
 	FGameplayTag Attributes_Secondary_Stamina;
 	FGameplayTag Attributes_Secondary_MaxStamina;
+
+	/**
+	 * Boost Attribute
+	 */
+	FGameplayTag Attributes_Boost_HealthBoost;
+	FGameplayTag Attributes_Boost_StaminaBoost;
 	
 	bool bInit = false;
 	
