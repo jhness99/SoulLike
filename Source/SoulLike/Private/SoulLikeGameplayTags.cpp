@@ -66,5 +66,15 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FString("MaxStamina Boost")
 	);
 
+	GameplayTags.InputTag_LMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.LMB"),
+		FString("Input Tag Mouse Left")
+	);
+
+	GameplayTags.InputTag_RMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.RMB"),
+		FString("Input Tag Mouse Right")
+	);
+
 	GameplayTags.bInit = true;
 }

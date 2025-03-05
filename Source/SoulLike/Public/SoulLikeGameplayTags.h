@@ -40,6 +40,12 @@ public:
 	 */
 	FGameplayTag Attributes_Boost_HealthBoost;
 	FGameplayTag Attributes_Boost_StaminaBoost;
+
+	/**
+	 * Input Tag
+	 */
+	FGameplayTag InputTag_LMB;
+	FGameplayTag InputTag_RMB;
 	
 	bool bInit = false;
 	

@@ -31,6 +31,16 @@ void ASoulLikeCharacterBase::InitializeDefaultAttributes() const
 	ApplyEffectToSelf(DefaultVitalAttributes, 1);
 }
 
+void ASoulLikeCharacterBase::GiveAbilities() const
+{
+	if(!HasAuthority()) return;
+	
+	if(USoulLikeAbilitySystemComponent* SoulLikeAbilitySystemComponent = Cast<USoulLikeAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		SoulLikeAbilitySystemComponent->GiveAbilities(StartupAbilities);
+	}
+}
+
 void ASoulLikeCharacterBase::ApplyEffectToSelf(const TSubclassOf<UGameplayEffect>& GameplayEffectClass, float Level) const
 {
 	check(IsValid(GetAbilitySystemComponent()));

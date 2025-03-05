@@ -8,6 +8,9 @@
 
 class UInputAction;
 class UInputMappingContext;
+class USL_InputConfig;
+class USoulLikeAbilitySystemComponent;
+struct FGameplayTag;
 struct FInputActionValue;
 
 /**
@@ -28,10 +31,16 @@ protected:
 	virtual void SetupInputComponent() override;
 	
 private:
-
+	
+	USoulLikeAbilitySystemComponent* GetASC();
+	
 	void Move(const FInputActionValue& InputActionValue);
 	void Lock(const FInputActionValue& InputActionValue);
-	
+
+	void AbilityInputTagPressed(FGameplayTag InputTag);
+	void AbilityInputTagHeld(FGameplayTag InputTag);
+	void AbilityInputTagReleased(FGameplayTag InputTag);
+		
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> InputContext;
 
@@ -40,4 +49,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> LockAction;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<USL_InputConfig> InputConfig;
+	
+	TObjectPtr<USoulLikeAbilitySystemComponent> SoulLikeAbilitySystemComponent;
 };

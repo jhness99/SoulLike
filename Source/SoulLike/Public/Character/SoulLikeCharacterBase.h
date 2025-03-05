@@ -9,6 +9,7 @@
 
 class UAbilitySystemComponent;
 class UAttributeSet;
+class UGameplayAbility;
 class UGameplayEffect;
 
 UCLASS()
@@ -37,6 +38,13 @@ protected:
 	void InitializeDefaultAttributes() const;
 
 	/**
+	 * StartupAbilities 를 부여하는 함수
+	 * TODO
+	 * 나중에 Enemy와 Character를 분리해야함
+	 */
+	void GiveAbilities() const;
+	
+	/**
 	 * 자기자신에게 Effect를 Apply하는 함수
 	 * @param GameplayEffectClass Effct의 Class
 	 * @param Level Effect의 Level
@@ -50,7 +58,10 @@ protected:
 	TObjectPtr<UAttributeSet> AttributeSet;
 	
 private:
-
+	
+	/**
+	 * 캐릭터가 시작할 때 부여받는 기본 Attribute를 제공하는 Effect
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
 	
@@ -59,4 +70,10 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
+
+	/**
+	 * 캐릭터가 시작할 때 부여받는 기본 Ability
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 };

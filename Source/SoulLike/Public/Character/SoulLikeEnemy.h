@@ -13,5 +13,14 @@ UCLASS()
 class SOULLIKE_API ASoulLikeEnemy : public ASoulLikeCharacterBase
 {
 	GENERATED_BODY()
+
+public:
 	
+	ASoulLikeEnemy();
+
+protected:
+	
+	virtual void BeginPlay() override;
+
+	virtual void InitAbilityActorInfo() override;
 };

@@ -3,7 +3,10 @@
 
 #include "Player/SoulLikePlayerController.h"
 
-#include "EnhancedInputComponent.h"
+#include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+
+#include "Input/SoulLikeInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
 
@@ -28,10 +31,24 @@ void ASoulLikePlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
+	USoulLikeInputComponent* SL_InputComponent = Cast<USoulLikeInputComponent>(InputComponent);
 
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASoulLikePlayerController::Move);
-	EnhancedInputComponent->BindAction(LockAction, ETriggerEvent::Triggered, this, &ASoulLikePlayerController::Lock);
+	SL_InputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASoulLikePlayerController::Move);
+	SL_InputComponent->BindAction(LockAction, ETriggerEvent::Triggered, this, &ASoulLikePlayerController::Lock);
+	
+	SL_InputComponent->BindAbilityActions(InputConfig, this,
+		&ASoulLikePlayerController::AbilityInputTagPressed,
+		&ASoulLikePlayerController::AbilityInputTagHeld,
+		&ASoulLikePlayerController::AbilityInputTagReleased);
+}
+
+USoulLikeAbilitySystemComponent* ASoulLikePlayerController::GetASC()
+{
+	if(SoulLikeAbilitySystemComponent == nullptr)
+	{
+		SoulLikeAbilitySystemComponent = Cast<USoulLikeAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
+	}
+	return SoulLikeAbilitySystemComponent;
 }
 
 void ASoulLikePlayerController::Move(const FInputActionValue& InputActionValue)
@@ -60,4 +77,31 @@ void ASoulLikePlayerController::Lock(const FInputActionValue& InputActionValue)
 		ControlledPawn->AddControllerPitchInput(InputAxisVector.Y);
 		ControlledPawn->AddControllerYawInput(InputAxisVector.X);
 	}
+}
+
+void ASoulLikePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Pressed Input Tag is %s"), *InputTag.GetTagName().ToString());
+	if(GetASC())
+	{
+		GetASC()->AbilityInputTagPressed(InputTag);
+	}
+}
+
+void ASoulLikePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Held Input Tag is %s"), *InputTag.GetTagName().ToString());
+	if(GetASC())
+	{
+		GetASC()->AbilityInputTagHeld(InputTag);
+	}
+}
+
+void ASoulLikePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Released Input Tag is %s"), *InputTag.GetTagName().ToString());
+	if(GetASC())
+    {
+    	GetASC()->AbilityInputTagReleased(InputTag);
+    }
 }

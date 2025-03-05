@@ -44,6 +44,8 @@ void ASoulLikeCharacter::PossessedBy(AController* NewController)
 
 	InitAbilityActorInfo();
 	InitializeDefaultAttributes();
+
+	GiveAbilities();
 }
 
 void ASoulLikeCharacter::OnRep_PlayerState()

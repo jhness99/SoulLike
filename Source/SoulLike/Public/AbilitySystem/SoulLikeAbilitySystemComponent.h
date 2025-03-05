@@ -13,5 +13,17 @@ UCLASS()
 class SOULLIKE_API USoulLikeAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
+
+public:
+
+	void GiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities);
+
+	/**
+	 * InputTag를 가지고 있는 Ability를 활성화 시키는 함수
+	 * @param InputTag 
+	 */
+	void AbilityInputTagPressed(FGameplayTag InputTag);
+	void AbilityInputTagHeld(FGameplayTag InputTag);
+	void AbilityInputTagReleased(FGameplayTag InputTag);
 	
 };
