@@ -6,6 +6,8 @@
 #include "AbilitySystemComponent.h"
 #include "SoulLikeAbilitySystemComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnInputTagStartedWaiting, const FGameplayTag& /*InputTag*/);
+
 /**
  * 
  */
@@ -25,5 +27,9 @@ public:
 	void AbilityInputTagPressed(FGameplayTag InputTag);
 	void AbilityInputTagHeld(FGameplayTag InputTag);
 	void AbilityInputTagReleased(FGameplayTag InputTag);
+
+	FGameplayAbilitySpec GetAbilitySpecFromInputTag(const FGameplayTag& InputTag);
+
+	FOnInputTagStartedWaiting WaitInputDelegate;
 	
 };

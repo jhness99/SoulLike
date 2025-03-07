@@ -10,6 +10,7 @@
 #include "Camera/CameraComponent.h"
 
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 
 
 ASoulLikeCharacter::ASoulLikeCharacter()
@@ -51,4 +52,13 @@ void ASoulLikeCharacter::PossessedBy(AController* NewController)
 void ASoulLikeCharacter::OnRep_PlayerState()
 {
 	InitAbilityActorInfo();
+}
+
+void ASoulLikeCharacter::TryActiveAbilityWithInputTag_Implementation(const FGameplayTag& InputTag)
+{
+	if(USoulLikeAbilitySystemComponent* SoulLikeASC = Cast<USoulLikeAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		FGameplayAbilitySpec Spec = SoulLikeASC->GetAbilitySpecFromInputTag(InputTag);
+		SoulLikeASC->TryActivateAbility(Spec.Handle);
+	}
 }

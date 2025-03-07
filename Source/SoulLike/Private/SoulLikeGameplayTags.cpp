@@ -76,5 +76,15 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FString("Input Tag Mouse Right")
 	);
 
+	GameplayTags.Event_Montage_WaitInput = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Event.Montage.WaitInput"),
+		FString("Wait InputTag From ASC")
+	);
+	
+	GameplayTags.Event_Montage_NextAction = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Event.Montage.NextAction"),
+		FString("Event Next Action")
+	);
+
 	GameplayTags.bInit = true;
 }

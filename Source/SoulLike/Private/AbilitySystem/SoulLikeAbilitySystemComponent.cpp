@@ -21,8 +21,12 @@ void USoulLikeAbilitySystemComponent::GiveAbilities(const TArray<TSubclassOf<UGa
 void USoulLikeAbilitySystemComponent::AbilityInputTagPressed(FGameplayTag InputTag)
 {
 	if(!InputTag.IsValid()) return;
-
+	
 	FScopedAbilityListLock ActivateScopeLock(*this);
+
+	if(WaitInputDelegate.IsBound())
+		WaitInputDelegate.Broadcast(InputTag);
+	
 	for(FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if(AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
@@ -67,4 +71,17 @@ void USoulLikeAbilitySystemComponent::AbilityInputTagReleased(FGameplayTag Input
 			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, AbilitySpec.Handle, AbilitySpec.ActivationInfo.GetActivationPredictionKey());
 		}
 	}
+}
+
+FGameplayAbilitySpec USoulLikeAbilitySystemComponent::GetAbilitySpecFromInputTag(const FGameplayTag& InputTag)
+{
+	FScopedAbilityListLock ActivateScopeLock(*this);
+	for(FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		if(AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
+		{
+			return AbilitySpec;
+		}
+	}
+	return FGameplayAbilitySpec();
 }

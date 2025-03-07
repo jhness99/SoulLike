@@ -46,6 +46,13 @@ public:
 	 */
 	FGameplayTag InputTag_LMB;
 	FGameplayTag InputTag_RMB;
+
+	/**
+	 * Event Tag
+	 */
+	FGameplayTag Event_Montage_WaitInput;
+	FGameplayTag Event_Montage_NextAction;
+
 	
 	bool bInit = false;
 	

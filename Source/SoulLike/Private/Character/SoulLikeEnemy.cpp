@@ -6,6 +6,9 @@
 #include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 #include "AbilitySystem/SoulLikeAttributeSet.h"
 
+#include "Components/WidgetComponent.h"
+#include "UI/Widgets/SoulLikeUserWidget.h"
+
 ASoulLikeEnemy::ASoulLikeEnemy()
 {
 	AbilitySystemComponent = CreateDefaultSubobject<USoulLikeAbilitySystemComponent>("AbilitySystemComponent");
@@ -13,6 +16,9 @@ ASoulLikeEnemy::ASoulLikeEnemy()
 	AbilitySystemComponent->SetIsReplicated(true);
 
 	AttributeSet = CreateDefaultSubobject<USoulLikeAttributeSet>("AttributeSet");
+	
+	HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>("HealthWidgetComponent");
+	HealthWidgetComponent->SetupAttachment(GetRootComponent());
 }
 
 void ASoulLikeEnemy::BeginPlay()
@@ -20,6 +26,11 @@ void ASoulLikeEnemy::BeginPlay()
 	Super::BeginPlay();
 
 	InitAbilityActorInfo();
+
+	if(USoulLikeUserWidget* UserWidget = Cast<USoulLikeUserWidget>(HealthWidgetComponent->GetUserWidgetObject()))
+	{
+		UserWidget->SetWidgetController(this);
+	}
 }
 
 void ASoulLikeEnemy::InitAbilityActorInfo()

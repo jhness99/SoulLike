@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/SoulLikeCharacterBase.h"
+#include "Interface/PlayerInterface.h"
 #include "SoulLikeCharacter.generated.h"
 
 class USpringArmComponent;
@@ -13,7 +14,7 @@ class UCameraComponent;
  * 
  */
 UCLASS()
-class SOULLIKE_API ASoulLikeCharacter : public ASoulLikeCharacterBase
+class SOULLIKE_API ASoulLikeCharacter : public ASoulLikeCharacterBase, public IPlayerInterface
 {
 	GENERATED_BODY()
 	
@@ -27,7 +28,8 @@ protected:
 	
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-	
+
+	virtual void TryActiveAbilityWithInputTag_Implementation(const FGameplayTag& InputTag) override;
 
 private:
     

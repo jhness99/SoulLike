@@ -6,6 +6,8 @@
 #include "Character/SoulLikeCharacterBase.h"
 #include "SoulLikeEnemy.generated.h"
 
+class UWidgetComponent;
+
 /**
  * 
  */
@@ -23,4 +25,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void InitAbilityActorInfo() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widget)
+	TObjectPtr<UWidgetComponent> HealthWidgetComponent;
 };
