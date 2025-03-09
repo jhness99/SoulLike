@@ -12,6 +12,8 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 
+#include "Inventory/InventoryComponent.h"
+
 
 ASoulLikeCharacter::ASoulLikeCharacter()
 {
@@ -37,6 +39,13 @@ void ASoulLikeCharacter::InitAbilityActorInfo()
 	SoulLikePlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(SoulLikePlayerState, this);
 	AbilitySystemComponent = SoulLikePlayerState->GetAbilitySystemComponent();
 	AttributeSet = SoulLikePlayerState->GetAttributeSet();
+	InventoryComponent = SoulLikePlayerState->GetInventoryComponent();
+}
+
+void ASoulLikeCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	
 }
 
 void ASoulLikeCharacter::PossessedBy(AController* NewController)
@@ -47,6 +56,12 @@ void ASoulLikeCharacter::PossessedBy(AController* NewController)
 	InitializeDefaultAttributes();
 
 	GiveAbilities();
+	
+	if(HasAuthority())
+	{
+		InventoryComponent->Init(EquipmentData);
+		InventoryComponent->EquipItem();
+	} 
 }
 
 void ASoulLikeCharacter::OnRep_PlayerState()

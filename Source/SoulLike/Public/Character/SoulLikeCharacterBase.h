@@ -5,15 +5,18 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
+#include "Interface/CombatInterface.h"
 #include "SoulLikeCharacterBase.generated.h"
 
+class UInventoryItemInstance;
 class UAbilitySystemComponent;
 class UAttributeSet;
 class UGameplayAbility;
 class UGameplayEffect;
+class UInventoryComponent;
 
 UCLASS()
-class SOULLIKE_API ASoulLikeCharacterBase : public ACharacter, public IAbilitySystemInterface
+class SOULLIKE_API ASoulLikeCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -22,6 +25,10 @@ public:
 	ASoulLikeCharacterBase();
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	/* Combat Interface */
+	virtual void EquipOnCharacter_Implementation(AActor* Equipment) override;
+	virtual UInventoryItemInstance* GetCurrentWeapon_Implementation() override;
 
 protected:
 
@@ -56,6 +63,10 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY()
+	TObjectPtr<UInventoryComponent> InventoryComponent;
+
 	
 private:
 	

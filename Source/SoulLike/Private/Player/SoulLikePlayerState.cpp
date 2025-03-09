@@ -6,6 +6,8 @@
 #include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 #include "Abilitysystem/SoulLikeAttributeSet.h"
 
+#include "Inventory/InventoryComponent.h"
+
 ASoulLikePlayerState::ASoulLikePlayerState()
 {
 	AbilitySystemComponent = CreateDefaultSubobject<USoulLikeAbilitySystemComponent>("AbilitySystemComponent");
@@ -14,6 +16,9 @@ ASoulLikePlayerState::ASoulLikePlayerState()
 
 	AttributeSet = CreateDefaultSubobject<USoulLikeAttributeSet>("AttributeSet");
 
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
+	InventoryComponent->SetIsReplicated(true);
+	
 	NetUpdateFrequency = 100.f;
 }
 

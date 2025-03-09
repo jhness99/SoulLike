@@ -9,6 +9,8 @@
 
 class UAbilitySystemComponent;
 class UAttributeSet;
+class UInventoryComponent;
+class UEquipmentData;
 
 /**
  * 
@@ -21,9 +23,13 @@ class SOULLIKE_API ASoulLikePlayerState : public APlayerState, public IAbilitySy
 public:
 
 	ASoulLikePlayerState();
-
+	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
+	UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UEquipmentData> EquipmentData;
 
 protected:
 
@@ -32,4 +38,7 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UInventoryComponent> InventoryComponent;
 };

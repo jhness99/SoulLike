@@ -7,6 +7,7 @@
 #include "Interface/PlayerInterface.h"
 #include "SoulLikeCharacter.generated.h"
 
+class UEquipmentData;
 class USpringArmComponent;
 class UCameraComponent;
 
@@ -22,15 +23,20 @@ public:
 
 	ASoulLikeCharacter();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UEquipmentData> EquipmentData;
+
 protected:
 
 	virtual void InitAbilityActorInfo() override;
-	
+
+	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 
+	/* Player Interface */
 	virtual void TryActiveAbilityWithInputTag_Implementation(const FGameplayTag& InputTag) override;
-
+	
 private:
     
 	UPROPERTY(VisibleAnywhere, Category = Camera)

@@ -6,6 +6,8 @@
 #include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 #include "AbilitySystem/SoulLikeAttributeSet.h"
 
+#include "Inventory/InventoryComponent.h"
+
 #include "Components/WidgetComponent.h"
 #include "UI/Widgets/SoulLikeUserWidget.h"
 
@@ -16,6 +18,8 @@ ASoulLikeEnemy::ASoulLikeEnemy()
 	AbilitySystemComponent->SetIsReplicated(true);
 
 	AttributeSet = CreateDefaultSubobject<USoulLikeAttributeSet>("AttributeSet");
+
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("InventoryComponent");
 	
 	HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>("HealthWidgetComponent");
 	HealthWidgetComponent->SetupAttachment(GetRootComponent());

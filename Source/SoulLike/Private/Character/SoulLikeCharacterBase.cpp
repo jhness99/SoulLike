@@ -5,6 +5,7 @@
 
 #include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 
+#include "Inventory/InventoryComponent.h"
 
 ASoulLikeCharacterBase::ASoulLikeCharacterBase()
 {
@@ -17,6 +18,18 @@ ASoulLikeCharacterBase::ASoulLikeCharacterBase()
 UAbilitySystemComponent* ASoulLikeCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void ASoulLikeCharacterBase::EquipOnCharacter_Implementation(AActor* Equipment)
+{
+	Equipment->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("WeaponSocket"));
+}
+
+UInventoryItemInstance* ASoulLikeCharacterBase::GetCurrentWeapon_Implementation()
+{
+	if(InventoryComponent == nullptr) return nullptr;
+
+	return InventoryComponent->GetCurrentWeapon();
 }
 
 void ASoulLikeCharacterBase::InitAbilityActorInfo()
@@ -56,5 +69,6 @@ void ASoulLikeCharacterBase::ApplyEffectToSelf(const TSubclassOf<UGameplayEffect
 void ASoulLikeCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
 	
 }

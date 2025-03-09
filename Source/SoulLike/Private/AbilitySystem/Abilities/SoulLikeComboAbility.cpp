@@ -30,7 +30,7 @@ void USoulLikeComboAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	}
 	
 	SectionIndex = 1;
-	InitAbilityState();
+	ResetAbilityState();
 
 	if(TestMontage == nullptr) return;
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, FName(""), TestMontage);
@@ -51,7 +51,10 @@ void USoulLikeComboAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
 	if(IsValid(MontageTask))
+	{
+		MontageStop();
 		MontageTask->EndTask();
+	}
 	
 	if(IsValid(InputPressTask))
 		InputPressTask->EndTask();
@@ -68,7 +71,7 @@ void USoulLikeComboAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void USoulLikeComboAbility::InitAbilityState()
+void USoulLikeComboAbility::ResetAbilityState()
 {
 	bNextCombo = false;
 	InputTag = FGameplayTag();
@@ -98,11 +101,11 @@ void USoulLikeComboAbility::ReceiveNextActionEvent(FGameplayEventData Payload)
 
 	if(bNextCombo)
 	{
-		MontageSection();
+		MontageJumpToNextCombo();
 	}
 	else
 	{
-		if(CheckAvatarInput()) EndAbility(GetCurrentAbilitySpec()->Handle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		if(CheckAvatarInput()) return;
 
 		if(InputTag.IsValid())
 		{
@@ -120,7 +123,7 @@ void USoulLikeComboAbility::ReceiveInputPress(float TimeWaited)
 	switch(AbilityState)
 	{
 		case EAbilityState::EAS_NextAction:
-			MontageSection();
+			MontageJumpToNextCombo();
 			break;
 	case EAbilityState::EAS_WaitInput:
 			bNextCombo = true;
@@ -140,21 +143,24 @@ void USoulLikeComboAbility::AddSectionIndex()
 	SectionIndex = FMath::Clamp(++SectionIndex, 1.f, MaxSectionIndex);
 }
 
-void USoulLikeComboAbility::MontageSection()
+void USoulLikeComboAbility::MontageJumpToNextCombo()
 {
 	FName Section = FName(*FString::Printf(TEXT("%s_%d"), *SectionName, SectionIndex));
 	MontageJumpToSection(Section);
-	InitAbilityState();
+	ResetAbilityState();
 }
 
-bool USoulLikeComboAbility::CheckAvatarInput() const
+bool USoulLikeComboAbility::CheckAvatarInput()
 {
 	ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 
 	if(Character == nullptr) return false;
 
 	float InputVector = Character->GetCharacterMovement()->GetLastInputVector().Size2D();
-	if(InputVector > 0.f) return true;
-
+	if(InputVector > 0.f)
+	{
+		EndAbility(GetCurrentAbilitySpec()->Handle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		return true;
+	}
 	return false;
 }
