@@ -28,9 +28,6 @@ public:
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
 	UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UEquipmentData> EquipmentData;
-
 protected:
 
 	UPROPERTY()

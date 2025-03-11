@@ -59,7 +59,7 @@ void ASoulLikeCharacter::PossessedBy(AController* NewController)
 	
 	if(HasAuthority())
 	{
-		InventoryComponent->Init(EquipmentData);
+		InventoryComponent->Init(ItemDataAsset);
 		InventoryComponent->EquipItem();
 	} 
 }

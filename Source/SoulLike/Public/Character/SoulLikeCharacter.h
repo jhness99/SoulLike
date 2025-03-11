@@ -7,7 +7,7 @@
 #include "Interface/PlayerInterface.h"
 #include "SoulLikeCharacter.generated.h"
 
-class UEquipmentData;
+class UItemDataAsset;
 class USpringArmComponent;
 class UCameraComponent;
 
@@ -24,7 +24,7 @@ public:
 	ASoulLikeCharacter();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UEquipmentData> EquipmentData;
+	TObjectPtr<UItemDataAsset> ItemDataAsset;
 
 protected:
 

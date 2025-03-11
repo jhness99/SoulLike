@@ -2,9 +2,10 @@
 
 
 #include "Inventory/InventoryComponent.h"
-#include "Inventory/ItemActor.h"
 #include "Inventory/InventoryItemInstance.h"
-#include "Inventory/Data/EquipmentData.h"
+
+#include "Engine/ActorChannel.h"
+
 #include "Net/UnrealNetwork.h"
 
 UInventoryComponent::UInventoryComponent()
@@ -13,32 +14,47 @@ UInventoryComponent::UInventoryComponent()
 	
 }
 
+bool UInventoryComponent::ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags){
+
+	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	for(FInventoryListItem& Item : InventoryList.GetItemsRef())
+	{
+		UInventoryItemInstance* ItemInstance = Item.ItemInstance;
+		if(IsValid(ItemInstance)){
+			WroteSomething |= Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
+		}
+	}
+	
+	return WroteSomething;
+}
+
 void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-void UInventoryComponent::Init(const UEquipmentData* EquipmentData)
+void UInventoryComponent::Init(UItemDataAsset* ItemDataAsset)
 {
 	RightWeaponList.Init();
 	int32 Index = 0;
-	for(const FSL_EquipmentData& Data : DefaultWeapons)
+	for(const FInventoryData& Data : DefaultWeapons)
 	{
-		UInventoryItemInstance* ItemInstance = NewObject<UInventoryItemInstance>();
+		UInventoryItemInstance* ItemInstance = NewObject<UInventoryItemInstance>(GetOwner());
 		ItemInstance->Init(Data);
-		RightWeaponList.Register(ItemInstance, Index++);
 		
+		RightWeaponList.Register(ItemInstance, Index++);
 		InventoryList.AddItem(ItemInstance);
 	}
 	
-	for(const FSL_EquipmentData& Data : DefaultInventoryItems)
-	{
-		UInventoryItemInstance* ItemInstance = NewObject<UInventoryItemInstance>();
-		ItemInstance->Init(Data);
-		
-		InventoryList.AddItem(ItemInstance);
-	}
+	// for(const FSL_EquipmentData& Data : DefaultInventoryItems)
+	// {
+	// 	UInventoryItemInstance* ItemInstance = NewObject<UInventoryItemInstance>();
+	// 	ItemInstance->Init(Data);
+	// 	
+	// 	InventoryList.AddItem(ItemInstance);
+	// }
 }
 
 void UInventoryComponent::EquipItem()
@@ -56,4 +72,6 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	
 	DOREPLIFETIME(UInventoryComponent, InventoryList);
 	DOREPLIFETIME(UInventoryComponent, RightWeaponList);
+	DOREPLIFETIME(UInventoryComponent, RegisterableList);
+	DOREPLIFETIME(UInventoryComponent, CurrentWeapon);
 }

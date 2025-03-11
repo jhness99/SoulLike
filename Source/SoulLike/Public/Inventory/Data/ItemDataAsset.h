@@ -4,27 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Engine/DataTable.h"
 #include "SoulLikeItemTypes.h"
-#include "Inventory/InventoryComponent.h"
-#include "EquipmentData.generated.h"
+#include "ItemDataAsset.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class SOULLIKE_API UEquipmentData : public UDataAsset
+class SOULLIKE_API UItemDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
 
-	FSL_EquipmentData FindEquipmentDataFromItemId(int32 InItemID, EEquipmentType EquipmentType) const;
+	UItemData* FindItemDataFromIndexAndItemType(EItemType ItemType, FName ItemID) const;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FSL_WeaponData> WeaponData;
+	TObjectPtr<UDataTable> WeaponDataTable;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FSL_GearData> GearData;
-	
+	TObjectPtr<UDataTable> RegisterableItemDataTable;
 };
-

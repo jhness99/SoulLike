@@ -4,6 +4,10 @@
 #include "Net/Serialization/FastArraySerializer.h"
 #include "InventoryList.generated.h"
 
+/**
+ * Fast Array Replication 시스템을 사용해서 인벤토리를 구현한다.
+ */
+
 class UInventoryItemInstance;
 
 USTRUCT(BlueprintType)

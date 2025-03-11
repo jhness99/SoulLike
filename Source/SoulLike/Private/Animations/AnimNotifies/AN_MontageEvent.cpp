@@ -5,8 +5,13 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 
+UAN_MontageEvent::UAN_MontageEvent()
+{
+	bShouldFireInEditor = false;
+}
+
 void UAN_MontageEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-	const FAnimNotifyEventReference& EventReference)
+                              const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 

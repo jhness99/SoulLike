@@ -4,13 +4,18 @@
 #include "Inventory/ItemActor.h"
 #include "Inventory/InventoryItemInstance.h"
 
-#include "Inventory/Data/EquipmentData.h"
+#include "Engine/ActorChannel.h"
+
+#include "SoulLikeItemTypes.h"
+
+#include "Net/UnrealNetwork.h"
+
 
 AItemActor::AItemActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
-	SetReplicateMovement(true);
+	SetReplicatingMovement(true);
 	
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	SetRootComponent(MeshComponent);
@@ -18,13 +23,43 @@ AItemActor::AItemActor()
 	MeshComponent->SetIsReplicated(true);
 }
 
-void AItemActor::Init(const FSL_EquipmentData& Data)
-{
-	MeshComponent->SetStaticMesh(Data.ItemMesh);
+bool AItemActor::ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags){
+
+	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	WroteSomething |= Channel->ReplicateSubobject(ItemInstance, *Bunch, *RepFlags);
+
+	return WroteSomething;
+}
+
+void AItemActor::Init(UItemData* Data)
+{	
+	ItemData = Data;
+	UEquipmentData* EquipmentData = Cast<UEquipmentData>(Data);
+	if(EquipmentData == nullptr) return;
+	
+	MeshComponent->SetStaticMesh(EquipmentData->ItemMesh);
 }
 
 void AItemActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void AItemActor::InitInternal()
+{
+	
+}
+
+void AItemActor::OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance)
+{
+	
+}
+
+
+void AItemActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AItemActor, ItemInstance);
 }

@@ -6,13 +6,14 @@
 #include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 
 #include "Inventory/InventoryComponent.h"
+#include "Inventory/InventoryItemInstance.h"
 
 ASoulLikeCharacterBase::ASoulLikeCharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	
 	SetReplicates(true);
-	SetReplicateMovement(true);
+	SetReplicatingMovement(true);
 }
 
 UAbilitySystemComponent* ASoulLikeCharacterBase::GetAbilitySystemComponent() const
@@ -30,6 +31,12 @@ UInventoryItemInstance* ASoulLikeCharacterBase::GetCurrentWeapon_Implementation(
 	if(InventoryComponent == nullptr) return nullptr;
 
 	return InventoryComponent->GetCurrentWeapon();
+}
+
+UAnimMontage* ASoulLikeCharacterBase::GetCurrentWeaponMontage_Implementation()
+{
+	if(GetCurrentWeapon_Implementation() == nullptr) return nullptr;
+	return GetCurrentWeapon_Implementation()->GetMontage();
 }
 
 void ASoulLikeCharacterBase::InitAbilityActorInfo()

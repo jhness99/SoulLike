@@ -29,6 +29,7 @@ public:
 	/* Combat Interface */
 	virtual void EquipOnCharacter_Implementation(AActor* Equipment) override;
 	virtual UInventoryItemInstance* GetCurrentWeapon_Implementation() override;
+	virtual UAnimMontage* GetCurrentWeaponMontage_Implementation() override;
 
 protected:
 

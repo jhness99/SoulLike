@@ -12,7 +12,10 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Inventory/InventoryItemInstance.h"
+
 #include "Interface/PlayerInterface.h"
+#include "Interface/CombatInterface.h"
 
 #include "SoulLikeGameplayTags.h"
 
@@ -23,20 +26,34 @@ void USoulLikeComboAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 {
 	
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
+	/**
+	 * Cost와 Cooldown을 체크하고 수행
+	 */
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 	}
-	
+
+	/**
+	 * 첫 Section에서 시작
+	 */
 	SectionIndex = 1;
 	ResetAbilityState();
 
-	if(TestMontage == nullptr) return;
-	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, FName(""), TestMontage);
+	/**
+	 * AvatarActor가 착용한 무기의 Montage를 가져옴
+	 */
+	if(GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
+	{
+		Montage = ICombatInterface::Execute_GetCurrentWeapon(GetAvatarActorFromActorInfo())->GetMontage();
+	}
+	if(Montage == nullptr) return;
+	
+	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, FName(""), Montage);
 	MontageTask->OnCompleted.AddDynamic(this, &USoulLikeComboAbility::K2_EndAbility);
 	MontageTask->Activate();
-
+	
 	WaitInputEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FSoulLikeGameplayTags::Get().Event_Montage_WaitInput);
 	WaitInputEventTask->EventReceived.AddDynamic(this, &USoulLikeComboAbility::ReceiveWaitInputEvent);
 	WaitInputEventTask->Activate();
@@ -50,6 +67,9 @@ void USoulLikeComboAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
+	/**
+	 * Ability가 끝나고 Task를 종료해도 Montage는 여전히 작동하므로 수동으로 Montage를 종료해야함
+	 */
 	if(IsValid(MontageTask))
 	{
 		MontageStop();

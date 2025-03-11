@@ -6,8 +6,12 @@
 #include "GameFramework/Actor.h"
 #include "ItemActor.generated.h"
 
-struct FSL_EquipmentData;
+class UItemData;
+class UInventoryItemInstance;
 
+/**
+ * 장비 아이템을 레벨에 구현하는 액터
+ */
 UCLASS()
 class SOULLIKE_API AItemActor : public AActor
 {
@@ -16,13 +20,26 @@ class SOULLIKE_API AItemActor : public AActor
 public:
 	
 	AItemActor();
-
-	void Init(const FSL_EquipmentData& Data);
+	
+	void Init(UItemData* Data);
 
 protected:
-
+	/**
+	 * UObject는 Replicate가 자체적으로 안되므로 ReplicateSubobjects로 직접 해야함
+	 */
+	virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
 	virtual void BeginPlay() override;
+	virtual void InitInternal();
+
+	UFUNCTION()
+	void OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance);
+	
+	UPROPERTY(ReplicatedUsing = OnRep_ItemInstance)
+	TObjectPtr<UInventoryItemInstance> ItemInstance;
 
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UStaticMeshComponent> MeshComponent;	
+	TObjectPtr<UStaticMeshComponent> MeshComponent;
+
+	UPROPERTY()
+	TObjectPtr<UItemData> ItemData;
 };

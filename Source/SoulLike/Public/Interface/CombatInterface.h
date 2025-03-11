@@ -28,4 +28,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent)
 	UInventoryItemInstance* GetCurrentWeapon();
+
+	UFUNCTION(BlueprintNativeEvent)
+	UAnimMontage* GetCurrentWeaponMontage();
 };

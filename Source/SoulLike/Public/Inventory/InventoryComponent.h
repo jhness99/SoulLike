@@ -5,14 +5,16 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Inventory/InventoryList.h"
+#include "SoulLikeItemTypes.h"
 #include "InventoryComponent.generated.h"
 
 
-class UEquipmentData;
+class UItemDataAsset;
 class AItemActor;
 class UInventoryItemInstance;
 struct FSL_EquipmentData;
 struct FSL_WeaponData;
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SOULLIKE_API UInventoryComponent : public UActorComponent
@@ -23,7 +25,7 @@ public:
 
 	UInventoryComponent();
 
-	void Init(const UEquipmentData* EquipmentData);
+	void Init(UItemDataAsset* ItemDataAsset);
 	void EquipItem();
 
 	UInventoryItemInstance* GetCurrentWeapon() const {return CurrentWeapon; }
@@ -31,21 +33,25 @@ public:
 protected:
 
 	virtual void BeginPlay() override;
+	virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
 
 private:
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TObjectPtr<UInventoryItemInstance> CurrentWeapon;
 
 	UPROPERTY(EditDefaultsOnly)
-	TArray<FSL_WeaponData> DefaultWeapons;
+	TArray<FInventoryData> DefaultWeapons;
 
 	UPROPERTY(EditDefaultsOnly)
-	TArray<FSL_EquipmentData> DefaultInventoryItems;
+	TArray<FInventoryData> DefaultInventoryItems;
 	
 	UPROPERTY(Replicated)
 	FInventoryList InventoryList;
 
 	UPROPERTY(Replicated)
 	FEquipmentInventoryList RightWeaponList;
+
+	UPROPERTY(Replicated)
+	FEquipmentInventoryList RegisterableList;
 };

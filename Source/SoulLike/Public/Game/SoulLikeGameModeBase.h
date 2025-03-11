@@ -13,5 +13,6 @@ UCLASS()
 class SOULLIKE_API ASoulLikeGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
+
 };
