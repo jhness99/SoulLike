@@ -81,7 +81,7 @@ void ASoulLikePlayerController::Lock(const FInputActionValue& InputActionValue)
 
 void ASoulLikePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Pressed Input Tag is %s"), *InputTag.GetTagName().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Pressed Input Tag is %s"), *InputTag.GetTagName().ToString());
 	if(GetASC())
 	{
 		GetASC()->AbilityInputTagPressed(InputTag);
@@ -90,7 +90,7 @@ void ASoulLikePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 
 void ASoulLikePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Held Input Tag is %s"), *InputTag.GetTagName().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Held Input Tag is %s"), *InputTag.GetTagName().ToString());
 	if(GetASC())
 	{
 		GetASC()->AbilityInputTagHeld(InputTag);
@@ -99,7 +99,7 @@ void ASoulLikePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 
 void ASoulLikePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Released Input Tag is %s"), *InputTag.GetTagName().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Released Input Tag is %s"), *InputTag.GetTagName().ToString());
 	if(GetASC())
     {
     	GetASC()->AbilityInputTagReleased(InputTag);

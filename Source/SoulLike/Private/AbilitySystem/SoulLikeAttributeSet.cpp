@@ -49,7 +49,7 @@ void USoulLikeAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffe
 
 	if(Data.EvaluatedData.Attribute == GetStaminaAttribute())
 	{
-		SetHealth(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
+		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
 	}
 }
 
@@ -99,6 +99,11 @@ void USoulLikeAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 	{
 		SetHealth(GetMaxHealth());
 		bTopOffHealth = false;
+	}
+	if(Attribute == GetMaxStaminaAttribute() && bTopOffStamina)
+	{
+	    SetStamina(GetMaxStamina());
+	    bTopOffStamina = false;
 	}
 }
 

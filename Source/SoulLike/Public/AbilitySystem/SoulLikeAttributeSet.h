@@ -205,4 +205,5 @@ private:
 	static void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props);
 
 	bool bTopOffHealth = true;
+	bool bTopOffStamina = true;
 };

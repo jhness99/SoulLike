@@ -3,9 +3,17 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "GameFramework/Info.h"
+#include "GameplayTagContainer.h"
 #include "SoulLikeItemTypes.generated.h"
 
 class UGameplayAbility;
+
+UENUM(BlueprintType)
+enum class EWeaponSlot : uint8
+{
+	EWS_Right	UMETA(DisplayName = "오른쪽"),
+	EWS_Left	UMETA(DisplayName = "왼쪽")
+};
 
 UENUM(BlueprintType)
 enum class EItemType : uint8
@@ -44,6 +52,30 @@ enum class EWeaponType : uint8
 };
 
 USTRUCT(BlueprintType)
+struct FWeaponDamageInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag DamageType = FGameplayTag();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Damage = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FStatusEffectInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag StatusEffectType = FGameplayTag();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float StatusPoint = 0;
+};
+
+USTRUCT(BlueprintType)
 struct FInventoryData
 {
 	GENERATED_BODY()
@@ -68,6 +100,9 @@ struct FSL_ItemData : public FTableRowBase
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UTexture2D> Image = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	EItemType ItemType = EItemType::EIT_None;
 };
 
 USTRUCT(BlueprintType)
@@ -92,6 +127,9 @@ struct FSL_EquipmentData : public FSL_ItemData
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UStaticMesh> ItemMesh = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Weight = 0.f;
 };
 
 USTRUCT(BlueprintType)
@@ -104,6 +142,18 @@ struct FSL_WeaponData : public FSL_EquipmentData
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Radius = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Stamina = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FWeaponDamageInfo> DamageInfos;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FStatusEffectInfo> StatusEffectInfos;
 };
 
 USTRUCT(BlueprintType)
@@ -122,6 +172,8 @@ class UItemData : public UObject
 
 public:
 
+	virtual bool IsSupportedForNetworking() const override { return true; }
+	
 	void Init(const FSL_ItemData& ItemData)
 	{
 		ItemID = ItemData.ItemID;
@@ -176,6 +228,7 @@ public:
 		Image = EquipmentData.Image;
 		EquipmentType = EquipmentData.EquipmentType;
 		ItemMesh = EquipmentData.ItemMesh;
+		Weight = EquipmentData.Weight;
 	}
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -183,6 +236,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UStaticMesh> ItemMesh = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Weight = 0.f;
 };
 
 UCLASS(BlueprintType)
@@ -201,6 +257,10 @@ public:
 		ItemMesh = WeaponData.ItemMesh;
 		WeaponType = WeaponData.WeaponType;
 		AttackMontage = WeaponData.AttackMontage;
+		Radius = WeaponData.Radius;
+		Stamina = WeaponData.Stamina;
+		DamageInfos = WeaponData.DamageInfos;
+		StatusEffectInfos = WeaponData.StatusEffectInfos;
 	}
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -208,7 +268,18 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Radius = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Stamina = 0.f;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FWeaponDamageInfo> DamageInfos;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FStatusEffectInfo> StatusEffectInfos;
 };
 
 UCLASS(BlueprintType)

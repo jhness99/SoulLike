@@ -5,6 +5,7 @@
 #include "Inventory/InventoryItemInstance.h"
 
 #include "Engine/ActorChannel.h"
+#include "Player/SoulLikePlayerState.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -27,6 +28,29 @@ bool UInventoryComponent::ReplicateSubobjects(UActorChannel *Channel, FOutBunch 
 	}
 	
 	return WroteSomething;
+}
+
+void UInventoryComponent::NextSlot(EWeaponSlot WeaponSlot)
+{
+	FEquipmentInventoryList EquipmentSlot;
+	switch(WeaponSlot)
+	{
+	case EWeaponSlot::EWS_Left:
+		{
+		
+		}
+	case EWeaponSlot::EWS_Right:
+		{
+			EquipmentSlot = RightWeaponList;
+		}
+	default:
+		break;
+	}
+	int32 MaxIndex = EquipmentSlot.GetMaxIndex();
+	if(CurrentWeapon) CurrentWeapon->OnUnEquip();
+	WeaponSlotIndex = WeaponSlotIndex == MaxIndex-1 ? 0 : WeaponSlotIndex + 1;
+	CurrentWeapon = RightWeaponList.GetItemsRef()[WeaponSlotIndex].ItemInstance;
+	if(CurrentWeapon) CurrentWeapon->OnEquip(GetOwner());
 }
 
 void UInventoryComponent::BeginPlay()
@@ -59,7 +83,7 @@ void UInventoryComponent::Init(UItemDataAsset* ItemDataAsset)
 
 void UInventoryComponent::EquipItem()
 {
-	CurrentWeapon = RightWeaponList.GetItemsRef()[0].ItemInstance;
+	CurrentWeapon = RightWeaponList.GetItemsRef()[WeaponSlotIndex].ItemInstance;
 	if(CurrentWeapon != nullptr)
 	{
 		CurrentWeapon->OnEquip(GetOwner());
@@ -69,7 +93,8 @@ void UInventoryComponent::EquipItem()
 void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
+
+	DOREPLIFETIME(UInventoryComponent, WeaponSlotIndex);
 	DOREPLIFETIME(UInventoryComponent, InventoryList);
 	DOREPLIFETIME(UInventoryComponent, RightWeaponList);
 	DOREPLIFETIME(UInventoryComponent, RegisterableList);

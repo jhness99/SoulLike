@@ -23,6 +23,11 @@ public:
 
 	ASoulLikeCharacter();
 
+	//Combat Interface
+	virtual void SetWarpingLocationAndRotation_Implementation() override;
+	virtual void SetWarpingLocation_Implementation() override;
+	virtual void SetWarpingRotation_Implementation() override;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UItemDataAsset> ItemDataAsset;
 
@@ -36,6 +41,7 @@ protected:
 
 	/* Player Interface */
 	virtual void TryActiveAbilityWithInputTag_Implementation(const FGameplayTag& InputTag) override;
+
 	
 private:
     

@@ -5,7 +5,7 @@
 
 #include "AbilitySystem/Abilities/SoulLikeGameplayAbility.h"
 
-void USoulLikeAbilitySystemComponent::GiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities)
+void USoulLikeAbilitySystemComponent::GiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities, APawn* Instigator)
 {
 	for(const TSubclassOf<UGameplayAbility>& AbilityClass : Abilities)
 	{
@@ -13,6 +13,7 @@ void USoulLikeAbilitySystemComponent::GiveAbilities(const TArray<TSubclassOf<UGa
 		if(const USoulLikeGameplayAbility* SoulLikeAbility = Cast<USoulLikeGameplayAbility>(AbilitySpec.Ability))
 		{
 			AbilitySpec.DynamicAbilityTags.AddTag(SoulLikeAbility->StartupInputTag);
+			AbilitySpec.SourceObject = Instigator;
 			GiveAbility(AbilitySpec);
 		}
 	}

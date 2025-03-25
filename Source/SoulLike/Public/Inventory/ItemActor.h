@@ -8,6 +8,7 @@
 
 class UItemData;
 class UInventoryItemInstance;
+struct FSL_ItemData;
 
 /**
  * 장비 아이템을 레벨에 구현하는 액터
@@ -21,7 +22,9 @@ public:
 	
 	AItemActor();
 	
-	void Init(UItemData* Data);
+	//void Init(UItemData* Data);
+	void Init(UInventoryItemInstance* InItemInstance);
+	void SetCollisionEnable(bool bEnable) const;
 
 protected:
 	/**
@@ -32,12 +35,15 @@ protected:
 	virtual void InitInternal();
 
 	UFUNCTION()
+	void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	UFUNCTION()
 	void OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance);
 	
 	UPROPERTY(ReplicatedUsing = OnRep_ItemInstance)
 	TObjectPtr<UInventoryItemInstance> ItemInstance;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UStaticMeshComponent> MeshComponent;
 
 	UPROPERTY()

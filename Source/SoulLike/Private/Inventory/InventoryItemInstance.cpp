@@ -28,7 +28,7 @@ void UInventoryItemInstance::Init(const FInventoryData& Data)
 void UInventoryItemInstance::OnEquip(AActor* Owner)
 {
 	if(const APlayerState* PS = Cast<APlayerState>(Owner)) Owner = PS->GetPawn();
-	
+	if(Owner == nullptr) return;
 	if(Owner->Implements<UCombatInterface>())
 	{
 		FTransform Transform;
@@ -36,9 +36,9 @@ void UInventoryItemInstance::OnEquip(AActor* Owner)
 
 		if(UWorld* World = Owner->GetWorld())
 		{
-			ItemActor = World->SpawnActorDeferred<AItemActor>(AItemActor::StaticClass(), Transform);
+			ItemActor = World->SpawnActorDeferred<AItemActor>(AItemActor::StaticClass(), Transform, Owner);
 			SetupItemData();
-			ItemActor->Init(ItemData);
+			ItemActor->Init(this);
 			ItemActor->FinishSpawning(Transform);
 
 			ICombatInterface::Execute_EquipOnCharacter(Owner, ItemActor);
@@ -60,7 +60,7 @@ void UInventoryItemInstance::OnUnEquip()
 	}
 }
 
-UAnimMontage* UInventoryItemInstance::GetMontage() const
+UAnimMontage* UInventoryItemInstance::GetMontage()
 {
 	if(UWeaponData* WeaponData = Cast<UWeaponData>(ItemData))
 	{
@@ -68,6 +68,14 @@ UAnimMontage* UInventoryItemInstance::GetMontage() const
 	}
 	
 	return nullptr;
+}
+
+void UInventoryItemInstance::SetCollisionEnable(bool bEnable) const
+{
+	if(ItemActor)
+	{
+		ItemActor->SetCollisionEnable(bEnable);
+	}
 }
 
 void UInventoryItemInstance::SetupItemData()

@@ -6,7 +6,14 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SoulLikeFunctionLibrary.generated.h"
 
-class UItemDataAsset;
+class ASoulLikeHUD;
+class UOverlayWidgetController;
+class UMenuWidgetController;
+class UInventoryWidgetController;
+class UAttributeSetWidgetController;
+class UAbilityInfo;
+struct FWidgetControllerParams;
+struct FSoulLikeAbilityInfo;
 
 /**
  * 
@@ -18,5 +25,18 @@ class SOULLIKE_API USoulLikeFunctionLibrary : public UBlueprintFunctionLibrary
 
 public:
 
-	
+	/**
+	 * Widget Controller
+	 */
+	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|WidgetController")
+	static bool MakeWidgetControllerParams(const UObject* WorldContextObject, ASoulLikeHUD*& OutSoulLikeHUD, FWidgetControllerParams& OutWCParams);
+
+	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|WidgetController")
+	static UOverlayWidgetController* GetOverlayWidgetController(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|GameInstance")
+	static UAbilityInfo* GetAbilityInfo(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|GameInstance")
+	static FSoulLikeAbilityInfo GetAbilityInfoForTag(const UObject* WorldContextObject, const FGameplayTag& Tag);
 };

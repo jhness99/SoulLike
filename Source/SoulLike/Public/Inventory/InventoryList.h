@@ -60,7 +60,9 @@ struct FEquipmentInventoryList : public FInventoryList
 	void Init();
 	void Register(UInventoryItemInstance * InItemInstance, int32 Index);
 	void UnRegister(int32 Index);
-	
+
+	int32 GetMaxIndex() const { return MaxIndex; }
+		
 protected:
 
 	UPROPERTY()	

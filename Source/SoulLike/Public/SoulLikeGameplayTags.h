@@ -1,4 +1,4 @@
-﻿
+﻿ 
 #pragma once
 
 #include "CoreMinimal.h"
@@ -42,17 +42,30 @@ public:
 	FGameplayTag Attributes_Boost_StaminaBoost;
 
 	/**
+	 * Character Status
+	 */
+	FGameplayTag Status_Action;
+
+	/**
 	 * Input Tag
 	 */
 	FGameplayTag InputTag_LMB;
 	FGameplayTag InputTag_RMB;
+    FGameplayTag InputTag_Right;
 
+	FGameplayTag InputTag_Space;
+    
 	/**
 	 * Event Tag
 	 */
 	FGameplayTag Event_Montage_WaitInput;
 	FGameplayTag Event_Montage_NextAction;
+	FGameplayTag Event_Montage_SwapWeapon;
 
+	/**
+	 * Ability Tag
+	 */
+	FGameplayTag Abilities_Attack;
 	
 	bool bInit = false;
 	

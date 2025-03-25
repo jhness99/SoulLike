@@ -4,12 +4,16 @@
 #include "Character/SoulLikeCharacter.h"
 
 #include "Player/SoulLikePlayerState.h"
+#include "Player/SoulLikePlayerController.h"
+
+#include "UI/HUD/SoulLikeHUD.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 
 #include "AbilitySystemComponent.h"
+#include "MotionWarpingComponent.h"
 #include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 
 #include "Inventory/InventoryComponent.h"
@@ -31,6 +35,35 @@ ASoulLikeCharacter::ASoulLikeCharacter()
 	bUseControllerRotationYaw = false;
 }
 
+void ASoulLikeCharacter::SetWarpingLocationAndRotation_Implementation()
+{
+	if(GetCharacterMovement() == nullptr) return;
+	
+	FRotator Direction = GetActorRotation();
+	if(GetCharacterMovement()->GetCurrentAcceleration().Size2D() > 0.f)
+	{
+		Direction.Yaw = GetCharacterMovement()->GetCurrentAcceleration().Rotation().Yaw;
+	}
+	MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(FName("WarpTarget"), GetActorLocation(), Direction);
+}
+
+void ASoulLikeCharacter::SetWarpingLocation_Implementation()
+{
+
+}
+
+void ASoulLikeCharacter::SetWarpingRotation_Implementation()
+{
+	if(GetCharacterMovement() == nullptr) return;
+	
+	FRotator Direction = GetActorRotation();
+	if(GetCharacterMovement()->GetCurrentAcceleration().Size2D() > 0.f)
+	{
+		Direction.Yaw = GetCharacterMovement()->GetCurrentAcceleration().Rotation().Yaw;
+	}
+	MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(FName("WarpTarget"), GetActorLocation(), Direction);
+}
+
 void ASoulLikeCharacter::InitAbilityActorInfo()
 {
 	ASoulLikePlayerState* SoulLikePlayerState = GetPlayerState<ASoulLikePlayerState>();
@@ -40,6 +73,14 @@ void ASoulLikeCharacter::InitAbilityActorInfo()
 	AbilitySystemComponent = SoulLikePlayerState->GetAbilitySystemComponent();
 	AttributeSet = SoulLikePlayerState->GetAttributeSet();
 	InventoryComponent = SoulLikePlayerState->GetInventoryComponent();
+
+	if(ASoulLikePlayerController* SoulLikePlayerController = Cast<ASoulLikePlayerController>(GetController())){
+    
+		if(ASoulLikeHUD* SoulLikeHUD = Cast<ASoulLikeHUD>(SoulLikePlayerController->GetHUD())){
+
+			SoulLikeHUD->InitOverlay(SoulLikePlayerController, SoulLikePlayerState, AbilitySystemComponent, AttributeSet);
+		}
+	}
 }
 
 void ASoulLikeCharacter::BeginPlay()
@@ -54,7 +95,7 @@ void ASoulLikeCharacter::PossessedBy(AController* NewController)
 
 	InitAbilityActorInfo();
 	InitializeDefaultAttributes();
-
+	
 	GiveAbilities();
 	
 	if(HasAuthority())
@@ -77,3 +118,4 @@ void ASoulLikeCharacter::TryActiveAbilityWithInputTag_Implementation(const FGame
 		SoulLikeASC->TryActivateAbility(Spec.Handle);
 	}
 }
+

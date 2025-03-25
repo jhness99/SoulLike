@@ -73,6 +73,15 @@ protected:
 	UFUNCTION()
 	void ReceiveInputTag(const FGameplayTag& InInputTag);
 
+	/**
+	 * 
+	 */
+	virtual void SetupMontage();
+
+	/***
+	 * 주어진 SectionName과 SectionIndex로 해당 Section으로 Montage를 이동시키는 함수
+	 */
+	virtual void MontageJumpToNextCombo();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UAnimMontage* Montage;
@@ -98,11 +107,6 @@ protected:
 private:
 	
 	void AddSectionIndex();
-
-	/***
-	 * 주어진 SectionName과 SectionIndex로 해당 Section으로 Montage를 이동시키는 함수
-	 */
-	void MontageJumpToNextCombo();
 
 	/***
 	 * Ability의 Avatar에 이동Input을 감지하는 함수

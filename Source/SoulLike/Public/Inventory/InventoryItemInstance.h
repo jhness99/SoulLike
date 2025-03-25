@@ -39,7 +39,12 @@ public:
 	void OnEquip(AActor* Owner);
 	void OnUnEquip();
 
-	UAnimMontage* GetMontage() const;
+	UAnimMontage* GetMontage();
+	UFUNCTION(Blueprintpure)
+	AItemActor* GetWeaponActor() const { return ItemActor; }
+	UItemData* GetItemData() const { return ItemData;}
+
+	void SetCollisionEnable(bool bEnable) const;
 
 protected:
 	/**

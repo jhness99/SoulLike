@@ -18,7 +18,7 @@ class SOULLIKE_API USoulLikeAbilitySystemComponent : public UAbilitySystemCompon
 
 public:
 
-	void GiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities);
+	void GiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities, APawn* Instigator);
 
 	/**
 	 * InputTag를 가지고 있는 Ability를 활성화 시키는 함수

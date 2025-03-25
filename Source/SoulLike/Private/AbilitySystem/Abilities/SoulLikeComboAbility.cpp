@@ -44,11 +44,13 @@ void USoulLikeComboAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	/**
 	 * AvatarActor가 착용한 무기의 Montage를 가져옴
 	 */
-	if(GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
+	SetupMontage();
+	
+	if(Montage == nullptr)
 	{
-		Montage = ICombatInterface::Execute_GetCurrentWeapon(GetAvatarActorFromActorInfo())->GetMontage();
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
 	}
-	if(Montage == nullptr) return;
 	
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, FName(""), Montage);
 	MontageTask->OnCompleted.AddDynamic(this, &USoulLikeComboAbility::K2_EndAbility);
@@ -112,7 +114,7 @@ void USoulLikeComboAbility::ReceiveWaitInputEvent(FGameplayEventData Payload)
 	InputPressTask->OnPress.AddDynamic(this, &USoulLikeComboAbility::ReceiveInputPress);
 	InputPressTask->Activate();
 
-	AddSectionIndex();
+	//AddSectionIndex();
 }
 
 void USoulLikeComboAbility::ReceiveNextActionEvent(FGameplayEventData Payload)
@@ -158,6 +160,14 @@ void USoulLikeComboAbility::ReceiveInputTag(const FGameplayTag& InInputTag)
 	InputTag = InInputTag;
 }
 
+void USoulLikeComboAbility::SetupMontage()
+{
+	if(GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
+	{
+		Montage = ICombatInterface::Execute_GetCurrentWeaponMontage(GetAvatarActorFromActorInfo());
+	}
+}
+
 void USoulLikeComboAbility::AddSectionIndex()
 {
 	SectionIndex = FMath::Clamp(++SectionIndex, 1.f, MaxSectionIndex);
@@ -165,6 +175,8 @@ void USoulLikeComboAbility::AddSectionIndex()
 
 void USoulLikeComboAbility::MontageJumpToNextCombo()
 {
+	AddSectionIndex();
+	
 	FName Section = FName(*FString::Printf(TEXT("%s_%d"), *SectionName, SectionIndex));
 	MontageJumpToSection(Section);
 	ResetAbilityState();

@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Inventory/Data/ItemDataAsset.h"
 #include "SoulLikeGameInstance.generated.h"
+
+class UItemDataAsset;
+class UAbilityInfo;
+class UCharacterDataAsset;
 
 /**
  * 
@@ -18,5 +21,11 @@ class SOULLIKE_API USoulLikeGameInstance : public UGameInstance
 public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
-	TObjectPtr<UItemDataAsset> ItemDataAsset;	
+	TObjectPtr<UItemDataAsset> ItemDataAsset;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilityInfo")
+	TObjectPtr<UAbilityInfo> AbilityInfoDataAsset;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData")
+	TObjectPtr<UCharacterDataAsset> CharacterDataAsset;
 };

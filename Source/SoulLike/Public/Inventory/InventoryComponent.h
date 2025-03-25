@@ -29,6 +29,7 @@ public:
 	void EquipItem();
 
 	UInventoryItemInstance* GetCurrentWeapon() const {return CurrentWeapon; }
+	void NextSlot(EWeaponSlot WeaponSlot);
 
 protected:
 
@@ -45,6 +46,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FInventoryData> DefaultInventoryItems;
+
+	UPROPERTY(Replicated)
+	int32 WeaponSlotIndex = 0;
 	
 	UPROPERTY(Replicated)
 	FInventoryList InventoryList;

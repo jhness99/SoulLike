@@ -6,6 +6,10 @@ FSoulLikeGameplayTags FSoulLikeGameplayTags::GameplayTags;
 
 void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 {
+	/**
+	 * Primary Attribute
+	 */
+	
 	GameplayTags.Attributes_Primary_Vigor = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Attributes.Primary.Vigor"),
 		FString("Increase Health Point")
@@ -35,6 +39,10 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FName("Attributes.Primary.Intelligence"),
 		FString("Increase Magic Damage")
 	);
+
+	/**
+	 * Secondary Attribute
+	 */
 	
 	GameplayTags.Attributes_Secondary_Health = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Attributes.Secondary.Health"),
@@ -56,6 +64,10 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FString("Maximum Stamina Point")
 	);
 
+	/**
+	 * Boost Attribute
+	 */
+	
 	GameplayTags.Attributes_Boost_HealthBoost = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Attributes.Boost.HealthBoost"),
 		FString("MaxHealth Boost")
@@ -66,6 +78,19 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FString("MaxStamina Boost")
 	);
 
+	/**
+	 * Character Status
+	 */
+
+	GameplayTags.Status_Action = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Status.Action"),
+		FString("Action Status")
+	);
+
+	/**
+	 * Input Tag
+	 */
+	
 	GameplayTags.InputTag_LMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("InputTag.LMB"),
 		FString("Input Tag Mouse Left")
@@ -75,6 +100,21 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FName("InputTag.RMB"),
 		FString("Input Tag Mouse Right")
 	);
+	
+    GameplayTags.InputTag_Right = UGameplayTagsManager::Get().AddNativeGameplayTag(
+        FName("InputTag.Right"),
+        FString("Input Tag Keyboard Right")
+    );
+
+	GameplayTags.InputTag_Space = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.Space"),
+		FString("Input Tag Keyboard Space")
+	);
+
+
+	/**
+	 * Event Tag
+	 */
 
 	GameplayTags.Event_Montage_WaitInput = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Event.Montage.WaitInput"),
@@ -86,5 +126,15 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FString("Event Next Action")
 	);
 
+	GameplayTags.Event_Montage_SwapWeapon = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Event.Montage.SwapWeapon"),
+		FString("Event SwapWeapon")
+	);
+
+	GameplayTags.Abilities_Attack = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.Attack"),
+		FString("Attack Action")
+	);
+	
 	GameplayTags.bInit = true;
 }

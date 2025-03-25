@@ -14,6 +14,7 @@ class UAttributeSet;
 class UGameplayAbility;
 class UGameplayEffect;
 class UInventoryComponent;
+class UMotionWarpingComponent;
 
 UCLASS()
 class SOULLIKE_API ASoulLikeCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
@@ -29,7 +30,13 @@ public:
 	/* Combat Interface */
 	virtual void EquipOnCharacter_Implementation(AActor* Equipment) override;
 	virtual UInventoryItemInstance* GetCurrentWeapon_Implementation() override;
+	virtual UItemData* GetCurrentWeaponItemData_Implementation() override;
 	virtual UAnimMontage* GetCurrentWeaponMontage_Implementation() override;
+	virtual UAnimMontage* EvaluateRollingMontage_Implementation() override;
+	virtual void NextSlot_Implementation(EWeaponSlot WeaponSlot) override;
+	virtual void MeleeTrace_Implementation(const FVector& TraceStart, const FVector& TraceEnd, float Radius) override;
+	virtual void ClearIgnoreActors_Implementation() override;
+	virtual void SetWarpingLocationAndRotation_Implementation() override;
 
 protected:
 
@@ -50,7 +57,7 @@ protected:
 	 * TODO
 	 * 나중에 Enemy와 Character를 분리해야함
 	 */
-	void GiveAbilities() const;
+	void GiveAbilities();
 	
 	/**
 	 * 자기자신에게 Effect를 Apply하는 함수
@@ -59,6 +66,9 @@ protected:
 	 */
 	void ApplyEffectToSelf(const TSubclassOf<UGameplayEffect>& GameplayEffectClass, float Level) const;
 
+	UFUNCTION(Server, Reliable)
+	void ServerMeleeTrace(const FVector& TraceStart, const FVector& TraceEnd, float Radius);
+	
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
@@ -68,8 +78,16 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> InventoryComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 	
 private:
+
+	/**
+	 * MeleeTrace
+	 */
+	UPROPERTY()
+	TArray<AActor*> IgnoreActors;
 	
 	/**
 	 * 캐릭터가 시작할 때 부여받는 기본 Attribute를 제공하는 Effect

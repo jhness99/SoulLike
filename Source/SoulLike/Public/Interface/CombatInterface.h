@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "SoulLikeItemTypes.h"
 #include "CombatInterface.generated.h"
+
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -26,9 +28,33 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void EquipOnCharacter(AActor* Equipment);
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	UInventoryItemInstance* GetCurrentWeapon();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UItemData* GetCurrentWeaponItemData();
 
 	UFUNCTION(BlueprintNativeEvent)
 	UAnimMontage* GetCurrentWeaponMontage();
+
+	UFUNCTION(BlueprintNativeEvent)
+	UAnimMontage* EvaluateRollingMontage();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void NextSlot(EWeaponSlot WeaponSlot);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void MeleeTrace(const FVector& TraceStart, const FVector& TraceEnd, float Radius);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ClearIgnoreActors();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetWarpingLocationAndRotation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SetWarpingLocation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SetWarpingRotation();
 };
