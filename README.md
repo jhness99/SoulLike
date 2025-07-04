@@ -1,108 +1,168 @@
-# SoulLike
+## SoulLike Action RPG
+Unreal Engine 5 Portfolio
+- Unreal Engine 5 버전 : 5.4.4
+- 에디터 : VSCode, Rider
+- 제작기간 : 2025.03~2025.06 (4개월)
+- 개발 인원 : 1인개발
+## CharacterBase 구조
 
-3월 1주차
+## MVC 패턴
+Widget과 클래스간의 의존성을 줄이기 위해 MVC패턴으로 UI를 구현
+1. 로컬 클라이언트에 하나만 존재하는 Controller의 HUD에 WidgetController를 생성
+2. 현재 클라이언트가 조종하는 Controller는 싱글톤처럼 한개의 객체만 존재하고 HUD또한 한개만 존재
+3. UBlueprintFunctionLibrary를 재정의 한 Static Helper Function을 사용해서 HUD의 WidgetController를 사용
 
-Character 기본 구현<br>
-ASC Character 구현<br>
-Attribute, MMC 구현
+## KeyBind
+EnhancedInput의 InputAction을 GameplayTag(InputTag)와 매핑하고, InputTag를 캐릭터의 어빌리티에 매핑해서 Ability의 TriggerInput을 동적으로 전환할 수 있도록 구현.
+```c++
+//SoulLikeInputComponent.h
+template <class UserClass, typename PressedFuncType, typename HeldFuncType, typename ReleasedFuncType>
+inline void USoulLikeInputComponent::BindAbilityActions(const USL_InputConfig* InputConfig, UserClass* Object,
+	PressedFuncType PressedFunc, HeldFuncType HeldFunc, ReleasedFuncType ReleasedFunc)
+{
+	check(InputConfig);
 
-MMC 클래스 통합
+  //DataAsset인 InputConfig에 InputAction과 GameplayTag의 매핑을 기반으로 ReceiveFunction들을 Bind하여 
+  //InputTag에 따른 Ability를 활성화 할 수 있도록 구현.
+	for(const FSL_InputAction& InputAction : InputConfig->InputActions)
+	{
+		if(PressedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Started, Object, PressedFunc, InputAction.InputTag);
+		if(HeldFunc) BindAction(InputAction.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, InputAction.InputTag);
+		if(ReleasedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, InputAction.InputTag);
+	}
+}
 
-MMC_Secondary -> MMC_VitalAttributes로 개선<br>
-Enemy AnimationBlueprint 임시 생성<br>
-InputAction에 GameplayTag 매칭해서 Callback 하는 InputComponent 구현<br>
-입력 받은 GameplayTag가 InputTag인 어빌리티 활성화<br>
+//SoulLikePlayerController.cpp
+void ASoulLikePlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
 
-ComboAbility 구현.<br>
-어빌리티의 Montage 재생 중 추가 입력으로<br>
-다음 액션(다음 콤보, 다른 어빌리티)를 실행시켜주는 어빌리티<br>
-테스트 하기 위해 Hard Cording으로 Montage 재생<br>
+	USoulLikeInputComponent* SL_InputComponent = Cast<USoulLikeInputComponent>(InputComponent);
 
-Weapon에 따라 다른 Montage 실행을 위해 Inventory Component 구현<br>
-FastArraySerializer를 사용해서 Replicate 또한 고려하는 아이템 컨테이너 구현.<br>
-이때 아이템의 정보를 저장하고 서버-클라이언트에서 Replicate하는 과정에서 문제발생.
+...
 
-3월 2주차
+	SL_InputComponent->BindAbilityActions(InputConfig, this,
+		&ASoulLikePlayerController::AbilityInputTagPressed,
+		&ASoulLikePlayerController::AbilityInputTagHeld,
+		&ASoulLikePlayerController::AbilityInputTagReleased);
+}
 
-문제해결방법<br>
-처음에 시도한 방법은 Item의 모든 정보를 Replicate해서 클라이언트에 동기화<br>
-해주는 방식이였는데, Struct->UObject로 정보를 저장하는 과정에서<br>
-Replicate가 잘 되지 않는 문제와 너무 많은 정보를 Replicate해줘야 한다는 점 때문에<br>
-클라이언트 서버 모두 ItemDataAsset을 가지고, ItemType과 ItemID만 Replicate해서<br>
-각 인스턴스에 있는 DataAsset에서 검색해서 정보를 가져오도록 변경<br>
+void ASoulLikePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
+{
+	if(InputMode.MatchesTagExact(FSoulLikeGameplayTags::Get().InputMode_UI) ||
+		InputMode.MatchesTagExact(FSoulLikeGameplayTags::Get().InputMode_KeyBind)) return;
+	
+	if(GetASC())
+	{
+		GetASC()->AbilityInputTagHeld(InputTag);
+	}
+}
+```
+InputAction과 Ability는 InputTag로 연결되어 있으므로, Ability의 InputTag를 변경한다면, 매칭된 InputAction 변경 가능
+```c++
+//SoulLikePlayerController.cpp
+void ASoulLikePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+{
+   ...
 
-TODO<br>
-그 이후 아이템에 추가적인 정보 또한 저장해줄 struct 필요<br>
-해당 struct는 ItemInstance에서 저장될 예정<br>
+	if(InputMode.MatchesTagExact(FSoulLikeGameplayTags::Get().InputMode_KeyBind))
+	{
+		ChangeAbilityInputTag(InputTag);
+		return;
+	}
+	
+	if(GetASC())
+	{
+		GetASC()->AbilityInputTagPressed(InputTag);
+	}
+}
 
-3월 3주차
+void ASoulLikePlayerController::ChangeAbilityInputTag(const FGameplayTag& InputTag)
+{
+	if(UKeybindMenuWidgetController* KeybindMenuWidgetController = USoulLikeFunctionLibrary::GetKeybindMenuWidgetController(this))
+	{
+		if(GetASC())
+		{
+			GetASC()->ChangeAbilityInputTag(KeybindMenuWidgetController, InputTag);
+		}
+	}
+}
 
-아에팀 관련해서 여러가지 시도를 해본 결과 기존의 방법을 사용하기로 함<br>
-시도해 본 방법
-1. UObject 자체를 Replicate 하는 방법
-2. FStruct를 Replicate 하는법
+//SoulLikeAbilitySystemComponent.cpp
+void USoulLikeAbilitySystemComponent::ChangeAbilityInputTag(UKeybindMenuWidgetController* KeybindMenuWidgetController, const FGameplayTag& InputTag)
+{
+	UAbilityInfo* AbilityInfo = USoulLikeFunctionLibrary::GetAbilityInfo(this);
+	if(AbilityInfo == nullptr) return;
 
-해결 후 간단한 콤보 공격 어빌리티 구현<br>
-몽타주에 SendEvent를 통해서 선입력을 받게 대기하거나, 특정 시점 이후에 다음 액션을 할 수 있도록 구현<br>
-MMC를 사용해서 해당 어빌리티의 AbilityTag를 사용해 AbilityInfo에서 어빌리티 정보를 가져와서<br>
-Stamina Cost를 설정 할 수 있도록 구현<br>
+	if(KeybindMenuWidgetController == nullptr) return;
 
-3월 4주차
+	const FGameplayTag SelectedAbilityTag = KeybindMenuWidgetController->SelectedAbilityTag;
+  //변경할 InputTag를 가지고 있는 어빌리티는 초기화
+	if(FGameplayAbilitySpec* PrevAbilitySpec = GetSpecFromInputTag(InputTag))
+	{
+		const FGameplayTag& PrevAbilityTag = GetAbilityTagFromSpec(*PrevAbilitySpec);
+		
+		PrevAbilitySpec->DynamicAbilityTags.RemoveTag(InputTag);
+		
+		AbilityInfo->ChangeAbilityInputTag(PrevAbilityTag, FGameplayTag());
 
-AnimMontage에 MotionWarping추가<br>
-이때 AnimNotifyState를 사용했는데 문제가 발생<br>
-문제는 AnimNotifyState가 데디케이티드에서도 작동 하는것 뿐만아니라 <br>
-클라이언트와 동시에 작동하지 않고 서버에서만 작동<br>
+		MarkAbilitySpecDirty(*PrevAbilitySpec);
+		
+		KeybindMenuWidgetController->OnReceiveInputTagDelegate.Broadcast(PrevAbilityTag);
+	}
+  //변경할 어빌리티 태그에 InputTag추가
+	if(FGameplayAbilitySpec* AbilitySpec = GetSpecFromAbilityTag(SelectedAbilityTag))
+	{
+		AbilitySpec->DynamicAbilityTags.RemoveTag(AbilityInfo->GetAbilityInputTag(SelectedAbilityTag));
+		
+		AbilityInfo->ChangeAbilityInputTag(SelectedAbilityTag, InputTag);
 
-또한 MotionWarping Target을 설정하는 과정에서<br>
-Pawn의 LastInputVector를 사용했는데<br>
-해당 변수는 클라이언트에서만 저장되기 때문에 클라이언트=>서버 로 변수를 갱신해야 하는 문제 발생<br>
+		AbilitySpec->DynamicAbilityTags.AddTag(InputTag);
 
-따라서 RPC를 사용해서 구현하려고 시도 >> RPC의 과다사용으로 인한 네트워크 부하 문제<br>
-서버에서도 남아있는 CurrentAcceleration 을 사용해 WarpingTarget 설정<br>
-==> 서버에도 있는 변수이므로 RPC사용할 필요 없음
+		MarkAbilitySpecDirty(*AbilitySpec);
+		
+    //Widget을 Delegate를 통해 갱신
+		KeybindMenuWidgetController->SelectedAbilityTag = FGameplayTag();
+		KeybindMenuWidgetController->OnReceiveInputTagDelegate.Broadcast(SelectedAbilityTag);
+	}
+}
+```
+## InventorySystem
+멀티플레이를 고려하여 Inventory를 FastArraySerializer를 사용<br>
+Item의 내부 데이터는 ItemInstance에 UItemData와 FInventoryData에서 보관<br>
+1. UItemData : 변하지 않는 아이템의 정보
+2. FInventoryData : 변하는 아이템의 정보
 
-4월 
+ItemInstance를 생성할 때 FindItemDataFromIndexAndItemType() 팩토리 함수 사용<br>
+ItemID와 GameplayTag로 FSL_ItemData를 탐색<br>
+탐색한 FSL_ItemData로 UItemData를 생성, 생성한 ItemData를 ItemInstance에 저장
+```c++
+UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID) const
+{
+	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+	
+	for(const FItemDataTable& ItemDataTableStruct : ItemDataTables)
+	{
+		if(ItemType.MatchesTagExact(ItemDataTableStruct.ItemTypeTag))
+		{
+			FSL_ItemData* ItemData = ItemDataTableStruct.DataTable->FindRow<FSL_ItemData>(ItemID, FString("Not Found"));
+			if(ItemData == nullptr) return nullptr;
 
-WidgetController 구현<br>
+			if(Outer)
+			{
+				UItemData* ItemDataObject = NewObject<UItemData>(Outer, ItemDataTableStruct.ItemDataClass.Get());
+				ItemDataObject->Init(ItemData);
 
-MVC패턴을 구현하기 위해 WidgetController 구현<br>
-WidgetController는 Widget과 AttributeSet같은 내부 로직사이에 델리게이트 등을 통해 상호작용한다.<br>
-AbilitySystem이 Model, Widget이 View, WidgetController가 Controller 역활을 한다.<br>
-WidgetController를 통해 Attribute의 변화를 Widget에 신호를 준다던가, <br>
-InventoryComponent와 연동해서 인벤토리를 구현
-
-InventoryWidget<br>
-WBP_Inventory를 중복해서 사용하기 위해 GameplayTag를 사용해서<br>
-InventoryComponent안에 있는 InventoryList에서 같은 ItemType을 가지고 있는 <br>
-ItemInstance를 InventorySlot에 등록하고 초기화 함으로써 WBP_Inventory의 Slot을 갱신<br>
-장비장착 또한 장착슬롯에 EquipSlot 태그로 분류해서 해당 슬롯에 장착될 수 있도록 구현.<br>
-WidgetController를 사용해서 EquipSlot에 등록될경우, 캐릭터 또한 해당 ItemIntance를 스폰해서<br>
-캐릭터가 장착할 수 있도록 함
-
-UI를 구현하기 위한 명칭DataAsset
-각 키워드의 한글이름을 저장하기 위해 DataAsset으로 GameInstance나 GameMode에 저장<br>
-
-* DataAsset을 저장할 때 GameInstance와 GameMode로 분류하는 이유
-
-GameInstance : Server, Client 모두 존재<br>
-GameMode : Authority Instance에만 존재<br>
-
-따라서 UI같이 클라이언트에도 존재해야하는 DataAsset은 GameInstance에 보관하고<br>
-서버에만 존재해야 하는 DataAsset은 GameMode에 보관함
-
-상호작용 구현<br>
-어빌리티를 통해 상호작용을 구현<br>
-상호작용은 이후 추가할 수 있도록 AbilityInfo DataAsset에 해당하는 상호작용 정보를 저장해서,<br>
-GameplayTag로 분류해서 특정 상황에 맞는 어빌리티 실행<br>
-상호작용 정보에는 Montage, InteractionTag, StatusTag 가 있고, <br>
-해당하는 상호작용에 종료 Montage존재 여부또한 저장함<br>
-
-AbilityTask_Interaction구현<br>
-AbilityTask_Interaction으로 구현해서 Interaction이 추가되더라도, 간단하게 확장할 수 있도록 구현<br>
-사다리 타기의 경우는 추가입력이 필요하므로 상속받아서 구현<br>
-이때 기존 앞 뒤 입력인 W,S에 추가적으로 LadderStatus일경우에만 InputValue를 저장하도록<br>
-구현하고, AbilityTask의 Tick마다 InputValue를 확인하고 위로 올라가거나 아래로 내려가도록 구현<br>
+				return ItemDataObject;
+			}
+		
+		}
+	}
+	
+	return nullptr;
+}
+```
 
 
-5월
+
+
