@@ -5,6 +5,7 @@
 
 #include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 #include "AbilitySystem/SoulLikeAttributeSet.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Player/SoulLikePlayerController.h"
 #include "Player/SoulLikePlayerState.h"
@@ -18,6 +19,28 @@ void USoulLikeWidgetController::BroadcastInitialValues()
 void USoulLikeWidgetController::BindCallbacksToModels()
 {
 	
+}
+
+void USoulLikeWidgetController::BindCallbacksToUISubsystem()
+{
+	if (UGameInstance* GI = UGameplayStatics::GetGameInstance(this))
+	{
+		if(UUISubSystem* UISubSystem = GI->GetSubsystem<UUISubSystem>())
+		{
+			UISubSystem->OnReceiveUITask.AddDynamic(this, &USoulLikeWidgetController::BroadcastReceiveUITask);
+		}
+	}
+}
+
+void USoulLikeWidgetController::BroadcastCloseMenu()
+{
+	if (UGameInstance* GI = UGameplayStatics::GetGameInstance(this))
+	{
+		if(UUISubSystem* UISubSystem = GI->GetSubsystem<UUISubSystem>())
+		{
+			UISubSystem->OnCloseMainMenu.Execute();
+		}
+	}
 }
 
 void USoulLikeWidgetController::SetWidgetControllerParams(const FWidgetControllerParams& WCParams)
@@ -62,4 +85,9 @@ USoulLikeAttributeSet* USoulLikeWidgetController::GetSoulLikeAS()
 		SoulLikeAttributeSet = Cast<USoulLikeAttributeSet>(AttributeSet);
 	}
 	return SoulLikeAttributeSet;
+}
+
+void USoulLikeWidgetController::BroadcastReceiveUITask(const FGameplayTag& TaskTag)
+{
+	OnReceiveUITask.Broadcast(TaskTag);
 }

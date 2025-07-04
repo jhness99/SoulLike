@@ -5,12 +5,17 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "UI/WidgetController/SoulLikeWidgetController.h"
+#include "UI/WidgetController/UpgradeMenuWidgetController.h"
 #include "SoulLikeHUD.generated.h"
 
+class ULevelUpMenuWidgetController;
 class UInventoryWidgetController;
 class UOverlayWidgetController;
 class UMenuWidgetController;
 class UAttributeSetWidgetController;
+class USavePointMenuWidgetController;
+class UConfirmMenuWidgetController;
+class UKeybindMenuWidgetController;
 class USoulLikeUserWidget;
 
 /**
@@ -24,8 +29,14 @@ class SOULLIKE_API ASoulLikeHUD : public AHUD
 public:
 
 	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& WCParams);
+	UMenuWidgetController* GetMenuWidgetController(const FWidgetControllerParams& WCParams);
 	UAttributeSetWidgetController* GetAttributeSetWidgetController(const FWidgetControllerParams& WCParams);
 	UInventoryWidgetController* GetInventoryWidgetController(const FWidgetControllerParams& WCParams);
+	USavePointMenuWidgetController* GetSavePointMenuWidgetController(const FWidgetControllerParams& WCParams);
+	ULevelUpMenuWidgetController* GetLevelUpMenuWidgetController(const FWidgetControllerParams& WCParams);
+	UConfirmMenuWidgetController* GetConfirmMenuWidgetController(const FWidgetControllerParams& WCParams);
+	UUpgradeMenuWidgetController* GetUpgradeMenuWidgetController(const FWidgetControllerParams& WCParams);
+	UKeybindMenuWidgetController* GetKeybindMenuWidgetController(const FWidgetControllerParams& WCParams);
 
 	void InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
 	
@@ -34,12 +45,40 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	
+	void HandleControllMenuWidget(USoulLikeUserWidget* Widget);
+	void OnPressedMainMenuButton();
+	void OnOpenSavePointMenu(const FString& SavePointName);
+	
+	UPROPERTY()
+	TObjectPtr<UUISubSystem> UISubSystem;
+
+	UPROPERTY()
+	TObjectPtr<USoulLikeUserWidget> CurrentWidget;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<USoulLikeUserWidget> OverlayWidgetClass;
 
 	UPROPERTY()
 	TObjectPtr<USoulLikeUserWidget> OverlayWidget;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<USoulLikeUserWidget> MenuWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<USoulLikeUserWidget> MenuWidget;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<USoulLikeUserWidget> SavePointMenuWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<USoulLikeUserWidget> SavePointMenuWidget;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<USoulLikeUserWidget> ConfirmMenuWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<USoulLikeUserWidget> ConfirmMenuWidget;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
@@ -64,4 +103,35 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UInventoryWidgetController> InventoryWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<USavePointMenuWidgetController> SavePointMenuWidgetControllerClass;
+
+	UPROPERTY()
+	TObjectPtr<USavePointMenuWidgetController> SavePointMenuWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ULevelUpMenuWidgetController> LevelUpMenuWidgetControllerClass;
+
+	UPROPERTY()
+	TObjectPtr<ULevelUpMenuWidgetController> LevelUpMenuWidgetController;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UConfirmMenuWidgetController> ConfirmMenuWidgetControllerClass;
+
+	UPROPERTY()
+	TObjectPtr<UConfirmMenuWidgetController> ConfirmMenuWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUpgradeMenuWidgetController> UpgradeMenuWidgetControllerClass;
+
+	UPROPERTY()
+	TObjectPtr<UUpgradeMenuWidgetController> UpgradeMenuWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UKeybindMenuWidgetController> KeybindMenuWidgetControllerClass;
+
+	UPROPERTY()
+	TObjectPtr<UKeybindMenuWidgetController> KeybindMenuWidgetController;
+	
 };

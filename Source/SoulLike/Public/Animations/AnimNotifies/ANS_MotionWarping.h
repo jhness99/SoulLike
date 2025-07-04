@@ -6,6 +6,8 @@
 #include "AnimNotifyState_MotionWarping.h"
 #include "ANS_MotionWarping.generated.h"
 
+class ASoulLikeCharacterBase;
+
 UENUM(BlueprintType)
 enum class EAnimWarpingType : uint8
 {
@@ -53,5 +55,5 @@ protected:
 	FMotionWarpingParams MotionWarpingParams;
 	
 	UPROPERTY()
-	TObjectPtr<AActor> Owner = nullptr; 
+	TObjectPtr<ASoulLikeCharacterBase> Owner = nullptr; 
 };

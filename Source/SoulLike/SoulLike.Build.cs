@@ -8,13 +8,16 @@ public class SoulLike : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities" });
-
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities", "PoseSearch"});
+        PublicDefinitions.Add("PLATFORM_ARM64=1");
 		PrivateDependencyModuleNames.AddRange(new string[] { 			
 			"GameplayTasks", 
 			"GameplayTags",
 			"NetCore", 
-			"MotionWarping"
+			"MotionWarping",
+			"AIModule",
+			"MotionTrajectory"
+			
 		});
 
 		// Uncomment if you are using Slate UI

@@ -6,9 +6,12 @@
 #include "Engine/GameInstance.h"
 #include "SoulLikeGameInstance.generated.h"
 
+class UEnemyDataAsset;
+class UAttributeInfo;
 class UItemDataAsset;
 class UAbilityInfo;
 class UCharacterDataAsset;
+class UDamageTypeInfo;
 
 /**
  * 
@@ -17,15 +20,40 @@ UCLASS()
 class SOULLIKE_API USoulLikeGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
-	
+
+
 public:
 
+	virtual void Init() override;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
 	TObjectPtr<UItemDataAsset> ItemDataAsset;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilityInfo")
 	TObjectPtr<UAbilityInfo> AbilityInfoDataAsset;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "DamageTypeInfo")
+	TObjectPtr<UDamageTypeInfo> DamageTypeInfoDataAsset;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AttributeInfo")
+	TObjectPtr<UAttributeInfo> AttributeInfoDataAsset;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData")
 	TObjectPtr<UCharacterDataAsset> CharacterDataAsset;
+	
+	//ObjectPoolingSubsystem Properties
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnemyObjectPoolilngSubsystem")
+	TObjectPtr<UEnemyDataAsset> EnemyDataAssset;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnemyObjectPoolilngSubsystem")
+	int32 MaxPoolSize = 100;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="EnemyObjectPoolilngSubsystem")
+	float MaxMobGenerateDistance = 300.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FString LoadSlotName = FString();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int32 LoadSlotIndex = 0;
 };

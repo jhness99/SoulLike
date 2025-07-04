@@ -3,8 +3,15 @@
 
 #include "UI/WidgetController/OverlayWidgetController.h"
 
-#include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 #include "AbilitySystem/SoulLikeAttributeSet.h"
+
+
+
+void UOverlayWidgetController::BindToInventoryComponent(UInventoryComponent* InInventoryComponent)
+{
+	InInventoryComponent->RefreshRegistSlotAtOverlay.AddDynamic(this, &UOverlayWidgetController::RefreshRegistSlotAtOverlay);
+	InInventoryComponent->PickedUpDelegate.AddDynamic(this, &UOverlayWidgetController::OnPickedUpItem);
+}
 
 void UOverlayWidgetController::BroadcastInitialValues()
 {
@@ -43,4 +50,15 @@ void UOverlayWidgetController::BindCallbacksToModels()
 		{
 				OnMaxStaminaChanged.Broadcast(Data.NewValue);
 		});
+}
+
+void UOverlayWidgetController::RefreshRegistSlotAtOverlay(URegisterableItemInstance* ItemInstance,
+	const FGameplayTag& SlotTag, int32 Index)
+{
+	OnRegistedItemToWidget.Broadcast(ItemInstance, SlotTag, Index);
+}
+
+void UOverlayWidgetController::OnPickedUpItem(UItemData* ItemData)
+{
+	OnPickedUpItemDelegate.Broadcast(ItemData);
 }

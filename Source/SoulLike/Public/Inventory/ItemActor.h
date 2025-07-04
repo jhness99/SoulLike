@@ -26,6 +26,8 @@ public:
 	void Init(UInventoryItemInstance* InItemInstance);
 	void SetCollisionEnable(bool bEnable) const;
 
+	void DetachAndDestroy();
+
 protected:
 	/**
 	 * UObject는 Replicate가 자체적으로 안되므로 ReplicateSubobjects로 직접 해야함

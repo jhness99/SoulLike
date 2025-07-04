@@ -14,3 +14,15 @@ const UInputAction* USL_InputConfig::FindInputActionForTag(const FGameplayTag& I
 	}
 	return nullptr;
 }
+
+FGameplayTag USL_InputConfig::FindInputTagForAbilityTags(const FGameplayTagContainer& AbilityTags) const
+{
+	for(const FAbilityKeyBind& AbilityKeyBind : AbilityKeyBinds)
+	{
+		if(AbilityTags.HasTagExact(AbilityKeyBind.AbilityTag))
+		{
+			return AbilityKeyBind.InputTag;
+		}
+	}
+	return FGameplayTag();
+}

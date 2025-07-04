@@ -1,0 +1,12 @@
+diff a/.gitignore b/.gitignore	(rejected hunks)
+@@ -74,4 +74,7 @@
+ DerivedDataCache/*
+ 
+ # Asset
+-Content/Assets/*
+\ No newline at end of file
++Content/Assets/*
++Content/Dungeon_Modular_V1/*
++Content/ControlRig/*
++Content/StarterContent/*
+\ No newline at end of file

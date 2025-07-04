@@ -3,7 +3,7 @@
 
 #include "AbilitySystem/Abilities/SoulLikeComboAbility.h"
 
-#include "AbilitySystem/AsyncTask/WaitInput.h"
+#include "AbilitySystem/AsyncTask/WaitInputTask.h"
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputPress.h"
@@ -12,17 +12,20 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-#include "Inventory/InventoryItemInstance.h"
-
-#include "Interface/PlayerInterface.h"
 #include "Interface/CombatInterface.h"
 
 #include "SoulLikeGameplayTags.h"
+#include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 
+
+USoulLikeComboAbility::USoulLikeComboAbility()
+{
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+}
 
 void USoulLikeComboAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData* TriggerEventData)
+                                            const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+                                            const FGameplayEventData* TriggerEventData)
 {
 	
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
@@ -33,6 +36,13 @@ void USoulLikeComboAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
+	if(AbilityTags.HasTagExact(FSoulLikeGameplayTags::Get().Abilities_Attack) && TryBackstab())
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
 	}
 
 	/**
@@ -52,8 +62,11 @@ void USoulLikeComboAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		return;
 	}
 	
-	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, FName(""), Montage);
+	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, FName(""), Montage, 1, GetSectionName());
 	MontageTask->OnCompleted.AddDynamic(this, &USoulLikeComboAbility::K2_EndAbility);
+	MontageTask->OnBlendOut.AddDynamic(this, &USoulLikeComboAbility::K2_EndAbility);
+	MontageTask->OnCancelled.AddDynamic(this, &USoulLikeComboAbility::K2_EndAbility);
+	MontageTask->OnInterrupted.AddDynamic(this, &USoulLikeComboAbility::K2_EndAbility);
 	MontageTask->Activate();
 	
 	WaitInputEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FSoulLikeGameplayTags::Get().Event_Montage_WaitInput);
@@ -93,6 +106,11 @@ void USoulLikeComboAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
+FName USoulLikeComboAbility::GetSectionName()
+{
+	return FName(*FString::Printf(TEXT("%s_%d"), *SectionName, SectionIndex));
+}
+
 void USoulLikeComboAbility::ResetAbilityState()
 {
 	bNextCombo = false;
@@ -101,20 +119,21 @@ void USoulLikeComboAbility::ResetAbilityState()
 }
 
 void USoulLikeComboAbility::ReceiveWaitInputEvent(FGameplayEventData Payload)
-{
+{	
 	if(IsValid(WaitInputTask))
 		WaitInputTask->EndTask();
 
+	if(IsValid(InputPressTask))
+		InputPressTask->EndTask();
+
 	AbilityState = EAbilityState::EAS_WaitInput;
 	
-	WaitInputTask = UWaitInput::WaitInputTag(GetAbilitySystemComponentFromActorInfo());
+	WaitInputTask = UWaitInputTask::WaitInputTag(GetAbilitySystemComponentFromActorInfo());
 	WaitInputTask->WaitInputTagDelegate.AddDynamic(this, &USoulLikeComboAbility::ReceiveInputTag);
 
 	InputPressTask = UAbilityTask_WaitInputPress::WaitInputPress(this);
 	InputPressTask->OnPress.AddDynamic(this, &USoulLikeComboAbility::ReceiveInputPress);
 	InputPressTask->Activate();
-
-	//AddSectionIndex();
 }
 
 void USoulLikeComboAbility::ReceiveNextActionEvent(FGameplayEventData Payload)
@@ -132,9 +151,10 @@ void USoulLikeComboAbility::ReceiveNextActionEvent(FGameplayEventData Payload)
 		if(InputTag.IsValid())
 		{
 			EndAbility(GetCurrentAbilitySpec()->Handle, CurrentActorInfo, CurrentActivationInfo, true, true);
-			if(GetAvatarActorFromActorInfo()->Implements<UPlayerInterface>())
+
+			if(USoulLikeAbilitySystemComponent* SL_ASC = Cast<USoulLikeAbilitySystemComponent>(GetAbilitySystemComponentFromActorInfo()))
 			{
-				IPlayerInterface::Execute_TryActiveAbilityWithInputTag(GetAvatarActorFromActorInfo(), InputTag);
+				SL_ASC->TryActivateAbilityFromInputTag(InputTag);
 			}
 		}
 	}
@@ -164,8 +184,27 @@ void USoulLikeComboAbility::SetupMontage()
 {
 	if(GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
 	{
-		Montage = ICombatInterface::Execute_GetCurrentWeaponMontage(GetAvatarActorFromActorInfo());
+		Montage = ICombatInterface::Execute_GetCurrentWeaponAttackMontage(GetAvatarActorFromActorInfo());
 	}
+}
+
+void USoulLikeComboAbility::ClearInputTask() const
+{
+	if(IsValid(WaitInputTask))
+		WaitInputTask->EndTask();
+
+	if(IsValid(InputPressTask))
+		InputPressTask->EndTask();
+}
+
+bool USoulLikeComboAbility::TryBackstab() const
+{
+	if(GetAvatarActorFromActorInfo() && GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
+	{
+		return ICombatInterface::Execute_TryBackstab(GetAvatarActorFromActorInfo());
+	}
+	
+	return false;
 }
 
 void USoulLikeComboAbility::AddSectionIndex()
@@ -175,9 +214,21 @@ void USoulLikeComboAbility::AddSectionIndex()
 
 void USoulLikeComboAbility::MontageJumpToNextCombo()
 {
+	if(!HasAuthority(&CurrentActivationInfo)) return;
+	
+	if (!CommitAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo()))
+	{
+		EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, true);
+		return;
+	}
+
+	ClearInputTask();
+	
 	AddSectionIndex();
 	
-	FName Section = FName(*FString::Printf(TEXT("%s_%d"), *SectionName, SectionIndex));
+	//FName Section = FName(*FString::Printf(TEXT("%s_%d"), *SectionName, SectionIndex));
+	FName Section = GetSectionName();
+	
 	MontageJumpToSection(Section);
 	ResetAbilityState();
 }

@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
+#include "Interface/InteractionInterface.h"
+#include "SoulLikeItemTypes.h"
 #include "AbilityInfo.generated.h"
 
 class UGameplayAbility;
@@ -15,9 +17,12 @@ struct FSoulLikeAbilityInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName AbilityName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FGameplayTag AbilityTag = FGameplayTag();
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FGameplayTag InputTag = FGameplayTag();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -30,6 +35,15 @@ struct FSoulLikeAbilityInfo
 	TSubclassOf<UGameplayAbility> Ability;
 };
 
+USTRUCT(BlueprintType)
+struct FEnemyAbilityDamageInfo : public FTableRowBase
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FWeaponDamageInfo> DamageInfos;
+};
+
 /**
  * 
  */
@@ -39,9 +53,19 @@ class SOULLIKE_API UAbilityInfo : public UDataAsset
 	GENERATED_BODY()
 
 public:
+
+	FSoulLikeAbilityInfo FindAbilityInfoForTag(const FGameplayTag& AbilityTag, bool bLogNotFound = false) const;
+	FInteractionTaskInfo FindInteractionTaskInfoForTag(const FGameplayTag& InteractionTag, bool bLogNotFound = false) const;
+
+	bool ChangeAbilityInputTag(const FGameplayTag& AbilityTag, const FGameplayTag& InputTag);
+	FGameplayTag GetAbilityInputTag(const FGameplayTag& Ability);
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilityInformation")
 	TArray<FSoulLikeAbilityInfo> AbilityInformation;
 
-	FSoulLikeAbilityInfo FindAbilityInfoForTag(const FGameplayTag& AbilityTag, bool bLogNotFound = false) const;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnemyAbilityInfo")
+	TObjectPtr<UDataTable> EnemyAbilityDamageInfo;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "InteractionAbilityInfomation")
+	TArray<FInteractionTaskInfo> InteractionTaskInfomation;
 };

@@ -2,11 +2,16 @@
 
 
 #include "AbilitySystem/SoulLikeAttributeSet.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "SoulLikeGameplayTags.h"
 
 #include "GameFramework/Character.h"
+#include "Character/SoulLikeCharacterBase.h"
 
 #include "GameplayEffectExtension.h"
+
+#include "Perception/AISense_Damage.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -14,7 +19,7 @@ TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> USoulLikeAttributeSet::
 
 USoulLikeAttributeSet::USoulLikeAttributeSet()
 {
-	FSoulLikeGameplayTags GameplayTags = FSoulLikeGameplayTags::Get();
+	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
 
 	/**
 	 * Primary Attributes
@@ -26,22 +31,32 @@ USoulLikeAttributeSet::USoulLikeAttributeSet()
 	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Dexterity, GetDexterityAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence, GetIntelligenceAttribute);
 	
-	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Health, GetHealthAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Vital_Health, GetHealthAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxHealth, GetMaxHealthAttribute);
-	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Stamina, GetStaminaAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Vital_Stamina, GetStaminaAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxStamina, GetMaxStaminaAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_StaminaRegeneration, GetStaminaRegenerationAttribute);
 
 	/**
 	 * Boost Attribute
 	 */
 	TagsToAttributes.Add(GameplayTags.Attributes_Boost_HealthBoost, GetHealthBoostAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Boost_StaminaBoost, GetStaminaBoostAttribute);
+
+	TagsToAttributes.Add(GameplayTags.Attributes_Boost_DamageBoost, GetDamageBoostAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Boost_PhysicalDamageBoost, GetPhysicalDamageBoostAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Boost_PhysicalDamageBoost, GetFireDamageBoostAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Boost_PhysicalDamageBoost, GetMagicDamageBoostAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Boost_PhysicalDamageBoost, GetLightningDamageBoostAttribute);
 }
 
 void USoulLikeAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	FEffectProperties Props;
+	SetEffectProperties(Data, Props);
+	
 	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
@@ -50,6 +65,10 @@ void USoulLikeAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffe
 	if(Data.EvaluatedData.Attribute == GetStaminaAttribute())
 	{
 		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
+	}
+	if(Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
+	{
+		HandleIncomingDamage(Props);
 	}
 }
 
@@ -121,10 +140,60 @@ void USoulLikeAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldStami
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, Stamina, OldStamina);
 }
-    	
+
+void USoulLikeAttributeSet::OnRep_DamageBoost(const FGameplayAttributeData& OldDamageBoost) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, DamageBoost, OldDamageBoost);
+}
+
+void USoulLikeAttributeSet::OnRep_PhysicalDamageBoost(const FGameplayAttributeData& OldPhysicalDamageBoost) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, PhysicalDamageBoost, OldPhysicalDamageBoost);
+}
+
+void USoulLikeAttributeSet::OnRep_FireDamageBoost(const FGameplayAttributeData& OldFireDamageBoost) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, FireDamageBoost, OldFireDamageBoost);
+}
+
+void USoulLikeAttributeSet::OnRep_MagicDamageBoost(const FGameplayAttributeData& OldMagicDamageBoost) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, MagicDamageBoost, OldMagicDamageBoost);
+}
+
+void USoulLikeAttributeSet::OnRep_LightningDamageBoost(const FGameplayAttributeData& OldLightningDamageBoost) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, LightningDamageBoost, OldLightningDamageBoost);
+}
+
 void USoulLikeAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, MaxStamina, OldMaxStamina);
+}
+
+void USoulLikeAttributeSet::OnRep_StaminaRegeneration(const FGameplayAttributeData& OldStaminaRegeneration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, StaminaRegeneration, OldStaminaRegeneration);
+}
+
+void USoulLikeAttributeSet::OnRep_FireResistance(const FGameplayAttributeData& OldFireResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, FireResistance, OldFireResistance);
+}
+
+void USoulLikeAttributeSet::OnRep_LightningResistance(const FGameplayAttributeData& OldLightningResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, LightningResistance, OldLightningResistance);
+}
+
+void USoulLikeAttributeSet::OnRep_MagicResistance(const FGameplayAttributeData& OldMagicResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, MagicResistance, OldMagicResistance);
+}
+
+void USoulLikeAttributeSet::OnRep_PhysicalResistance(const FGameplayAttributeData& OldFireResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USoulLikeAttributeSet, FireResistance, OldFireResistance);
 }
 
 void USoulLikeAttributeSet::OnRep_HealthBoost(const FGameplayAttributeData& OldHealthBoost) const
@@ -178,7 +247,7 @@ void USoulLikeAttributeSet::SetEffectProperties(const FGameplayEffectModCallback
 		Props.SourceController = Props.SourceASC->AbilityActorInfo->PlayerController.Get();
 		if(Props.SourceController == nullptr && Props.SourceAvatarActor != nullptr)
 		{
-			if(const APawn* Pawn = Cast<APawn>(Props.SourceController->GetPawn()))
+			if(const APawn* Pawn = Cast<APawn>(Props.SourceAvatarActor))
 			{
 				Props.SourceController = Pawn->GetController();
 			}
@@ -193,7 +262,66 @@ void USoulLikeAttributeSet::SetEffectProperties(const FGameplayEffectModCallback
 		Props.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
 		Props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 		Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
+
+		Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
 	}
+}
+
+void USoulLikeAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
+{
+	const float LocalIncomingDamage = GetIncomingDamage();
+	SetIncomingDamage(0.f);
+	
+	if(GetOwningAbilitySystemComponent() && GetOwningAbilitySystemComponent()->HasMatchingGameplayTag(FSoulLikeGameplayTags::Get().Status_Invincibility))
+	{
+		return;
+	}
+	
+	if(LocalIncomingDamage > 0.f)
+	{
+		const float NewHealth = GetHealth() - LocalIncomingDamage;
+		SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
+
+		const bool bFatel = NewHealth <= 0.f;
+		if(bFatel)
+		{
+			if(ASoulLikeCharacterBase* SL_Character = Cast<ASoulLikeCharacterBase>(Props.TargetCharacter))
+			{
+				SL_Character->DeathToCharacter(Props.SourceCharacter);	
+			}
+			bTopOffHealth = true;
+			bTopOffStamina = true;
+		}
+		else
+		{
+			FGameplayEventData Payload;
+			Payload.Instigator = Props.SourceCharacter;
+			Payload.EventTag = FSoulLikeGameplayTags::Get().Abilities_Stagger_HitReact;
+			if(Props.TargetASC && Props.TargetASC->HasMatchingGameplayTag(FSoulLikeGameplayTags::Get().Status_HitReact))
+			{
+				Payload.EventTag = FSoulLikeGameplayTags::Get().Abilities_Stagger_HitReact_Trigger;
+			}
+			//UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Props.TargetCharacter, Payload.EventTag, Payload);
+			//Multicast_SendHitReactTriggerEvent(Props.TargetCharacter, Payload);
+			if(ASoulLikeCharacterBase* SL_Character = Cast<ASoulLikeCharacterBase>(Props.TargetCharacter))
+			{
+				SL_Character->Multicast_SendHitReactTriggerEvent(Payload);
+			}
+
+			UAISense_Damage::ReportDamageEvent(
+				this,
+				Props.TargetCharacter,
+				Props.SourceCharacter,
+				LocalIncomingDamage,
+				Props.TargetCharacter->GetActorLocation(),
+				Props.TargetCharacter->GetActorLocation());
+			}
+	}
+}
+
+void USoulLikeAttributeSet::Multicast_SendHitReactTriggerEvent_Implementation(AActor* Target, const FGameplayEventData Payload)
+{
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Target, Payload.EventTag, Payload);
 }
 
 void USoulLikeAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty> &OutLifetimeProps) const
@@ -210,7 +338,13 @@ void USoulLikeAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimePro
 	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, StaminaRegeneration, COND_None, REPNOTIFY_Always);
 	
 	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, HealthBoost, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, StaminaBoost, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, DamageBoost, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, PhysicalDamageBoost, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, FireDamageBoost, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, MagicDamageBoost, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(USoulLikeAttributeSet, LightningDamageBoost, COND_None, REPNOTIFY_Always);
 }

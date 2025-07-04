@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
+#include "SoulLikeAbilityTypes.h"
 #include "ANS_MeleeTrace.generated.h"
 
 /**
@@ -21,6 +22,14 @@ public:
 	virtual void NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBase * Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent * MeshComp, UAnimSequenceBase * Animation, const FAnimNotifyEventReference& EventReference) override;
 
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EMeleeTraceType MeleeTraceType = EMeleeTraceType::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName AbilityIndex;
+	
 private:
 
 	void SetWeaponCollisionEnable(USkeletalMeshComponent* MeshComp, bool bEnable);

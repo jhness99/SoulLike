@@ -19,5 +19,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	FGameplayTag StartupInputTag;
-	
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bIsToggleAbility = false;
 };

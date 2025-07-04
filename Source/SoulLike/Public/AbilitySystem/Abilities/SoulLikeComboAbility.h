@@ -9,7 +9,7 @@
 
 class UAbilityTask_WaitGameplayEvent;
 class UAbilityTask_PlayMontageAndWait;
-class UWaitInput;
+class UWaitInputTask;
 
 UENUM(BlueprintType)
 enum class EAbilityState : uint8
@@ -39,11 +39,17 @@ class SOULLIKE_API USoulLikeComboAbility : public USoulLikeDamageGameplayAbility
 {
 	GENERATED_BODY()
 
+public:
+
+	USoulLikeComboAbility();
+	
 protected:
 	
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
+	
+	virtual FName GetSectionName();
+	
 	/**
 	 * 현재 어빌리티의 상태를 초기화
 	 */
@@ -78,6 +84,8 @@ protected:
 	 */
 	virtual void SetupMontage();
 
+	void ClearInputTask() const;
+
 	/***
 	 * 주어진 SectionName과 SectionIndex로 해당 Section으로 Montage를 이동시키는 함수
 	 */
@@ -105,7 +113,8 @@ protected:
 	bool bNextCombo = false;
 	
 private:
-	
+
+	bool TryBackstab() const;
 	void AddSectionIndex();
 
 	/***
@@ -126,6 +135,6 @@ private:
 	TObjectPtr<UAbilityTask_WaitGameplayEvent> NextActionEventTask;
 
 	UPROPERTY()
-	TObjectPtr<UWaitInput> WaitInputTask;
+	TObjectPtr<UWaitInputTask> WaitInputTask;
 	
 };

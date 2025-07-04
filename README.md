@@ -62,6 +62,47 @@ Pawn의 LastInputVector를 사용했는데<br>
 서버에서도 남아있는 CurrentAcceleration 을 사용해 WarpingTarget 설정<br>
 ==> 서버에도 있는 변수이므로 RPC사용할 필요 없음
 
+4월 
+
+WidgetController 구현<br>
+
+MVC패턴을 구현하기 위해 WidgetController 구현<br>
+WidgetController는 Widget과 AttributeSet같은 내부 로직사이에 델리게이트 등을 통해 상호작용한다.<br>
+AbilitySystem이 Model, Widget이 View, WidgetController가 Controller 역활을 한다.<br>
+WidgetController를 통해 Attribute의 변화를 Widget에 신호를 준다던가, <br>
+InventoryComponent와 연동해서 인벤토리를 구현
+
+InventoryWidget<br>
+WBP_Inventory를 중복해서 사용하기 위해 GameplayTag를 사용해서<br>
+InventoryComponent안에 있는 InventoryList에서 같은 ItemType을 가지고 있는 <br>
+ItemInstance를 InventorySlot에 등록하고 초기화 함으로써 WBP_Inventory의 Slot을 갱신<br>
+장비장착 또한 장착슬롯에 EquipSlot 태그로 분류해서 해당 슬롯에 장착될 수 있도록 구현.<br>
+WidgetController를 사용해서 EquipSlot에 등록될경우, 캐릭터 또한 해당 ItemIntance를 스폰해서<br>
+캐릭터가 장착할 수 있도록 함
+
+UI를 구현하기 위한 명칭DataAsset
+각 키워드의 한글이름을 저장하기 위해 DataAsset으로 GameInstance나 GameMode에 저장<br>
+
+* DataAsset을 저장할 때 GameInstance와 GameMode로 분류하는 이유
+
+GameInstance : Server, Client 모두 존재<br>
+GameMode : Authority Instance에만 존재<br>
+
+따라서 UI같이 클라이언트에도 존재해야하는 DataAsset은 GameInstance에 보관하고<br>
+서버에만 존재해야 하는 DataAsset은 GameMode에 보관함
+
+상호작용 구현<br>
+어빌리티를 통해 상호작용을 구현<br>
+상호작용은 이후 추가할 수 있도록 AbilityInfo DataAsset에 해당하는 상호작용 정보를 저장해서,<br>
+GameplayTag로 분류해서 특정 상황에 맞는 어빌리티 실행<br>
+상호작용 정보에는 Montage, InteractionTag, StatusTag 가 있고, <br>
+해당하는 상호작용에 종료 Montage존재 여부또한 저장함<br>
+
+AbilityTask_Interaction구현<br>
+AbilityTask_Interaction으로 구현해서 Interaction이 추가되더라도, 간단하게 확장할 수 있도록 구현<br>
+사다리 타기의 경우는 추가입력이 필요하므로 상속받아서 구현<br>
+이때 기존 앞 뒤 입력인 W,S에 추가적으로 LadderStatus일경우에만 InputValue를 저장하도록<br>
+구현하고, AbilityTask의 Tick마다 InputValue를 확인하고 위로 올라가거나 아래로 내려가도록 구현<br>
 
 
-
+5월

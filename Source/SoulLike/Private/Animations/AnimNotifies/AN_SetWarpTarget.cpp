@@ -3,6 +3,7 @@
 
 #include "Animations/AnimNotifies/AN_SetWarpTarget.h"
 
+#include "Character/SoulLikeCharacterBase.h"
 #include "Interface/CombatInterface.h"
 
 void UAN_SetWarpTarget::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -10,9 +11,9 @@ void UAN_SetWarpTarget::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBa
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	AActor* Owner = MeshComp->GetOwner();
-	if(Owner != nullptr && Owner->Implements<UCombatInterface>())
+	ASoulLikeCharacterBase* Owner = Cast<ASoulLikeCharacterBase>(MeshComp->GetOwner());
+	if(Owner)
 	{
-		ICombatInterface::Execute_SetWarpingLocationAndRotation(Owner);
+		Owner->SetWarpingLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
 	}
 }

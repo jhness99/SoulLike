@@ -21,6 +21,18 @@ struct FSL_InputAction
 	FGameplayTag InputTag = FGameplayTag();
 };
 
+USTRUCT(BlueprintType)
+struct FAbilityKeyBind
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AbilityTag = FGameplayTag();
+ 
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag InputTag = FGameplayTag();
+};
+
 /**
  * InputAction과 GameplayTag를 매칭해서 저장하는 DataAsset
  */
@@ -32,7 +44,11 @@ class SOULLIKE_API USL_InputConfig : public UDataAsset
 public:
 
 	const UInputAction* FindInputActionForTag(const FGameplayTag& InputTag) const;
+	FGameplayTag FindInputTagForAbilityTags(const FGameplayTagContainer& AbilityTags) const;
 	
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FSL_InputAction> InputActions;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FAbilityKeyBind> AbilityKeyBinds;
 };

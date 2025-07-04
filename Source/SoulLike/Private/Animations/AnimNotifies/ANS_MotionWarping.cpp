@@ -3,6 +3,9 @@
 
 #include "Animations/AnimNotifies/ANS_MotionWarping.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "Character/SoulLikeCharacterBase.h"
 #include "Interface/CombatInterface.h"
 
 UANS_MotionWarping::UANS_MotionWarping(const FObjectInitializer& ObjectInitializer)
@@ -16,7 +19,7 @@ void UANS_MotionWarping::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequ
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
 
-	Owner = MeshComp->GetOwner();
+	Owner = Cast<ASoulLikeCharacterBase>(MeshComp->GetOwner());
 	
 	if(MotionWarpingParams.bUpdateTick) return;
 	
@@ -41,19 +44,25 @@ void UANS_MotionWarping::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequen
 
 void UANS_MotionWarping::SetMotionWarpingTarget() const
 {
-	if(Owner && Owner->Implements<UCombatInterface>())
+	if(Owner)
 	{
 		switch(MotionWarpingParams.WarpingType)
 		{
 		case EAnimWarpingType::EWT_LocationAndRotation:
-			ICombatInterface::Execute_SetWarpingLocationAndRotation(Owner);
-			break;
+			{
+				Owner->SetWarpingLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
+				break;
+			}
 		case EAnimWarpingType::EWT_Location:
-			ICombatInterface::Execute_SetWarpingLocation(Owner);
-			break;
+			{
+				Owner->SetWarpingLocation();
+				break;
+			}
 		case EAnimWarpingType::EWT_Rotation:
-			ICombatInterface::Execute_SetWarpingRotation(Owner);
-			break;
+			{
+				Owner->SetWarpingRotation(FRotator::ZeroRotator);
+				break;
+			}
 		default:
 			break;
 		}

@@ -2,16 +2,12 @@
 
 
 #include "Inventory/InventoryItemInstance.h"
-#include "Inventory/ItemActor.h"
 #include "Inventory/Data/ItemDataAsset.h"
 
 #include "Game/SoulLikeGameInstance.h"
 
-#include "GameFramework/PlayerState.h"
-
-#include "Interface/CombatInterface.h"
-
 #include "SoulLikeItemTypes.h"
+#include "SoulLikeGameplayTags.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -23,75 +19,73 @@ UInventoryItemInstance::UInventoryItemInstance()
 void UInventoryItemInstance::Init(const FInventoryData& Data)
 {
 	InventoryData = Data;
+	SetupItemData(GetOuter());
 }
 
-void UInventoryItemInstance::OnEquip(AActor* Owner)
+int32 UInventoryItemInstance::GetItemType() const
 {
-	if(const APlayerState* PS = Cast<APlayerState>(Owner)) Owner = PS->GetPawn();
-	if(Owner == nullptr) return;
-	if(Owner->Implements<UCombatInterface>())
+	if(GetWeaponData())
 	{
-		FTransform Transform;
-		Transform.SetLocation(Owner->GetActorLocation());
-
-		if(UWorld* World = Owner->GetWorld())
-		{
-			ItemActor = World->SpawnActorDeferred<AItemActor>(AItemActor::StaticClass(), Transform, Owner);
-			SetupItemData();
-			ItemActor->Init(this);
-			ItemActor->FinishSpawning(Transform);
-
-			ICombatInterface::Execute_EquipOnCharacter(Owner, ItemActor);
-		}
+		const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+		return *GameplayTags.WeaponTypeIndex.Find(GetWeaponData()->ItemType);
 	}
+	return 0;
 }
 
-void UInventoryItemInstance::OnUnEquip()
+int32 UInventoryItemInstance::GetItemId() const
 {
-	if(ItemActor)
+	if(GetItemData())
 	{
-		ItemActor->Destroy();
-		ItemActor = nullptr;
+		return FCString::Atoi(*GetItemData()->ItemID.ToString());
 	}
-	if(ItemData)
-	{
-		ItemData->MarkAsGarbage();
-		ItemData = nullptr;
-	}
+	return 0;
 }
 
-UAnimMontage* UInventoryItemInstance::GetMontage()
+void UInventoryItemInstance::SetItemNum(int32 InCount)
 {
-	if(UWeaponData* WeaponData = Cast<UWeaponData>(ItemData))
-	{
-		return WeaponData->AttackMontage;
-	}
-	
-	return nullptr;
+	InventoryData.Count = InCount;
 }
 
-void UInventoryItemInstance::SetCollisionEnable(bool bEnable) const
+int32 UInventoryItemInstance::GetItemNum() const
 {
-	if(ItemActor)
-	{
-		ItemActor->SetCollisionEnable(bEnable);
-	}
+	return InventoryData.Count;
 }
 
-void UInventoryItemInstance::SetupItemData()
+void UInventoryItemInstance::SetUpgradeLevel(int32 InUpgradeLevel)
 {
-	if(GetWorld())
+	InventoryData.UpgradeLevel = InUpgradeLevel;
+}
+
+int32 UInventoryItemInstance::GetUpgradeLevel() const
+{
+	return InventoryData.UpgradeLevel;
+}
+
+void UInventoryItemInstance::SetInventoryData(FInventoryData InInventoryData)
+{
+	InventoryData = InInventoryData;
+}
+
+FInventoryData UInventoryItemInstance::GetInventoryData() const
+{
+	return InventoryData;
+}
+
+
+void UInventoryItemInstance::SetupItemData(UObject* Outer)
+{
+	if(GetWorld() && ItemData == nullptr)
 	{
 		if(USoulLikeGameInstance* GameInstance = Cast<USoulLikeGameInstance>(GetWorld()->GetGameInstance()))
 		{
-			ItemData = GameInstance->ItemDataAsset->FindItemDataFromIndexAndItemType(InventoryData.ItemType, InventoryData.ItemID);
+			ItemData = GameInstance->ItemDataAsset->FindItemDataFromIndexAndItemType(Outer, InventoryData.ItemType, InventoryData.ItemID);
 		}
 	}
 }
 
 void UInventoryItemInstance::OnRep_InventoryData(FInventoryData OldInventoryData)
 {
-	SetupItemData();
+	SetupItemData(GetOuter());
 }
 
 
@@ -99,6 +93,5 @@ void UInventoryItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
-	DOREPLIFETIME(UInventoryItemInstance, ItemActor);
 	DOREPLIFETIME(UInventoryItemInstance, InventoryData);
 }

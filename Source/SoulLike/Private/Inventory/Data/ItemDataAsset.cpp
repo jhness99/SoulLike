@@ -3,31 +3,66 @@
 
 #include "Inventory/Data/ItemDataAsset.h"
 
-UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(EItemType ItemType, FName ItemID) const
+#include "SoulLikeGameplayTags.h"
+
+UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID) const
 {
-	switch(ItemType)
+	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+	
+	for(const FItemDataTable& ItemDataTableStruct : ItemDataTables)
 	{
-	case EItemType::EIT_Weapon:
+		if(ItemType.MatchesTagExact(ItemDataTableStruct.ItemTypeTag))
 		{
-			FSL_WeaponData* WeaponData = WeaponDataTable->FindRow<FSL_WeaponData>(ItemID, FString("Not Found"));
-			if(WeaponData == nullptr) return nullptr;
+			FSL_ItemData* ItemData = ItemDataTableStruct.DataTable->FindRow<FSL_ItemData>(ItemID, FString("Not Found"));
+			if(ItemData == nullptr) return nullptr;
+
+			if(Outer)
+			{
+				UItemData* ItemDataObject = NewObject<UItemData>(Outer, ItemDataTableStruct.ItemDataClass.Get());
+				ItemDataObject->Init(ItemData);
+
+				return ItemDataObject;
+			}
 		
-			UWeaponData* WeaponDataClass = NewObject<UWeaponData>();
-			WeaponDataClass->Init(*WeaponData);
-		
-			return WeaponDataClass;
-		}
-		
-	case EItemType::EIT_Registerable:
-		{
-			FSL_RegisterableItemData* RegisterableItemData = RegisterableItemDataTable->FindRow<FSL_RegisterableItemData>(ItemID, FString("Not Found"));
-			if(RegisterableItemData == nullptr) return nullptr;
-		
-			URegisterableItemData* RegisterableItemDataClass = NewObject<URegisterableItemData>();
-			RegisterableItemDataClass->Init(*RegisterableItemData);
-		
-			return RegisterableItemDataClass;
 		}
 	}
+	
 	return nullptr;
+}
+
+FString UItemDataAsset::FindTagNameFromGameplayTag(const FGameplayTag& Tag) const
+{
+	if(const FString* String = StringToEquipSlot.Find(Tag))
+	{
+		return *String;
+	}
+	return FString();
+}
+
+FString UItemDataAsset::FindItemTypeFromGameplayTag(const FGameplayTag& Tag) const
+{
+	if(const FString* String = StringToItemType.Find(Tag))
+	{
+		return *String;
+	}
+	return FString();
+}
+
+
+FString UItemDataAsset::FindWeaponTypeFromGameplayTag(const FGameplayTag& Tag) const
+{
+	if(const FString* String = StringToWeaponType.Find(Tag))
+	{
+		return *String;
+	}
+	return FString();
+}
+
+FString UItemDataAsset::FindToolTypeFromGameplayTag(const FGameplayTag& Tag) const
+{
+	if(const FString* String = StringToToolType.Find(Tag))
+	{
+		return *String;
+	}
+	return FString();
 }

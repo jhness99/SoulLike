@@ -1,0 +1,143 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "AbilitySystem/Abilities/TargetLockGameplayAbility.h"
+#include "AbilitySystem/Task/AbilityTask_TargetLock.h"
+#include "AbilitySystem/SoulLikeAbilitySystemLibrary.h"
+
+#include "Interface/CombatInterface.h"
+
+#include "SoulLikeFunctionLibrary.h"
+#include "SoulLikeGameplayTags.h"
+
+#include "SoulLike/SoulLike.h"
+
+
+UTargetLockGameplayAbility::UTargetLockGameplayAbility()
+{
+	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+
+	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+	
+	StartupInputTag = GameplayTags.InputTag_Q;
+	
+	AbilityTags.AddTag(GameplayTags.Abilities_TargetLock);
+	ActivationOwnedTags.AddTag(GameplayTags.Status_TargetLock);
+
+	bIsToggleAbility = true;
+}
+
+bool UTargetLockGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags,
+	const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+{
+	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags);
+}
+
+void UTargetLockGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+                                                 const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+                                                 const FGameplayEventData* TriggerEventData)
+{
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	if(!IsLocallyControlled()) return;
+	
+	const bool bDebug = static_cast<bool>(CVarShowTargetLockTrace.GetValueOnAnyThread());
+	
+	FHitResult AimHitResult;
+	FTraceProperties AnimTraceProperties(TraceLength, SingleTraceCollisionChannel, SingleTraceSphereRadius, DebugLifeTime);
+	FTraceProperties MultiTraceProperties(TraceLength, MultiTraceCollisionChannel, MultiTraceSphereRadius, DebugLifeTime);
+	
+	if(USoulLikeFunctionLibrary::SingleTraceFromCameraLocation(GetAvatarActorFromActorInfo(), AimHitResult, AnimTraceProperties, bDebug))
+	{
+		bIsTargetLock = true;
+		if(AimHitResult.GetActor())
+		{
+			TargetActor = AimHitResult.GetActor();
+		}
+	}
+	else
+	{
+		TArray<FHitResult> TargetHitResults;
+		
+		if(USoulLikeFunctionLibrary::MultiTraceFromCameraLocation(GetAvatarActorFromActorInfo(), TargetHitResults, MultiTraceProperties, bDebug))
+		{
+			float NearestDistance = 5000.f;
+
+			for(const FHitResult& TargetHitResult : TargetHitResults)
+			{
+				AActor* CurrentTargetActor = TargetHitResult.GetActor();
+				if(CurrentTargetActor == nullptr) return;
+
+				float DistanceToTarget = FVector::Distance(GetAvatarActorFromActorInfo()->GetActorLocation(), CurrentTargetActor->GetActorLocation());
+
+				if(DistanceToTarget < NearestDistance)
+				{
+					NearestDistance = DistanceToTarget;
+					TargetActor = CurrentTargetActor;
+					bIsTargetLock = true;
+				}
+			}
+		}
+	}
+
+	if(bIsTargetLock)
+	{
+		if(TargetActor.IsValid())
+			UE_LOG(LogTemp, Warning, TEXT("TargetLock Actor is %s"), *TargetActor->GetName())
+
+		if(TargetActor.Get() && TargetActor->Implements<UCombatInterface>())
+		{
+			ICombatInterface::Execute_ToggleTargetMark(TargetActor.Get());
+		}
+
+		if(GetAvatarActorFromActorInfo() &&  GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
+		{
+			ICombatInterface::Execute_SetStrafeMode(GetAvatarActorFromActorInfo(), true);
+		}
+		
+		TargetLockTask = UAbilityTask_TargetLock::CreateTargetLockTask(this, TargetActor.Get(), FTargetLockTaskProperties(MultiTraceProperties, LockRetentionTimeInvisible, MaxDistance));
+		TargetLockTask->ChangedTargetActorDelegate.AddDynamic(this, &UTargetLockGameplayAbility::OnChangedTargetActor);
+		TargetLockTask->ReadyForActivation();
+	}
+	else
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+	}
+}
+
+void UTargetLockGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	if(IsValid(TargetLockTask))
+	{
+		TargetLockTask->EndTask();
+	}
+
+	if(TargetActor.IsValid() && TargetActor->Implements<UCombatInterface>())
+	{
+		ICombatInterface::Execute_ToggleTargetMark(TargetActor.Get());
+		TargetActor = nullptr;
+	}
+
+	if(GetAvatarActorFromActorInfo() &&  GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
+	{
+		ICombatInterface::Execute_SetStrafeMode(GetAvatarActorFromActorInfo(), false);
+	}
+	
+	bIsTargetLock = false;
+	
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UTargetLockGameplayAbility::OnChangedTargetActor(AActor* NewTargetActor)
+{
+	if(NewTargetActor == nullptr)
+	{
+		EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, false);
+	}
+	else
+	{
+		TargetActor = NewTargetActor;
+	}
+}

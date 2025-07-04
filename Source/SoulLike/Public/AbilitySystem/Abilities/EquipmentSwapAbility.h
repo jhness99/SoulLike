@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/SoulLikeGameplayAbility.h"
-#include "SoulLikeItemTypes.h"
 #include "EquipmentSwapAbility.generated.h"
 
 class UAbilityTask_WaitGameplayEvent;
 class UAbilityTask_PlayMontageAndWait;
+class UAbilityTask_WaitInputRelease;
 /**
  * 
  */
@@ -17,6 +17,11 @@ class SOULLIKE_API UEquipmentSwapAbility : public USoulLikeGameplayAbility
 {
 	GENERATED_BODY()
 
+public:
+
+	UPROPERTY(EditDefaultsOnly)
+	bool Mirror = false;
+
 protected:
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
@@ -24,12 +29,15 @@ protected:
 
 	UFUNCTION()
 	void SwapWeapon(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void OnReleased(float TimeHeld);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UAnimMontage* Montage = nullptr;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EWeaponSlot WeaponSlot = EWeaponSlot::EWS_Right;
+	FGameplayTag SlotTag;
 	
 private:
 	
@@ -38,5 +46,8 @@ private:
 	
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_WaitGameplayEvent> WeaponSwapTask;
+
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_WaitInputRelease> InputReleaseTask;
 	
 };

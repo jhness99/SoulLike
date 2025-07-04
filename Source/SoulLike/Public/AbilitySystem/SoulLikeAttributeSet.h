@@ -106,7 +106,7 @@ public:
 	 * 따라서 특정 함수포인터를 TMap의 Value로써 지정해서 저장한다
 	 */
 	static TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
-
+	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Vigor, Category = "Primary Attributes")
 	FGameplayAttributeData Vigor;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Vigor)
@@ -131,7 +131,42 @@ public:
 	FGameplayAttributeData Intelligence;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Intelligence)
 	
+	/**
+	 * Secondary Attributes
+	 */
 	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "Vital Attributes")
+	FGameplayAttributeData MaxHealth;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, MaxHealth)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxStamina, Category = "Vital Attributes")
+	FGameplayAttributeData MaxStamina;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, MaxStamina)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_StaminaRegeneration, Category = "Vital Attributes")
+	FGameplayAttributeData StaminaRegeneration;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, StaminaRegeneration)
+
+	/**
+	 * Resistance Attributes
+	 */
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_FireResistance, Category = "Resistance Attributes")
+	FGameplayAttributeData FireResistance;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, FireResistance)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_LightningResistance, Category = "Resistance Attributes")
+	FGameplayAttributeData LightningResistance;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, LightningResistance)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MagicResistance, Category = "Resistance Attributes")
+	FGameplayAttributeData MagicResistance;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, MagicResistance)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_PhysicalResistance, Category = "Resistance Attributes")
+	FGameplayAttributeData PhysicalResistance;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, PhysicalResistance)
+
 	/**
 	 * Vital Attribute
 	 */
@@ -139,19 +174,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Health, Category = "Vital Attributes")
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Health)
-
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "Vital Attributes")
-	FGameplayAttributeData MaxHealth;
-	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, MaxHealth)
-
+	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Stamina, Category = "Vital Attributes")
 	FGameplayAttributeData Stamina;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, Stamina)
-
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxStamina, Category = "Vital Attributes")
-	FGameplayAttributeData MaxStamina;
-	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, MaxStamina)
-
+	
 	/**
 	 * Boost Attribute
 	 */
@@ -163,6 +190,34 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_StaminaBoost, Category = "Boost Attributes")
 	FGameplayAttributeData StaminaBoost;
 	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, StaminaBoost)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_DamageBoost, Category = "Boost Attributes")
+	FGameplayAttributeData DamageBoost;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, DamageBoost)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_PhysicalDamageBoost, Category = "Boost Attributes")
+	FGameplayAttributeData PhysicalDamageBoost;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, PhysicalDamageBoost)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_FireDamageBoost, Category = "Boost Attributes")
+	FGameplayAttributeData FireDamageBoost;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, FireDamageBoost)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MagicDamageBoost, Category = "Boost Attributes")
+	FGameplayAttributeData MagicDamageBoost;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, MagicDamageBoost)
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_LightningDamageBoost, Category = "Boost Attributes")
+	FGameplayAttributeData LightningDamageBoost;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, LightningDamageBoost)
+
+	/**
+	 * Meta Attribute
+	 */
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Meta Attribute")
+	FGameplayAttributeData IncomingDamage;
+	ATTRIBUTE_ACCESSORS(USoulLikeAttributeSet, IncomingDamage)
 
 	UFUNCTION()
 	void OnRep_Vigor(const FGameplayAttributeData& OldVigor) const;
@@ -181,18 +236,27 @@ public:
     	
 	UFUNCTION()
 	void OnRep_Intelligence(const FGameplayAttributeData& OldIntelligence) const;
-	
-	UFUNCTION()
-	void OnRep_Health(const FGameplayAttributeData& OldHealth) const;
 
 	UFUNCTION()
 	void OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth) const;
 	
 	UFUNCTION()
-	void OnRep_Stamina(const FGameplayAttributeData& OldStamina) const;
-    	
-	UFUNCTION()
 	void OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina) const;
+
+	UFUNCTION()
+	void OnRep_StaminaRegeneration(const FGameplayAttributeData& OldStaminaRegeneration) const;
+
+	UFUNCTION()
+	void OnRep_FireResistance(const FGameplayAttributeData& OldFireResistance) const;
+
+	UFUNCTION()
+	void OnRep_LightningResistance(const FGameplayAttributeData& OldLightningResistance) const;
+	
+	UFUNCTION()
+	void OnRep_MagicResistance(const FGameplayAttributeData& OldMagicResistance) const;
+
+	UFUNCTION()
+	void OnRep_PhysicalResistance(const FGameplayAttributeData& OldFireResistance) const;
 
 	UFUNCTION()
 	void OnRep_HealthBoost(const FGameplayAttributeData& OldHealthBoost) const;
@@ -200,10 +264,38 @@ public:
 	UFUNCTION()
 	void OnRep_StaminaBoost(const FGameplayAttributeData& OldStaminaBoost) const;
 
+	UFUNCTION()
+	void OnRep_Health(const FGameplayAttributeData& OldHealth) const;
+
+	UFUNCTION()
+	void OnRep_Stamina(const FGameplayAttributeData& OldStamina) const;
+	
+	UFUNCTION()
+	void OnRep_DamageBoost(const FGameplayAttributeData& OldDamageBoost) const;
+
+	UFUNCTION()
+	void OnRep_PhysicalDamageBoost(const FGameplayAttributeData& OldPhysicalDamageBoost) const;
+
+	UFUNCTION()
+	void OnRep_FireDamageBoost(const FGameplayAttributeData& OldFireDamageBoost) const;
+
+	UFUNCTION()
+	void OnRep_MagicDamageBoost(const FGameplayAttributeData& OldMagicDamageBoost) const;
+	
+	UFUNCTION()
+	void OnRep_LightningDamageBoost(const FGameplayAttributeData& OldLightningDamageBoost) const;
+
+	
 private:
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SendHitReactTriggerEvent(AActor* Target, const FGameplayEventData Payload);
+	
 	static void SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props);
 
+	void HandleIncomingDamage(const FEffectProperties& Props);
+
+	
 	bool bTopOffHealth = true;
 	bool bTopOffStamina = true;
 };

@@ -7,6 +7,7 @@
 #include "Interface/PlayerInterface.h"
 #include "SoulLikeCharacter.generated.h"
 
+class IInteractionInterface;
 class UItemDataAsset;
 class USpringArmComponent;
 class UCameraComponent;
@@ -24,9 +25,20 @@ public:
 	ASoulLikeCharacter();
 
 	//Combat Interface
-	virtual void SetWarpingLocationAndRotation_Implementation() override;
-	virtual void SetWarpingLocation_Implementation() override;
-	virtual void SetWarpingRotation_Implementation() override;
+	virtual void SetWarpingLocationAndRotation(FVector Location, FRotator Rotation) override;
+	virtual void SetWarpingLocation() override;
+	virtual void SetWarpingRotation(FRotator TargetRotation = FRotator::ZeroRotator) override;
+	
+	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
+	virtual UAnimMontage* GetRiposteReactMontage_Implementation() override;
+
+	UCameraComponent* GetPlayerCameraComponent() const;
+	float GetMouseXInput() const;
+
+	UFUNCTION(BlueprintCallable)
+	void Pickup(FInventoryData InventoryData);
+	
+	void LoadProgress();
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UItemDataAsset> ItemDataAsset;
@@ -38,16 +50,46 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-
-	/* Player Interface */
-	virtual void TryActiveAbilityWithInputTag_Implementation(const FGameplayTag& InputTag) override;
-
+	virtual void DisableCharacter_Implementation() override;
 	
+	/** Player Interface */
+	virtual void RefreshInventory_Implementation() override;
+	virtual void TriggerSavePointMenuWidget_Implementation() override;
+	virtual void SaveProgress_Implementation() const override;
+	virtual void GiveExp_Implementation(int32 ExpValue) override;
+
+	/** Interaction Interface*/
+	virtual void Interaction_Implementation(AActor* InteractionActor) override;
+	virtual FGameplayTag GetInteractionTag_Implementation() const override;
+	virtual const FInteractionTaskInfo GetInteractionActorInfo_Implementation() const override;
+
+	UFUNCTION()
+	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
+	void SetWarpingTargetFromInteractionActor(bool bHasWarpingPoint = false);
+
 private:
+
+	UFUNCTION()
+	void Rebirth();
     
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	TObjectPtr<UCameraComponent> CameraComponent;
+	
+	UPROPERTY()
+	TArray<TObjectPtr<AActor>> InteractionActors;
+	
+	UPROPERTY()
+	TObjectPtr<AActor> SelectedInteractionActor;
+
+	UPROPERTY()
+	FTransform RespawnPoint;
+
+	FTimerHandle RebirthTimerHandle;
 };

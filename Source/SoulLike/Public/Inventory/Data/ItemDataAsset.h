@@ -8,6 +8,21 @@
 #include "SoulLikeItemTypes.h"
 #include "ItemDataAsset.generated.h"
 
+USTRUCT(BlueprintType)
+struct FItemDataTable
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UDataTable> DataTable;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag ItemTypeTag = FGameplayTag();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<UItemData> ItemDataClass;
+};
+
 /**
  * 
  */
@@ -18,11 +33,41 @@ class SOULLIKE_API UItemDataAsset : public UDataAsset
 
 public:
 
-	UItemData* FindItemDataFromIndexAndItemType(EItemType ItemType, FName ItemID) const;
+	//UItemData* FindItemDataFromIndexAndItemType(FGameplayTag ItemType, FName ItemID) const;
+	UItemData* FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID) const;
+
+	FString FindTagNameFromGameplayTag(const FGameplayTag& Tag) const;
+	FString FindItemTypeFromGameplayTag(const FGameplayTag& Tag) const;
+	FString FindWeaponTypeFromGameplayTag(const FGameplayTag& Tag) const;
+	FString FindToolTypeFromGameplayTag(const FGameplayTag& Tag) const;
+	
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	// TArray<FItemTypeMapping> ItemTypeMappings;
+
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	// TObjectPtr<UDataTable> ItemDataTable;
+	//
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	// TObjectPtr<UDataTable> WeaponDataTable;
+	//
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	// TObjectPtr<UDataTable> GearDataTable;
+	//
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	// TObjectPtr<UDataTable> ToolDataTable;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UDataTable> WeaponDataTable;
+	TMap<FGameplayTag, FString> StringToEquipSlot;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UDataTable> RegisterableItemDataTable;
+	TMap<FGameplayTag, FString> StringToItemType;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TMap<FGameplayTag, FString> StringToWeaponType;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TMap<FGameplayTag, FString> StringToToolType;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FItemDataTable> ItemDataTables;
 };

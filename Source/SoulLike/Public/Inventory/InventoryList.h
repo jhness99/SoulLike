@@ -9,17 +9,17 @@
  */
 
 class UInventoryItemInstance;
+class UEquipmentItemInstance;
 
 USTRUCT(BlueprintType)
 struct FInventoryListItem : public FFastArraySerializerItem
 {
 	GENERATED_BODY()
 
-public:
-
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UInventoryItemInstance> ItemInstance;
-	
+
+	bool operator<(const FInventoryListItem& other) const;
 };
 
 USTRUCT(BlueprintType)
@@ -34,7 +34,10 @@ struct FInventoryList : public FFastArraySerializer
 	
 	void AddItem(UInventoryItemInstance* InItemInstance);
 	void RemoveItem(UInventoryItemInstance* InItemInstance);
+	void RemoveAll();
 
+	void SortItems();
+	
 	TArray<FInventoryListItem>& GetItemsRef() { return Items; }
 
 protected:
@@ -57,9 +60,11 @@ struct FEquipmentInventoryList : public FInventoryList
 {
 	GENERATED_BODY()
 
-	void Init();
+	void Init(int32 InMaxIndex);
 	void Register(UInventoryItemInstance * InItemInstance, int32 Index);
 	void UnRegister(int32 Index);
+
+	UEquipmentItemInstance* GetEquipmentItemInstance(int32 Index);
 
 	int32 GetMaxIndex() const { return MaxIndex; }
 		

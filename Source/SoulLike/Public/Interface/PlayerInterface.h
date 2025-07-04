@@ -6,7 +6,6 @@
 #include "UObject/Interface.h"
 #include "PlayerInterface.generated.h"
 
-struct FGameplayTag;
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
@@ -26,5 +25,17 @@ class SOULLIKE_API IPlayerInterface
 public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void TryActiveAbilityWithInputTag(const FGameplayTag& InputTag);
+	void RefreshInventory();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void TriggerSavePointMenuWidget();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void EnterBossRoom();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void SaveProgress() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void GiveExp(int32 ExpValue);
 };

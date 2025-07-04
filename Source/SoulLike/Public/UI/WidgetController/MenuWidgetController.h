@@ -14,4 +14,5 @@ class SOULLIKE_API UMenuWidgetController : public USoulLikeWidgetController
 {
 	GENERATED_BODY()
 	
+	
 };

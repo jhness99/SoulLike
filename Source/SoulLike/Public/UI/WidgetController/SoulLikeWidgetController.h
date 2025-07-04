@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
+#include "Game/UISubSystem.h"
 #include "SoulLikeWidgetController.generated.h"
 
 class APlayerController;
@@ -14,6 +14,9 @@ class ASoulLikePlayerController;
 class ASoulLikePlayerState;
 class USoulLikeAbilitySystemComponent;
 class USoulLikeAttributeSet;
+class UAttributeInfo;
+struct FGameplayTag;
+struct FSoulLikeAttributeInfo;
 
 USTRUCT(BlueprintType)
 struct FWidgetControllerParams
@@ -37,20 +40,43 @@ struct FWidgetControllerParams
 	TObjectPtr<UAttributeSet> AttributeSet = nullptr;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAttributeInfoSignature, const FSoulLikeAttributeInfo&, Info);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerStatusChangedSignature, int32, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOpenedMenuSignature, bool, bOpen);
+
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class SOULLIKE_API USoulLikeWidgetController : public UObject
 {
 	GENERATED_BODY()
 
 public:
 
+	UFUNCTION(BlueprintCallable)
 	virtual void BroadcastInitialValues();
 	virtual void BindCallbacksToModels();
 	
+	UFUNCTION(BlueprintCallable)
+	virtual void BindCallbacksToUISubsystem();
+
+	UFUNCTION(BlueprintCallable)
+	void BroadcastCloseMenu();
+	
 	void SetWidgetControllerParams(const FWidgetControllerParams& WCParams);
+
+	UFUNCTION(BlueprintPure)
+	bool GetIsFocused() const {return bIsFocused; }
+	
+	UFUNCTION(BlueprintCallable)
+	void SetIsFocused(bool InbIsFocused) { bIsFocused =  InbIsFocused; }
+
+	UPROPERTY(BlueprintAssignable)
+	FOnReceiveUITaskInUIModeSignature OnReceiveUITask;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnOpenedMenuSignature OnOpendMenu;
 
 protected:
 
@@ -58,6 +84,9 @@ protected:
 	ASoulLikePlayerState* GetSoulLikePS();
 	USoulLikeAbilitySystemComponent* GetSoulLikeASC();
 	USoulLikeAttributeSet* GetSoulLikeAS();
+
+	UFUNCTION()
+	void BroadcastReceiveUITask(const FGameplayTag& TaskTag);
 
 	UPROPERTY(BlueprintReadOnly, Category = "WidgetController")
 	TObjectPtr<APlayerController> PlayerController;
@@ -82,4 +111,7 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "WidgetController")
 	TObjectPtr<USoulLikeAttributeSet> SoulLikeAttributeSet;
+
+	UPROPERTY()
+	bool bIsFocused = false;
 };

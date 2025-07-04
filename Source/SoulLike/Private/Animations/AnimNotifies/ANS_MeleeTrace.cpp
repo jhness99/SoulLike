@@ -5,7 +5,7 @@
 
 #include "GameFramework/Character.h"
 
-#include "Inventory/InventoryItemInstance.h"
+#include "Inventory/EquipmentItemInstance.h"
 
 #include "Interface/CombatInterface.h"
 
@@ -37,10 +37,7 @@ void UANS_MeleeTrace::SetWeaponCollisionEnable(USkeletalMeshComponent* MeshComp,
 
 	if(Character->Implements<UCombatInterface>())
 	{
-		UInventoryItemInstance* WeaponInstance = ICombatInterface::Execute_GetCurrentWeapon(Character);
-		if(WeaponInstance == nullptr) return;
-
-		WeaponInstance->SetCollisionEnable(bEnable);
+		ICombatInterface::Execute_SetWeaponCollisionEnable(Character, bEnable, MeleeTraceType, AbilityIndex);
 	}
 }
 
