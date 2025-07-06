@@ -4,6 +4,10 @@ Unreal Engine 5 Portfolio
 - 에디터 : VSCode, Rider
 - 제작기간 : 2025.03~2025.06 (4개월)
 - 개발 인원 : 1인개발
+## 프로젝트 개요
+매인사진        
+소울라이크 액션을 레퍼런스로 액션 RPG     
+GAS 기반의 전투 시스템, 커스터마이징 가능한 키 바인딩, FastArray 기반 인벤토리, MVC 구조의 UI 연동, ObjectPooling 적 리스폰 등을 구현
 ## CharacterBase 구조
 
 ## MVC 패턴
@@ -13,52 +17,13 @@ Widget과 클래스간의 의존성을 줄이기 위해 MVC패턴으로 UI를 �
 3. UBlueprintFunctionLibrary를 재정의 한 Static Helper Function을 사용해서 HUD의 WidgetController를 사용
 
 ## KeyBind
-EnhancedInput의 InputAction을 GameplayTag(InputTag)와 매핑하고, InputTag를 캐릭터의 어빌리티에 매핑해서 Ability의 TriggerInput을 동적으로 전환할 수 있도록 구현.
-```c++
-//SoulLikeInputComponent.h
-template <class UserClass, typename PressedFuncType, typename HeldFuncType, typename ReleasedFuncType>
-inline void USoulLikeInputComponent::BindAbilityActions(const USL_InputConfig* InputConfig, UserClass* Object,
-	PressedFuncType PressedFunc, HeldFuncType HeldFunc, ReleasedFuncType ReleasedFunc)
-{
-	check(InputConfig);
-
-  //DataAsset인 InputConfig에 InputAction과 GameplayTag의 매핑을 기반으로 ReceiveFunction들을 Bind하여 
-  //InputTag에 따른 Ability를 활성화 할 수 있도록 구현.
-	for(const FSL_InputAction& InputAction : InputConfig->InputActions)
-	{
-		if(PressedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Started, Object, PressedFunc, InputAction.InputTag);
-		if(HeldFunc) BindAction(InputAction.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, InputAction.InputTag);
-		if(ReleasedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, InputAction.InputTag);
-	}
-}
-
-//SoulLikePlayerController.cpp
-void ASoulLikePlayerController::SetupInputComponent()
-{
-	Super::SetupInputComponent();
-
-	USoulLikeInputComponent* SL_InputComponent = Cast<USoulLikeInputComponent>(InputComponent);
-
-...
-
-	SL_InputComponent->BindAbilityActions(InputConfig, this,
-		&ASoulLikePlayerController::AbilityInputTagPressed,
-		&ASoulLikePlayerController::AbilityInputTagHeld,
-		&ASoulLikePlayerController::AbilityInputTagReleased);
-}
-
-void ASoulLikePlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
-{
-	if(InputMode.MatchesTagExact(FSoulLikeGameplayTags::Get().InputMode_UI) ||
-		InputMode.MatchesTagExact(FSoulLikeGameplayTags::Get().InputMode_KeyBind)) return;
-	
-	if(GetASC())
-	{
-		GetASC()->AbilityInputTagHeld(InputTag);
-	}
-}
-```
-InputAction과 Ability는 InputTag로 연결되어 있으므로, Ability의 InputTag를 변경한다면, 매칭된 InputAction 변경 가능
+![KeyBind](Images/KeyBindFlow.png)     
+EnhancedInput의 InputAction을 GameplayTag(InputTag)와 매핑       
+InputTag를 캐릭터의 어빌리티에 매핑해서 Ability의 TriggerInput을 동적으로 전환할 수 있도록 구현      
+![InputWorkFlow](Images/InputWorkFlow.png)      
+InputTag로 입력을 구분하고 Ability를 활성화   
+![InputWorkFlow](Images/KeybindChangeFlow.png)      
+InputAction과 Ability는 InputTag로 매핑되어 있으므로, Ability의 InputTag를 변경한다면, 매칭된 InputAction 변경 가능
 ```c++
 //SoulLikePlayerController.cpp
 void ASoulLikePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
@@ -87,7 +52,8 @@ void ASoulLikePlayerController::ChangeAbilityInputTag(const FGameplayTag& InputT
 		}
 	}
 }
-
+```
+```c++
 //SoulLikeAbilitySystemComponent.cpp
 void USoulLikeAbilitySystemComponent::ChangeAbilityInputTag(UKeybindMenuWidgetController* KeybindMenuWidgetController, const FGameplayTag& InputTag)
 {
@@ -162,7 +128,10 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGam
 	return nullptr;
 }
 ```
-
+### ObjectPoolingSubsystem
+### MeleeTrace
+### ComboAbility의 State로 인한 FSM
+### GAS
 
 
 
