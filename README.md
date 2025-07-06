@@ -17,12 +17,15 @@ Widget과 클래스간의 의존성을 줄이기 위해 MVC패턴으로 UI를 �
 3. UBlueprintFunctionLibrary를 재정의 한 Static Helper Function을 사용해서 HUD의 WidgetController를 사용
 
 ## KeyBind
-![KeyBind](Images/KeyBindFlow.png)     
+![KeyBindChangeScreenShot](Images/KeyBindChangeScreenShot.png)
+![KeyBindChangeScreenShot](Images/KeyBindChangeScreenShotAfter.png)     
+![KeyBind](Images/KeyBindFlow.png)
+EnhancedInput의 InputAction 기반 구조를 확장하여, GameplayTag 기반으로 Ability를 동적으로 연결할 수 있도록 설계        
 EnhancedInput의 InputAction을 GameplayTag(InputTag)와 매핑       
 InputTag를 캐릭터의 어빌리티에 매핑해서 Ability의 TriggerInput을 동적으로 전환할 수 있도록 구현      
 ![InputWorkFlow](Images/InputWorkFlow.png)      
 InputTag로 입력을 구분하고 Ability를 활성화   
-![InputWorkFlow](Images/KeybindChangeFlow.png)      
+![KeybindChangeFlow](Images/KeybindChangeFlow.png)      
 InputAction과 Ability는 InputTag로 매핑되어 있으므로, Ability의 InputTag를 변경한다면, 매칭된 InputAction 변경 가능
 ```c++
 //SoulLikePlayerController.cpp
