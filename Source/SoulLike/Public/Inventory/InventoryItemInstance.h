@@ -34,7 +34,6 @@ struct FRegistInfo
  * 인벤토리의 아이템의 정보를 저장하는 Instance
  * FInventoryData로 아이템의 정보를 받고
  * GameInstance의 ItemDataAsset에서 FInventoryData로 UItemData를 가져온다.
- * 
  */
 UCLASS(BlueprintType, Blueprintable)
 class SOULLIKE_API UInventoryItemInstance : public UObject

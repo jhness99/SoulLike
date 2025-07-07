@@ -22,7 +22,7 @@ class SOULLIKE_API UObjectPoolingSubsystem : public UGameInstanceSubsystem
 public:
 	
 	void Init();
-	ASoulLikeEnemy* SpawnEmeny(AActor* SpawnerActor, const TSubclassOf<ASoulLikeEnemy>& SpawnActorClass, FName RowName);
+	ASoulLikeEnemy* SpawnEnemy(AActor* SpawnerActor, const TSubclassOf<ASoulLikeEnemy>& SpawnActorClass, FName RowName);
 
 	void ResetEnemyPool();
 
@@ -43,7 +43,7 @@ private:
 	void OnEnemyDisabledObject(AActor* Actor);
 	
 	UPROPERTY()
-	TArray<ASoulLikeEnemy*> EmenyObjectPool;
+	TArray<AActor*> EnemyObjectPool;
 	
 	TQueue<AActor*> EnemyObjectPoolQueue;
 

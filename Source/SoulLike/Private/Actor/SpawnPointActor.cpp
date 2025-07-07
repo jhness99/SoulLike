@@ -83,7 +83,7 @@ void ASpawnPointActor::SpawnEnemy()
 {
 	if(ObjectPoolingSubsystem && SpawnedEnemy == nullptr && !bIsDeadEnemy)
 	{
-		SpawnedEnemy = ObjectPoolingSubsystem->SpawnEmeny(this, EnemyClass, EnemyId);
+		SpawnedEnemy = ObjectPoolingSubsystem->SpawnEnemy(this, EnemyClass, EnemyId);
 
 		if(SpawnedEnemy && !SpawnedEnemy->GetOnDeathDelegate().IsAlreadyBound(this, &ASpawnPointActor::OnDeathEnemy))
 		{

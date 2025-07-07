@@ -12,11 +12,11 @@
 
 void UObjectPoolingSubsystem::Init()
 {
-	EmenyObjectPool.Empty();
+	EnemyObjectPool.Empty();
 	EnemyObjectPoolQueue.Empty();
 }
 
-ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEmeny(AActor* SpawnerActor, const TSubclassOf<ASoulLikeEnemy>& SpawnActorClass, FName RowName)
+ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEnemy(AActor* SpawnerActor, const TSubclassOf<ASoulLikeEnemy>& SpawnActorClass, FName RowName)
 {
 	FScopeLock Lock(&PoolLock);
 	
@@ -26,7 +26,7 @@ ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEmeny(AActor* SpawnerActor, const 
 	FEnemyData* Data = EnemyDataAssset->EnemyDataTable->FindRow<FEnemyData>(RowName, FString(""), false);
 	if(Data == nullptr) return nullptr;
 	
- 	if(EmenyObjectPool.Num() < MaxPoolSize)
+ 	if(EnemyObjectPool.Num() < MaxPoolSize)
 	{
 		FTransform SpawnTransform = SpawnerActor->GetTransform();
 		
@@ -39,24 +39,23 @@ ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEmeny(AActor* SpawnerActor, const 
 				{
 					EnemyActor->Init(SpawnerActor, *Data);
 				}
-			}
-			EnemyActor->OnDisabledObjectDelegate.AddDynamic(this, &UObjectPoolingSubsystem::OnEnemyDisabledObject);
-			EnemyActor->SpawnDefaultController();
-			EnemyActor->FinishSpawning(SpawnTransform);
+				EnemyActor->OnDisabledObjectDelegate.AddDynamic(this, &UObjectPoolingSubsystem::OnEnemyDisabledObject);
+				EnemyActor->SpawnDefaultController();
+				EnemyActor->FinishSpawning(SpawnTransform);
 			
-			EmenyObjectPool.Add(EnemyActor);
-			return EnemyActor;
+				EnemyObjectPool.Add(EnemyActor);
+				return EnemyActor;
+			}
 		}
 	}
 	else
 	{
-		
  		if(!EnemyObjectPoolQueue.IsEmpty())
 		{
-			AActor* PooledActor  = nullptr;
-			if(EnemyObjectPoolQueue.Dequeue(PooledActor))
+			AActor* PooledObject  = nullptr;
+			if(EnemyObjectPoolQueue.Dequeue(PooledObject))
 			{
-				if(ASoulLikeEnemy* EnemyActor = Cast<ASoulLikeEnemy>(PooledActor))
+				if(ASoulLikeEnemy* EnemyActor = Cast<ASoulLikeEnemy>(PooledObject))
 				{
 					EnemyActor->SetActorTransform(SpawnerActor->GetTransform(), false,  nullptr, ETeleportType::ResetPhysics);
 					if(Data != nullptr)
@@ -75,11 +74,13 @@ ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEmeny(AActor* SpawnerActor, const 
 void UObjectPoolingSubsystem::ResetEnemyPool()
 {
 	FScopeLock Lock(&PoolLock);
-
-	for(ASoulLikeEnemy* Enemy : EmenyObjectPool)
+	
+	for(AActor* Object : EnemyObjectPool)
 	{
-		if(Enemy)
-			Enemy->Disable(false);
+		if(IObjectPoolingInterface* ObjectPoolingInterface = Cast<IObjectPoolingInterface>(Object))
+		{
+			ObjectPoolingInterface->Disable(false);
+		}
 	}
 	OnResetLevelDelegate.Broadcast();
 }
@@ -87,6 +88,6 @@ void UObjectPoolingSubsystem::ResetEnemyPool()
 void UObjectPoolingSubsystem::OnEnemyDisabledObject(AActor* Actor)
 {
 	FScopeLock Lock(&PoolLock);
-	UE_LOG(LogTemp, Warning, TEXT("ActorName : %s, FunctionName : %hs"), *GetNameSafe(this), __FUNCTION__);
+	
 	EnemyObjectPoolQueue.Enqueue(Actor);
 }
