@@ -22,12 +22,15 @@ WidgetController와 Widget, Model들과 WidgetController는 Delegate를 통해 �
 ## KeyBind
 ![KeyBindChangeScreenShot](Images/KeyBindChangeScreenShot.png)      
 Input을 대기하는 상태(InputMode_KeyBind)
-![KeyBind](Images/KeyBindFlow.png)
+
+![KeyBind](Images/KeyBindFlow.png)      
 EnhancedInput의 InputAction 기반 구조를 확장하여, GameplayTag 기반으로 Ability를 동적으로 연결할 수 있도록 설계        
 EnhancedInput의 InputAction을 GameplayTag(InputTag)와 매핑       
-InputTag를 캐릭터의 어빌리티에 매핑해서 Ability의 TriggerInput을 동적으로 전환할 수 있도록 구현      
+InputTag를 캐릭터의 어빌리티에 매핑해서 Ability의 TriggerInput을 동적으로 전환할 수 있도록 구현
+
 ![InputWorkFlow](Images/InputWorkFlow.png)      
 InputTag로 입력을 구분하고 Ability를 활성화   
+
 ![KeybindChangeFlow](Images/KeybindChangeFlow.png)      
 InputAction과 Ability는 InputTag로 매핑되어 있으므로, Ability의 InputTag를 변경한다면, 매칭된 InputAction 변경 가능
 ```c++
@@ -137,9 +140,10 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGam
 	return nullptr;
 }
 ```
-### ObjectPoolingSubsystem
+## ObjectPoolingSubsystem
 ![ObjectPoolingSubsystem](Images/ObjectPooling.png)     
-Enemy의 ObjectPoolingSubsystem 구조        
+Enemy의 ObjectPoolingSubsystem 구조   
+
 ![ObjectPoolingSubsystem WorkFlow](Images/ObjectPoolingWorkflow.png)     
 EnemySpawn Workflow     
 Tick()은 1초에 1번 호출되도록 빈도 조절  
@@ -206,10 +210,48 @@ ScopeLock을 통해 RaceCondition을 차단
 ```c++
 FScopeLock Lock(&PoolLock);
 ```
+## GameplayAbilitySystem
+언리얼 엔진의 프레임워크인 GAS를 사용해서 로직을 구현     
+- GameplayTag : ItemType, Input, Status 등을 GameplayTag로 정의, 구현
+- GameplayAbility : 캐릭터가 할 수 있는 액션을 구현
+- GameplayAttributeSet : 캐릭터의 능력치를 정의
+- GameplayEffect : Attribute를 변경하거나, GameplayTag를 부여/제거 해서 캐릭터에 영향을 줌
+- AbilityTask : GAS에서 사용할 수 있는 비동기Task. Ability안에서 비동기로 추가 로직 구현가능.
+- AbilitySystemComponent : GAS의 중심이 되는 컴포넌트. Ability, Attribute, Effect등을 관리
 
-### MeleeTrace
-### ComboAbility의 State로 인한 FSM
-### GAS
+![GameAbility Example](Images/GAS.png)  
+공격 어빌리티
+1. GameplayTag로 공격 액션을 활성화 시도하도록 Trigger
+2. GameplayAttributeSet의 Attribute로 활성화 조건을 체크
+3. GameplayAbility를 활성화 시켜, 공격 액션을 실행
+
+![AbilityTask Example](Images/AbilityTask.png)  
+타겟 락온 어빌리티
+1. Ability가 활성화 됬을 때, SweepMultiByChannel()로 적을 탐색
+2. 적이 있을경우, AbilityTask를 활성화 시켜서 비동기로 입력을 확인
+3. 마우스에 입력이 있다면 타겟을 해당방향으로 변경
+
+## ComboAbility의 State
+![AbilityState](Images/AbilityState.png)        
+Ability가 실행하는 Montage는 특정 시점에 AnimNofity를 통해 GameEvent를 전송
+```c++
+void UAN_MontageEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+                              const FAnimNotifyEventReference& EventReference)
+{
+	Super::Notify(MeshComp, Animation, EventReference);
+
+	FGameplayEventData Payload;
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(MeshComp->GetOwner(), EventTag, Payload);
+}
+
+```
+Ability 내부의 UAbilityTask_WaitGameplayEvent가 Event를 받아서 Bind 된 Callback 함수를 호출
+Callback 함수에서 AbilityState를 변경하고, 입력이 왔을 때 해당 상태에 맞게 Ability 작동
+
+## MeleeTrace
+
+
 
 
 
