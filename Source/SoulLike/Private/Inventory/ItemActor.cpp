@@ -104,7 +104,7 @@ void AItemActor::InitInternal()
 	{
 		MeshComponent->InitializeComponent();
 	}
-	if(EquipmentData->EquipmentType != EEquipmentType::EET_Weapon) return;
+
 	MeshComponent->SetCollisionProfileName(TEXT("Weapon"));
 }
 

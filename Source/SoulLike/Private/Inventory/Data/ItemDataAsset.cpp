@@ -7,8 +7,6 @@
 
 UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID) const
 {
-	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
-	
 	for(const FItemDataTable& ItemDataTableStruct : ItemDataTables)
 	{
 		if(ItemType.MatchesTagExact(ItemDataTableStruct.ItemTypeTag))
@@ -16,7 +14,7 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGam
 			FSL_ItemData* ItemData = ItemDataTableStruct.DataTable->FindRow<FSL_ItemData>(ItemID, FString("Not Found"));
 			if(ItemData == nullptr) return nullptr;
 
-			if(Outer)
+			if (Outer && ItemDataTableStruct.ItemDataClass != nullptr)
 			{
 				UItemData* ItemDataObject = NewObject<UItemData>(Outer, ItemDataTableStruct.ItemDataClass.Get());
 				ItemDataObject->Init(ItemData);

@@ -83,7 +83,6 @@ void UAbilityTask_TargetLock::OnDeathTargetActor()
 	GetWorld()->GetTimerManager().ClearTimer(TargetDeathTimerHandle);
 	GetWorld()->GetTimerManager().SetTimer(TargetDeathTimerHandle, FTimerDelegate::CreateLambda([&]()
 	{
-		
 		TArray<FHitResult> TargetHitResults;
 		AActor* NewTargetActor = nullptr;
 		const bool bDebug = static_cast<bool>(CVarShowTargetLockTrace.GetValueOnAnyThread());

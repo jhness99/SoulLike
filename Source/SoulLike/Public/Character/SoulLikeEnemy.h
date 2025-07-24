@@ -25,7 +25,7 @@ public:
 	ASoulLikeEnemy();
 	virtual void PossessedBy(AController* NewController) override;
 	
-	virtual void Init(AActor* InSpanwerActor, FEnemyData Data) override;
+	virtual void Init(AActor* InSpawnerActor, FEnemyData Data) override;
 	virtual void Disable(bool bKilled) override;
 
 	/** Combat Interface */

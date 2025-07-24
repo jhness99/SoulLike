@@ -160,7 +160,7 @@ FGameplayEffectContextHandle USoulLikeAbilitySystemLibrary::ApplyDamageEffect(co
 	SetDamageType(EffectContextHandle, DamageEffectParams.AttackType);
 	SetAttackForce(EffectContextHandle, DamageEffectParams.AttackForce);
 	SetToughness(EffectContextHandle, DamageEffectParams.Toughness);
-	SetKnockbackForce(EffectContextHandle, DamageEffectParams	.KnockbackForce);
+	SetKnockbackForce(EffectContextHandle, DamageEffectParams.KnockbackForce);
 
 	const FGameplayEffectSpecHandle SpecHandle = DamageEffectParams.SourceAbilitySystemComponent->MakeOutgoingSpec(DamageEffectParams.DamageGameplayEffectClass, 1.f, EffectContextHandle);
 

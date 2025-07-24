@@ -105,10 +105,10 @@ void ASoulLikeEnemy::PossessedBy(AController* NewController)
 	}
 }
 
-void ASoulLikeEnemy::Init(AActor* InSpanwerActor, FEnemyData Data)
+void ASoulLikeEnemy::Init(AActor* InSpawnerActor, FEnemyData Data)
 {
 	EnemyData = Data;
-	SpawnerActor = InSpanwerActor;
+	SpawnerActor = InSpawnerActor;
 	SetupActorWithEnmeyData();
 	if(HasAuthority())
 	{

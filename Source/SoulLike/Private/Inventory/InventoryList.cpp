@@ -71,6 +71,7 @@ void FEquipmentInventoryList::Register(UInventoryItemInstance* InItemInstance, i
 	
 	Items[Index].ItemInstance = InItemInstance;
 	Items[Index].ItemInstance->SetRegisted(true);
+	MarkItemDirty(Items[Index]);
 }
 
 void FEquipmentInventoryList::UnRegister(int32 Index)
@@ -78,6 +79,7 @@ void FEquipmentInventoryList::UnRegister(int32 Index)
 	if(Items[Index].ItemInstance == nullptr) return;
 	Items[Index].ItemInstance->SetRegisted(false);
 	Items[Index].ItemInstance = nullptr;
+	MarkArrayDirty();
 }
 
 UEquipmentItemInstance* FEquipmentInventoryList::GetEquipmentItemInstance(int32 Index)

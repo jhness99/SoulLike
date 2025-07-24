@@ -10,34 +10,6 @@
 class UGameplayAbility;
 class UGameplayEffect;
 
-UENUM(BlueprintType)
-enum class EItemType : uint8
-{
-	EIT_None			UMETA(DisplayName = "None"),
-	EIT_Item			UMETA(DisplayName = "아이템"),
-	EIT_Tool			UMETA(DisplayName = "도구"),
-	EIT_Gear			UMETA(DisplayName = "방어구"),
-	EIT_Weapon			UMETA(DisplayName = "무기")
-};
-
-UENUM(BlueprintType)
-enum class EEquipmentType : uint8
-{
-	EET_None UMETA(DisplayName = "None"),
-	EET_Gear UMETA(DisplayName = "방어구"),
-	EET_Weapon UMETA(DisplayName = "무기")
-};
-
-UENUM(BlueprintType)
-enum class EGearType : uint8
-{
-	EGT_None UMETA(DisplayName = "None"),
-	EGT_Helmet UMETA(DisplayName = "투구"),
-	EGT_Breastplate UMETA(DisplayName = "흉갑"),
-	EGT_Leggings UMETA(DisplayName = "각반"),
-	EGT_Boots UMETA(DisplayName = "부츠")
-};
-
 USTRUCT(BlueprintType)
 struct FWeaponDamageInfo
 {
@@ -162,9 +134,6 @@ struct FSL_EquipmentData : public FSL_ItemData
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	EEquipmentType EquipmentType = EEquipmentType::EET_None;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UStaticMesh> ItemMesh = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -211,9 +180,7 @@ USTRUCT(BlueprintType)
 struct FSL_GearData : public FSL_EquipmentData
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	EGearType GearType = EGearType::EGT_None;
+	
 };
 
 UCLASS(BlueprintType)
@@ -232,13 +199,6 @@ public:
 		ItemType = ItemData->ItemType;
 		Description = ItemData->Description;
 	}
-	// void Init(const FSL_ItemData& ItemData)
-	// {
-	// 	ItemID = ItemData.ItemID;
-	// 	ItemName = ItemData.ItemName;
-	// 	Image = ItemData.Image;
-	// 	ItemType = ItemData.ItemType;
-	// }
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName ItemID = FName();
@@ -275,15 +235,6 @@ public:
 		UsingMontage = ToolData->UsingMontage;
 		UsingEffect = ToolData->UsingEffect;
 	}
-	// void Init(const FSL_ToolData& ToolData)
-	// {
-	// 	ItemID = ToolData.ItemID;
-	// 	ItemName = ToolData.ItemName;
-	// 	Image = ToolData.Image;
-	// 	ItemType = ToolData.ItemType;
-	// 	bConsume = ToolData.bConsume;
-	// 	UsingMontage = ToolData.UsingMontage;
-	// }
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	bool bConsume = false;
@@ -335,13 +286,9 @@ public:
 
 		if(EquipmentData == nullptr) return;
 		
-		EquipmentType = EquipmentData->EquipmentType;
 		ItemMesh = EquipmentData->ItemMesh;
 		Weight = EquipmentData->Weight;
 	}
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	EEquipmentType EquipmentType = EEquipmentType::EET_None;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UStaticMesh> ItemMesh = nullptr;
@@ -356,50 +303,14 @@ class UWeaponData : public UEquipmentData
 	GENERATED_BODY()
 
 public:
-	
-	// void Init(const FSL_WeaponData& WeaponData)
-	// {
-	// 	ItemID = WeaponData.ItemID;
-	// 	ItemName = WeaponData.ItemName;
-	// 	Image = WeaponData.Image;
-	// 	ItemType = WeaponData.ItemType;
-	// 	EquipmentType = WeaponData.EquipmentType;
-	// 	ItemMesh = WeaponData.ItemMesh;
-	// 	AttackMontage = WeaponData.AttackMontage;
-	// 	RiposteMontage = WeaponData.RiposteMontage.LoadSynchronous();
-	// 	Radius = WeaponData.Radius;
-	// 	Stamina = WeaponData.Stamina;
-	// 	DamageInfos = WeaponData.DamageInfos;
-	// 	StatusEffectInfos = WeaponData.StatusEffectInfos;
-	// 	
-	// 	WeaponRequirements.Add(FSoulLikeGameplayTags::Get().Attributes_Primary_Strength, 0);
-	// 	WeaponRequirements.Add(FSoulLikeGameplayTags::Get().Attributes_Primary_Dexterity, 0);
-	// 	WeaponRequirements.Add(FSoulLikeGameplayTags::Get().Attributes_Primary_Intelligence, 0);
-	//
-	// 	for(const FWeaponRequirement& Requirement : WeaponData.WeaponRequirements)
-	// 	{
-	// 		int32& Value = WeaponRequirements.FindChecked(Requirement.AttributeTag);
-	// 		Value = Requirement.Value;
-	// 	}
-	//
-	// 	DamageType = WeaponData.DamageType;
-	// 	AttackForce = WeaponData.AttackForce;
-	// 	Toughness = WeaponData.Toughness;
-	// }
+
 	virtual void Init(const FSL_ItemData* ItemData) override
 	{
 		Super::Init(ItemData);
 		const FSL_WeaponData* WeaponData = static_cast<const FSL_WeaponData*>(ItemData);
 
 		if(WeaponData == nullptr) return;
-		
-		// ItemID = WeaponData->ItemID;
-		// ItemName = WeaponData->ItemName;
-		// Image = WeaponData->Image;
-		// ItemType = WeaponData->ItemType;
-		// EquipmentType = WeaponData->EquipmentType;
-		// ItemMesh = WeaponData->ItemMesh;
-		// Weight = WeaponData->Weight;
+
 		AttackMontage = WeaponData->AttackMontage;
 		RiposteMontage = WeaponData->RiposteMontage.LoadSynchronous();
 		Radius = WeaponData->Radius;
@@ -465,20 +376,5 @@ public:
 		Super::Init(ItemData);
 
 		const FSL_GearData* GearData = static_cast<const FSL_GearData*>(ItemData);
-		
-		GearType = GearData->GearType;
 	}
-	// void Init(const FSL_GearData& GearData)
-	// {
-	// 	ItemID = GearData.ItemID;
-	// 	ItemName = GearData.ItemName;
-	// 	Image = GearData.Image;
-	// 	ItemType = GearData.ItemType;
-	// 	EquipmentType = GearData.EquipmentType;
-	// 	ItemMesh = GearData.ItemMesh;
-	// 	GearType = GearData.GearType;
-	// }
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	EGearType GearType = EGearType::EGT_None;
 };
