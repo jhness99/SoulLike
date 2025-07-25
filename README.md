@@ -3,10 +3,12 @@
 메인사진
 
 # 목차
-- [프로젝트 개요](#프로젝트 개요)
+- [프로젝트 개요](#프로젝트-개요)
 - [InventorySystem](#InventorySystem)
 - [WidgetController](#widgetcontroller)
 - [KeyBind](#keybind)
+- [ObjectPoolingSubsystem](#ObjectPoolingSubsystem)
+- [GameplayAbilitySystem](#gameplayabilitysystem)
 
 ## 프로젝트 개요
 Unreal Engine 5 Portfolio
@@ -299,16 +301,26 @@ void USoulLikeAbilitySystemComponent::ChangeAbilityInputTag(UKeybindMenuWidgetCo
 ```
 
 ## ObjectPoolingSubsystem
-![ObjectPoolingSubsystem](Images/ObjectPooling.png)     
-Enemy의 ObjectPoolingSubsystem 구조       
-GameInstanceSubsystem을 기반으로 구현하여, 싱글톤 구조로 모든 SpawnPointActor에서 접근할 수 있도록 구현     
-적을 생성하거나 ObjectPool에 반환하여 적 생성/제거를 관리
+![ObjectPoolingSubsystem](Images/ObjectPooling.png)      
+Enemy를 스폰할 때 SpawnActor를 사용해서 매번 Enemy를 Spawn하면 최적화에 영향을 끼치기 때문에 ObjectPool로 EnemySpawn을 구현.    
+Enemy가 비활성화(죽음, 휴식으로 인한 레벨 내 적 초기화)시 Pool에 반환하고, Spawn할 때 Pool 안의 Enemy를 활성화하여 사용.
+### Enemy 동적 초기화
+![EnemyData](Images/EnemyData.png)
+```c++
+void ASoulLikeEnemy::Init(AActor* InSpawnerActor, FEnemyData Data)
+{
+	EnemyData = Data;
+	SpawnerActor = InSpawnerActor;
+	//EnemyData로 ASoulLikeEnmey를 초기화
+	SetupActorWithEnmeyData();
+	...
+}
+```
+Pool에서 Enemy를 활성화하고 사용하려면 활성화 할 때 동적으로 Enemy를 초기화 필요.   
+따라서 FEnemyData를 DataTable에 정의하여 초기화 할 때 EnemyData를 사용하여 Enemy를 초기화.
 
-![ObjectPoolingSubsystem WorkFlow](Images/ObjectPoolingWorkflow.png)     
-EnemySpawn Workflow     
-너무 많은 함수호출을 막기 위해 Tick()은 1초에 1번 호출 되도록 빈도 조절  
-ASoulLikeEnemy는 Disable됬다면 Bind 해둔 OnEnemyDisabledObject()를 호출 해서 ObjectPoolQueue에 대기 시키고,        
-다시 Spawn 해야 할 때 활성화
+>![ObjectPoolingSubsystem_EnemySpawn](Images/ObjectPooling_EnemySpawn.png)     
+EnemySpawn Sequence
 ```c++
 ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEnemy(AActor* SpawnerActor, const TSubclassOf<ASoulLikeEnemy>& SpawnActorClass, FName RowName)
 {
@@ -365,49 +377,34 @@ ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEnemy(AActor* SpawnerActor, const 
 	return nullptr;
 }
 ```
-여러개의 오브젝트가 동시에 하나의 Subsystem의 객체에 접근, 관여할 수 있기 때문에
-ScopeLock을 통해 RaceCondition을 차단
+### Enemy Pool반환
+Enemy가 Disable 될 때, Broadcast를 통해 PoolQueue에 Enemy를 반환.
 ```c++
-FScopeLock Lock(&PoolLock);
-```
-## GameplayAbilitySystem
-언리얼 엔진의 프레임워크인 GAS를 사용해서 로직을 구현     
-- GameplayTag : ItemType, Input, Status 등을 GameplayTag로 정의, 구현
-- GameplayAbility : 캐릭터가 할 수 있는 액션을 구현
-- GameplayAttributeSet : 캐릭터의 능력치를 정의
-- GameplayEffect : Attribute를 변경하거나, GameplayTag를 부여/제거 해서 캐릭터에 영향을 줌
-- AbilityTask : GAS에서 사용할 수 있는 비동기Task. Ability안에서 비동기로 추가 로직 구현가능.
-- AbilitySystemComponent : GAS의 중심이 되는 컴포넌트. Ability, Attribute, Effect등을 관리
-
-![GameAbility Example](Images/GAS.png)  
-공격 어빌리티
-1. GameplayTag로 공격 액션을 활성화 시도하도록 Trigger
-2. GameplayAttributeSet의 Attribute로 활성화 조건을 체크
-3. GameplayAbility를 활성화 시켜, 공격 액션을 실행
-
-![AbilityTask Example](Images/AbilityTask.png)  
-타겟 락온 어빌리티
-1. Ability가 활성화 됬을 때, SweepMultiByChannel()로 적을 탐색
-2. 적이 있을경우, AbilityTask를 활성화 시켜서 비동기로 입력을 확인
-3. 마우스에 입력이 있다면 타겟을 해당방향으로 변경
-
-## ComboAbility의 State
-![AbilityState](Images/AbilityState.png)        
-Ability가 실행하는 Montage는 특정 시점에 AnimNofity를 통해 GameEvent를 전송
-```c++
-void UAN_MontageEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-                              const FAnimNotifyEventReference& EventReference)
+ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEnemy(AActor* SpawnerActor, const TSubclassOf<ASoulLikeEnemy>& SpawnActorClass, FName RowName)
 {
-	Super::Notify(MeshComp, Animation, EventReference);
+        ...
+        if(Data != nullptr)
+        {
+            EnemyActor->Init(SpawnerActor, *Data);
+        }
+        EnemyActor->OnDisabledObjectDelegate.AddDynamic(this, &UObjectPoolingSubsystem::OnEnemyDisabledObject);
+}
 
-	FGameplayEventData Payload;
+void UObjectPoolingSubsystem::OnEnemyDisabledObject(AActor* Actor)
+{
+	FScopeLock Lock(&PoolLock);
 	
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(MeshComp->GetOwner(), EventTag, Payload);
+	EnemyObjectPoolQueue.Enqueue(Actor);
 }
 
 ```
-Ability 내부의 UAbilityTask_WaitGameplayEvent가 Event를 받아서 Bind 된 Callback 함수를 호출
-Callback 함수에서 AbilityState를 변경하고, 입력이 왔을 때 해당 상태에 맞게 Ability 작동
+### Pool ScopeLock
+![ObjectPoolingSubsystem_EnemySpawn](Images/ScopeLock.png)     
+여러개의 오브젝트가 동시에 하나의 Subsystem의 객체에 접근, 관여할 수 있기 때문에    
+ScopeLock을 통해 PoolQueue를 사용하는 동안에 다른 접근을 차단.
+```c++
+FScopeLock Lock(&PoolLock);
+```
 
 ## MeleeTrace
 ![MeleeTrace](Images/MeleeTrace.png)        
@@ -452,3 +449,38 @@ void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartRelativeT
 	...
 }
 ```
+
+## GameplayAbilitySystem
+GAS는 캐릭터의 액션/상태 구현을 위해 사용한 프레임워크
+공격, 상호작용, 스테이터스, 아이탬 사용, 타겟고정, 구르기등의 핵심기능 구현
+
+![GameAbility Example](Images/GAS.png)  
+공격 어빌리티
+1. GameplayTag로 공격 액션을 활성화 시도하도록 Trigger
+2. GameplayAttributeSet의 Attribute로 활성화 조건을 체크
+3. GameplayAbility를 활성화 시켜, 공격 액션을 실행
+
+![AbilityTask Example](Images/AbilityTask.png)  
+타겟 락온 어빌리티
+1. Ability가 활성화 됬을 때, SweepMultiByChannel()로 적을 탐색
+2. 적이 있을경우, AbilityTask를 활성화 시켜서 비동기로 입력을 확인
+3. 마우스에 입력이 있다면 타겟을 해당방향으로 변경
+
+## ComboAbility의 State
+![AbilityState](Images/AbilityState.png)        
+Ability가 실행하는 Montage는 특정 시점에 AnimNofity를 통해 GameEvent를 전송
+```c++
+void UAN_MontageEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
+                              const FAnimNotifyEventReference& EventReference)
+{
+	Super::Notify(MeshComp, Animation, EventReference);
+
+	FGameplayEventData Payload;
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(MeshComp->GetOwner(), EventTag, Payload);
+}
+
+```
+Ability 내부의 UAbilityTask_WaitGameplayEvent가 Event를 받아서 Bind 된 Callback 함수를 호출
+Callback 함수에서 AbilityState를 변경하고, 입력이 왔을 때 해당 상태에 맞게 Ability 작동
+
