@@ -161,6 +161,13 @@ UInventoryWidgetController* ASoulLikeHUD::GetInventoryWidgetController(const FWi
 ```
 WidgetController와 Widget, Model들과 WidgetController는 Delegate를 통해 통신     
 단방향으로 작동하며 View와 Model간의 의존성을 줄임
+
+>![WidgetControllerSequenceDiagram](Images/WidgetControllerSequenceDiagram.png)     
+> 인벤토리 갱신 시퀀스와 장비장착 시퀀스
+
+* InventoryList에 변화가 생긴다면, InventoryWidgetController의 Delegate에 의해 SoulLikeUserWidget에 Bind된 Callback함수로 InventoryWidget 갱신
+* Widget의 Button을 상호작용 했다면, InventoryWidgetController를 통해 InventoryComponent에 Bind 된 아이탬 장착 함수를 호출한다.
+
 ## KeyBind
 
 >![KeyBindChangeScreenShot](Images/KeyBindChangeScreenShot.png)      
