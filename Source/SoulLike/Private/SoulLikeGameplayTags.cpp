@@ -16,10 +16,7 @@ const FSoulLikeGameplayTags& FSoulLikeGameplayTags::Get()
 void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 {
 	if(GameplayTags.bInit) return;
-	/**
-	 * Primary Attribute
-	 */
-
+	
 	const FGameplayTag CheckTag = FGameplayTag::RequestGameplayTag(FName("Attributes.Primary.Vigor"), false);
 	if (CheckTag.IsValid())
 	{
@@ -27,7 +24,10 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		GameplayTags.bInit = true;
 		return;
 	}
-	
+	/**
+	 * Primary Attribute
+	 */
+
 	GameplayTags.Attributes_Primary_Vigor = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Attributes.Primary.Vigor"),
 		FString("Increase Health Point")

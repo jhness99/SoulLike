@@ -3,12 +3,17 @@
 메인사진
 
 # 목차
-- [프로젝트 개요](#프로젝트-개요)
-- [InventorySystem](#InventorySystem)
-- [WidgetController](#widgetcontroller)
-- [KeyBind](#keybind)
-- [ObjectPoolingSubsystem](#ObjectPoolingSubsystem)
-- [GameplayAbilitySystem](#gameplayabilitysystem)
+1. [프로젝트 개요](#프로젝트-개요)
+1. [InventorySystem](#InventorySystem)
+1. [WidgetController](#widgetcontroller)
+1. [KeyBind](#keybind)
+1. [ObjectPoolingSubsystem](#ObjectPoolingSubsystem)
+1. [GameplayAbilitySystem](#gameplayabilitysystem)       
+    6.1 [FSoulLikeGameplayTags](#FSoulLikeGameplayTags)              
+    6.2 [AbilityState](#AbilityState)       
+    6.3 [AttackMontage](#AttackMontage)               
+    6.4 [TargetLock](#TargetLock)              
+    6.5 [InteractionAbility](#InteractionAbility)
 
 ## 프로젝트 개요
 Unreal Engine 5 Portfolio
@@ -454,33 +459,436 @@ void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartRelativeT
 GAS는 캐릭터의 액션/상태 구현을 위해 사용한 프레임워크
 공격, 상호작용, 스테이터스, 아이탬 사용, 타겟고정, 구르기등의 핵심기능 구현
 
-![GameAbility Example](Images/GAS.png)  
-공격 어빌리티
-1. GameplayTag로 공격 액션을 활성화 시도하도록 Trigger
-2. GameplayAttributeSet의 Attribute로 활성화 조건을 체크
-3. GameplayAbility를 활성화 시켜, 공격 액션을 실행
+### FSoulLikeGameplayTags
+FGameplayTag는 문자열을 "."로 구분하여 계층을 나누어 분류하는 계층형 식별자
 
-![AbilityTask Example](Images/AbilityTask.png)  
-타겟 락온 어빌리티
-1. Ability가 활성화 됬을 때, SweepMultiByChannel()로 적을 탐색
-2. 적이 있을경우, AbilityTask를 활성화 시켜서 비동기로 입력을 확인
-3. 마우스에 입력이 있다면 타겟을 해당방향으로 변경
-
-## ComboAbility의 State
-![AbilityState](Images/AbilityState.png)        
-Ability가 실행하는 Montage는 특정 시점에 AnimNofity를 통해 GameEvent를 전송
 ```c++
-void UAN_MontageEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-                              const FAnimNotifyEventReference& EventReference)
+struct FSoulLikeGameplayTags
 {
-	Super::Notify(MeshComp, Animation, EventReference);
+public:
 
-	FGameplayEventData Payload;
+	static const FSoulLikeGameplayTags& Get();
 	
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(MeshComp->GetOwner(), EventTag, Payload);
+	static void InitializeNativeGameplayTags();
+
+	/**
+	 * Primary Attribute
+	 * 기본 Attribute
+	 */
+	FGameplayTag Attributes_Primary_Vigor;
+        ...	
+}
+
+FSoulLikeGameplayTags FSoulLikeGameplayTags::GameplayTags;
+
+const FSoulLikeGameplayTags& FSoulLikeGameplayTags::Get()
+{
+        if(!GameplayTags.bInit)
+        {
+             InitializeNativeGameplayTags();
+        }
+        return GameplayTags;
+}
+
+void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
+{
+        if(GameplayTags.bInit) return;
+
+	const FGameplayTag CheckTag = FGameplayTag::RequestGameplayTag(FName("Attributes.Primary.Vigor"), false);
+	if (CheckTag.IsValid())
+	{
+		// 이미 태그가 등록되어 있으면 초기화 생략
+		GameplayTags.bInit = true;
+		return;
+	}
+	/**
+	 * Primary Attribute
+	 */
+
+	GameplayTags.Attributes_Primary_Vigor = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Primary.Vigor"),
+		FString("Increase Health Point")
+	);
+}
+```
+FSoulLikeGameplayTags는 정적 싱글톤 객체
+* FGameplayTag를 간편하게 사용할 수 있도록 정적 싱글톤 객체에서 FGameplayTag들을 초기화 한다.     
+* 초기화 한 FGameplayTag는 변수로써 싱글톤 객체에서 접근할 수 있다.
+
+### AbilityState
+![AbilityState](Images/AbilityState.png) 
+```c++
+UENUM(BlueprintType)
+enum class EAbilityState : uint8
+{   
+    EAS_None UMETA(DisplayName = "None"),
+    EAS_WaitInput UMETA(DisplayName = "Input Wait"),
+    EAS_NextAction UMETA(DisplayName = "Next Action")
+};
+```
+액션 선입력과 다음 액션 활성화를 위해 CombatAbility에 Montage 진행에 따른 상태를 저장.   
+Ability State
+- None       : 기본 상태
+- WaitInput  : 입력을 받는 상태 
+- NextAction : 다음 액션을 활성활 할 수 있는 상태
+
+상태를 나눠서 모든 액션에 선입력, 액션 후 딜레이를 Montage의 Notify를 통해 설정 가능.
+
+### AttackMontage
+![WeaponData](Images/WeaponData.png)
+```c++
+void USoulLikeComboAbility::SetupMontage()
+{
+	if(GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
+	{
+		Montage = ICombatInterface::Execute_GetCurrentWeaponAttackMontage(GetAvatarActorFromActorInfo());
+	}
+}
+```
+ComboAbility는 현재 객체가 장착한 Weapon의 Montage를 재생
+Weapon의 데이터는 DataTable에서 정의하므로, DataTable을 통해 각 무기의 공격 애니메이션 변경 가능
+
+### TargetLock
+타겟방향으로 카메라를 회전시키는 어빌리티. 비동기 작업인 AbilityTask를 사용   
+타겟을 변경하거나 고정하는 경우
+>![TargetLockFromAim](Images/TargetLockFromAim.gif)       
+>1. 애임으로 적을 직접 선택 했거나, 범위 내 가장 가까운 적에 고정        
+<details>
+    <summary>코드 보기</summary>
+
+```c++
+//TargetLockGameplayAbility.cpp
+
+FHitResult AimHitResult;
+FTraceProperties AnimTraceProperties(TraceLength, SingleTraceCollisionChannel, SingleTraceSphereRadius, DebugLifeTime);
+FTraceProperties MultiTraceProperties(TraceLength, MultiTraceCollisionChannel, MultiTraceSphereRadius, DebugLifeTime);
+
+if(USoulLikeFunctionLibrary::SingleTraceFromCameraLocation(GetAvatarActorFromActorInfo(), AimHitResult, AnimTraceProperties, bDebug))
+{
+    bIsTargetLock = true;
+    if(AimHitResult.GetActor())
+    {
+        TargetActor = AimHitResult.GetActor();
+    }
+}
+
+//SoulLikeFunctionLibrary.cpp
+bool USoulLikeFunctionLibrary::SingleTraceFromCameraLocation(const AActor* Instigator, FHitResult& HitResult,
+                                                             FTraceProperties TraceProperties, bool bDebug)
+{
+    FVector TraceStartLocation = FVector::ZeroVector;
+    FVector TraceEndLocation = FVector::ZeroVector;
+    FVector TraceForwardVector = FVector::ZeroVector;
+    
+    if(!SetupTraceProperties(Instigator, TraceStartLocation, TraceEndLocation, TraceForwardVector, TraceProperties.TraceLength)) return false;
+    
+    FCollisionQueryParams Params(NAME_None, false, Instigator);
+    
+    UWorld* World = Instigator->GetWorld();
+    if(World == nullptr) return false;
+    
+    bool bResult = World->SweepSingleByChannel(
+        HitResult,
+        TraceStartLocation + (TraceForwardVector * TraceProperties.TraceSphereRadius),
+        TraceEndLocation - (TraceForwardVector * TraceProperties.TraceSphereRadius),
+        FQuat::Identity,
+        TraceProperties.TraceCollisionChannel,
+        FCollisionShape::MakeSphere(TraceProperties.TraceSphereRadius),
+        Params);
+    
+    if(bResult)
+    {
+        if(HitResult.GetActor())
+        {
+            bResult = HitResult.GetActor()->IsA(ASoulLikeCharacterBase::StaticClass());
+            
+            if(bDebug)
+            {
+                FVector TraceVec = TraceForwardVector;
+                FVector Center = TraceStartLocation + TraceForwardVector * TraceProperties.TraceLength / 2;
+                float HalfHeight = TraceProperties.TraceLength / 2.f;
+                FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
+                FColor DrawColor = bResult ? FColor::Green : FColor::Red;
+    
+                DrawDebugCapsule(World,
+                    Center,
+                    HalfHeight,
+                    5.0f,
+                    CapsuleRot,
+                    DrawColor,
+                    false,
+                    TraceProperties.DebugLifeTime);
+            }
+            
+            return bResult;
+        }
+    }
+    
+    return false;
+}
+```
+</details>
+
+>![SwapTargetEnemy](Images/SwapTargetEnemy.gif)
+>2. 현재 타겟 고정이 되어있는 상태에서 다른 타겟으로 타겟을 변경
+<details>
+    <summary>코드 보기</summary>
+
+```c++
+//AbilityTask_TargetLock.cpp
+void UAbilityTask_TargetLock::TryChangeTargetActor()
+{
+    if(TargetActor.IsValid() && !USoulLikeFunctionLibrary::CheckTargetOnViewport(TargetActor.Get(), 0.2f)) return;
+    if(!bCanChangeTarget) return;
+    
+    bool LeftTrace = false;
+    bool RightTrace = false;
+    
+    float NextTargetDegree = 0.f;
+    
+    ASoulLikeCharacter* Character = Cast<ASoulLikeCharacter>(GetAvatarActor());
+    if(Character == nullptr) return;
+    
+    
+    UCameraComponent* Camera = Character->GetPlayerCameraComponent();
+    if(Camera == nullptr) return;
+    
+    if(Character->GetMouseXInput() > 8.f)
+    {
+        RightTrace = true;
+        NextTargetDegree = 360.f;
+    }
+    else if(Character->GetMouseXInput() < -8.f)
+    {
+        LeftTrace = true;
+        NextTargetDegree = -360.f;
+    }
+    
+    if(!LeftTrace && !RightTrace) return;
+    
+    AActor* NewTargetActor = nullptr;
+    TArray<FHitResult> HitResults;
+    
+    const bool bDebug = static_cast<bool>(CVarShowTargetLockTrace.GetValueOnAnyThread());
+    USoulLikeFunctionLibrary::MultiTraceFromCameraLocation(Character, HitResults, TraceProperties, bDebug);
+    
+    for(const FHitResult& HitResult : HitResults)
+    {
+        AActor* CurrentTargetActor = HitResult.GetActor();
+        if(CurrentTargetActor == nullptr) continue;
+        
+        float LookAtTargetRotatorYaw = FRotationMatrix::MakeFromX(CurrentTargetActor->GetActorLocation() - Camera->GetComponentLocation()).Rotator().Yaw;
+        float CurrentTargetDegree = FRotator::ClampAxis(LookAtTargetRotatorYaw - Camera->GetComponentRotation().Yaw);
+    
+        if(bDebug)
+        {
+            DrawDebugString(GetWorld(), CurrentTargetActor->GetActorLocation() + FVector(0.f, 0.f, 20.f), FString::SanitizeFloat(CurrentTargetDegree), 0, FColor::White, 5.f);
+        }
+    
+        if(TargetActor != CurrentTargetActor && 
+            ((CurrentTargetDegree > 180.f && CurrentTargetDegree > NextTargetDegree && LeftTrace)||
+                (CurrentTargetDegree < 180.f && CurrentTargetDegree < NextTargetDegree && RightTrace)))
+        {
+            NextTargetDegree = CurrentTargetDegree;
+            NewTargetActor = CurrentTargetActor;
+        }
+    }
+    
+    if(NewTargetActor != nullptr && NewTargetActor != TargetActor && NewTargetActor->Implements<UCombatInterface>() && USoulLikeFunctionLibrary::CheckTargetOnViewport(NewTargetActor, 0.2f))
+    {
+        ICombatInterface::Execute_ToggleTargetMark(TargetActor.Get());
+        TargetActor = NewTargetActor;
+        
+        ChangedTargetActorDelegate.Broadcast(TargetActor.Get());
+        
+        ICombatInterface::Execute_ToggleTargetMark(TargetActor.Get());
+    
+        bCanChangeTarget = false;
+        GetWorld()->GetTimerManager().ClearTimer(LockOnTimerHandle);
+        GetWorld()->GetTimerManager().SetTimer(LockOnTimerHandle, FTimerDelegate::CreateLambda([&](){
+            bCanChangeTarget = true;
+        }), 1.f, false);
+    }
+}
+```
+</details>
+
+>![OnDeathSwapTarget](Images/OnDeathSwapTarget.gif)
+>3. 타겟이 죽었다면, 가장 가까운 적에게 타겟고정
+<details>
+    <summary>코드 보기</summary>
+
+```c++
+//AbilityTask_TargetLock.cpp
+void UAbilityTask_TargetLock::OnDeathTargetActor()
+{
+    GetWorld()->GetTimerManager().ClearTimer(TargetDeathTimerHandle);
+    GetWorld()->GetTimerManager().SetTimer(TargetDeathTimerHandle, FTimerDelegate::CreateLambda([&]()
+    {
+        TArray<FHitResult> TargetHitResults;
+        AActor* NewTargetActor = nullptr;
+        const bool bDebug = static_cast<bool>(CVarShowTargetLockTrace.GetValueOnAnyThread());
+        if(USoulLikeFunctionLibrary::MultiTraceFromCameraLocation(GetAvatarActor(), TargetHitResults, TraceProperties, bDebug))
+        {
+            float NearestDistance = 5000.f;
+    
+            for(const FHitResult& TargetHitResult : TargetHitResults)
+            {
+                AActor* CurrentTargetActor = TargetHitResult.GetActor();
+                if(CurrentTargetActor == nullptr) return;
+    
+                float DistanceToTarget = FVector::Distance(GetAvatarActor()->GetActorLocation(), CurrentTargetActor->GetActorLocation());
+    
+                if(DistanceToTarget < NearestDistance)
+                {
+                    NearestDistance = DistanceToTarget;
+                    NewTargetActor = CurrentTargetActor;
+                }
+            }
+        }
+    
+        if(NewTargetActor && TargetActor.Get())
+        {
+            ICombatInterface::Execute_ToggleTargetMark(TargetActor.Get());
+            TargetActor = NewTargetActor;
+            ICombatInterface::Execute_ToggleTargetMark(NewTargetActor);
+            if(ICombatInterface* CombatInterface = Cast<ICombatInterface>(TargetActor))
+            {
+                CombatInterface->GetOnDeathDelegate().AddDynamic(this, &UAbilityTask_TargetLock::OnDeathTargetActor);
+            }
+        }
+        ChangedTargetActorDelegate.Broadcast(NewTargetActor);
+    }), 1.f, false);
+}
+```
+</details>
+
+### InteractionAbility
+![InteractionTask](Images/InteractionClassDiagram.png)
+캐릭터와 오브젝트가 상호작용 동작을 처리하는 어빌리티       
+* 상호 작용은 FGameplayTag로 분류     
+* IInteractionInterface를 구현하여 각각 캐릭터와 액터의 상호 작용 구현  
+
+>![InteractionTask](Images/AbilityInfoInteractionTask.png)
+> DataAsset "DA_AbilityInfo"에서 관리
+> ```c++
+> if(InteractionTaskInfo.InteractionTag.MatchesTagExact(FSoulLikeGameplayTags::Get().Interaction_Ladder))
+>	{
+>		InteractionTask = UAbilityTask_Ladder::CreateLadderTask(this, GetAvatarActorFromActorInfo(), InteractionTaskInfo);
+>	}
+>	else
+>	{
+>		InteractionTask = UAbilityTask_Interaction::CreateInteractionTask(this, GetAvatarActorFromActorInfo(), InteractionTaskInfo);
+>	}
+> ```
+> FGameplayTag로 구분해서 Interaction 실행
+
+* 각 상호 작용은 별도의 InteractionAbility를 만들지 않고, 비동기 작업 AbilityTask를 통해 추가, 구현     
+
+#### InteractionTask_Ladder
+> ![InteractionTask_Ladder](Images/InteractionTask_Ladder.gif)
+> 사다리타기 상호작용
+
+비동기 작업 AbilityTask_Interaction에서 Tick마다 캐릭터의 Controller의 위, 아래 InputValue을 가져와 LadderClimbMontageTask를 실행
+
+<details>
+    <summary>코드 보기</summary>
+
+```c++
+void UAbilityTask_Ladder::TickTask(float DeltaTime)
+{
+    Super::TickTask(DeltaTime);
+    
+    //Input을 받을 수 있는 상태이면서 ClimbLoop Animation이 활성화 되지 않았을경우
+    //ClimbMontage의 중복작동 막음
+    if(bCanReceiveInput &&
+        (!IsValid(LadderClimbMontageTask) || !LadderClimbMontageTask->IsActive()))
+    {
+        FName SectionName = FName("");
+        FString Direction = FString("");
+        FString RL = FString("");
+        
+        if(Ability && Ability->GetAvatarActorFromActorInfo()->Implements<UCombatInterface>() && Ability->GetAvatarActorFromActorInfo()->Implements<UInteractionInterface>())
+        {
+            //InputValue를 가져옴
+            float InputValue = ICombatInterface::Execute_GetLadderMoveInput(Ability->GetAvatarActorFromActorInfo());
+            //입력이 없다면 함수종료
+            if(InputValue == 0.f) return;
+            //종결 Montage를 작동해야 하는지에 대한 여부를 확인하기 위해 현재 Overlay된 InteractionActor의 Tag가져옴
+            FGameplayTag InteractionTag = IInteractionInterface::Execute_GetInteractionTag(Ability->GetAvatarActorFromActorInfo());
+            
+            if(InputValue > 0.f)
+            {
+                Direction = FString("Up");
+                //만약 Overlap된 Interaction의 방향이 아래일경우, 위로 올라가는 종결Montage 재생
+                if(InteractionTag.MatchesTagExact(FSoulLikeGameplayTags::Get().Interaction_Ladder_Down))
+                {
+                    bCanReceiveInput = false;
+                    UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Ability->GetAvatarActorFromActorInfo(), InteractionTag, FGameplayEventData());
+                    ICombatInterface::Execute_SetLadderMirror(Ability->GetAvatarActorFromActorInfo(), false);
+                    ICombatInterface::Execute_SetMirror(Ability->GetAvatarActorFromActorInfo(), bIsRight);
+                    return;
+                }
+            }
+            else if(InputValue < 0.f)
+            {
+                Direction = FString("Down");
+                //만약 Overlap된 Interaction의 방향이 위일경우, 아래로 내려가는 종결Montage 재생
+                if(InteractionTag.MatchesTagExact(FSoulLikeGameplayTags::Get().Interaction_Ladder_Up))
+                {
+                    bCanReceiveInput = false;
+                    UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Ability->GetAvatarActorFromActorInfo(), InteractionTag, FGameplayEventData());
+                    ICombatInterface::Execute_SetLadderMirror(Ability->GetAvatarActorFromActorInfo(), false);
+                    ICombatInterface::Execute_SetMirror(Ability->GetAvatarActorFromActorInfo(), bIsRight);
+                    return;
+                }
+            }
+            //현재 상태에 따른 LadderIdle Animation Mirror설정
+            //ICombatInterface::Execute_SetLadderMirror(Ability->GetAvatarActorFromActorInfo(), !bIsRight);
+        }
+        
+        if(bIsRight)
+        {
+            RL = FString("R");
+        }
+        else
+        {
+            RL = FString("L");
+        }
+        //현재 LadderIdle Mirror상태 스위치
+        bIsRight = !bIsRight;
+        
+        SectionName = FName(*FString::Printf(TEXT("%sLoop_%s_%s"), *InteractionTaskInfo.SectionName, *Direction, *RL));
+        
+        LadderClimbMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(Ability, FName("LadderLoop"), InteractionTaskInfo.Montage, 1, SectionName);
+        LadderClimbMontageTask->ReadyForActivation();
+    }
+}
+```
+</details>
+
+※ 데디케이티드 서버에서의 작동       
+Standalone에서 컨트롤러의 LocalRole이 Authority이지만, 데디케이디트에선 AutonomousProxy이다.     
+InteractionAbility는 Server, Client 두 곳에서 모두 활성화 되지만, InputValue는 Client에만 존재하게 된다.      
+따라서 ServerRPC를 통해 Client의 InputValue를 Server에도 동기화 시켜야한다.       
+
+#### SoulLikePlayerController.cpp
+```c++
+void ASoulLikePlayerController::LadderMove(const FInputActionValue& InputActionValue)
+{
+	if(GetASC() && !GetASC()->HasMatchingGameplayTag(FSoulLikeGameplayTags::Get().Status_Ladder))
+	{
+		LadderMoveInput = 0.f;
+		return;
+	}
+	
+	const float InputValue = InputActionValue.Get<float>();
+	//기존 InputValue와 값이 비슷하다면, ServerRPC를 호출하지 않음
+	if (FMath::Abs(InputValue - LadderMoveInput) > KINDA_SMALL_NUMBER)
+	{
+		LadderMoveInput = InputValue;
+		Server_SetLadderMoveInput(InputValue);
+	}
 }
 
 ```
-Ability 내부의 UAbilityTask_WaitGameplayEvent가 Event를 받아서 Bind 된 Callback 함수를 호출
-Callback 함수에서 AbilityState를 변경하고, 입력이 왔을 때 해당 상태에 맞게 Ability 작동
-
