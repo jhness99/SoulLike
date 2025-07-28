@@ -1,6 +1,6 @@
 # SoulLike Action RPG
 
-![Main](Images/Main.png)
+![Main](Images/main.png)
 
 # 목차
 1. [프로젝트 개요](#프로젝트-개요)
