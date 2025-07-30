@@ -62,7 +62,7 @@ void UTargetLockGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandl
 	}
 	else
 	{
-		//Trace 실패
+		//SingleTraceFromCameraLocation 실패시
 		TArray<FHitResult> TargetHitResults;
 
 		//카메라 각도(애임)을 기준으로 MultiTrace 시도
