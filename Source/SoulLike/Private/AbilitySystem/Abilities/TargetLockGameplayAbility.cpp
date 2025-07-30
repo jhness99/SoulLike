@@ -40,6 +40,7 @@ void UTargetLockGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandl
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	//클라이언트에서만 실행
 	if(!IsLocallyControlled()) return;
 	
 	const bool bDebug = static_cast<bool>(CVarShowTargetLockTrace.GetValueOnAnyThread());
@@ -47,28 +48,34 @@ void UTargetLockGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandl
 	FHitResult AimHitResult;
 	FTraceProperties AnimTraceProperties(TraceLength, SingleTraceCollisionChannel, SingleTraceSphereRadius, DebugLifeTime);
 	FTraceProperties MultiTraceProperties(TraceLength, MultiTraceCollisionChannel, MultiTraceSphereRadius, DebugLifeTime);
-	
+
+	//카메라 각도(애임)을 기준으로 한 Trace 시도
 	if(USoulLikeFunctionLibrary::SingleTraceFromCameraLocation(GetAvatarActorFromActorInfo(), AimHitResult, AnimTraceProperties, bDebug))
 	{
+		//Trace 성공
 		bIsTargetLock = true;
 		if(AimHitResult.GetActor())
 		{
+			//타겟 지정
 			TargetActor = AimHitResult.GetActor();
 		}
 	}
 	else
 	{
+		//Trace 실패
 		TArray<FHitResult> TargetHitResults;
-		
+
+		//카메라 각도(애임)을 기준으로 MultiTrace 시도
 		if(USoulLikeFunctionLibrary::MultiTraceFromCameraLocation(GetAvatarActorFromActorInfo(), TargetHitResults, MultiTraceProperties, bDebug))
 		{
 			float NearestDistance = 5000.f;
-
+			
 			for(const FHitResult& TargetHitResult : TargetHitResults)
 			{
 				AActor* CurrentTargetActor = TargetHitResult.GetActor();
 				if(CurrentTargetActor == nullptr) return;
 
+				//캐릭터와의 거리가 가장 가까운 Enemy 타겟으로 지정
 				float DistanceToTarget = FVector::Distance(GetAvatarActorFromActorInfo()->GetActorLocation(), CurrentTargetActor->GetActorLocation());
 
 				if(DistanceToTarget < NearestDistance)

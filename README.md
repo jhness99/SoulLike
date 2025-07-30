@@ -38,44 +38,44 @@ InventoryComponent를 통해 Inventory를 관리한다. 아이템의 기능과 �
 USTRUCT(BlueprintType)
 struct FItemDataTable
 {
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UDataTable> DataTable;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTag ItemTypeTag = FGameplayTag();
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UItemData> ItemDataClass;
+    GENERATED_BODY()
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TObjectPtr<UDataTable> DataTable;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    FGameplayTag ItemTypeTag = FGameplayTag();
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TSubclassOf<UItemData> ItemDataClass;
 };
 
 ...
 //FSL_ItemData의 하위구조체를 기반으로 UItemData를 생성하고 초기화 해주는 함수
 UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID) const
 {
-	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
-	
-	for(const FItemDataTable& ItemDataTableStruct : ItemDataTables)
-	{
-		if(ItemType.MatchesTagExact(ItemDataTableStruct.ItemTypeTag))
-		{
-			FSL_ItemData* ItemData = ItemDataTableStruct.DataTable->FindRow<FSL_ItemData>(ItemID, FString("Not Found"));
-			if(ItemData == nullptr) return nullptr;
-
-			if (Outer && ItemDataTableStruct.ItemDataClass != nullptr)
-			{
-			        //등록되어있는 ItemDataClass로 형 변환해서 생성
-				UItemData* ItemDataObject = NewObject<UItemData>(Outer, ItemDataTableStruct.ItemDataClass.Get());
-				ItemDataObject->Init(ItemData);
-
-				return ItemDataObject;
-			}
-		
-		}
-	}
-	
-	return nullptr;
+    const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+    
+    for(const FItemDataTable& ItemDataTableStruct : ItemDataTables)
+    {
+        if(ItemType.MatchesTagExact(ItemDataTableStruct.ItemTypeTag))
+        {
+            FSL_ItemData* ItemData = ItemDataTableStruct.DataTable->FindRow<FSL_ItemData>(ItemID, FString("Not Found"));
+            if(ItemData == nullptr) return nullptr;
+    
+            if (Outer && ItemDataTableStruct.ItemDataClass != nullptr)
+            {
+                    //등록되어있는 ItemDataClass로 형 변환해서 생성
+                UItemData* ItemDataObject = NewObject<UItemData>(Outer, ItemDataTableStruct.ItemDataClass.Get());
+                ItemDataObject->Init(ItemData);
+    
+                return ItemDataObject;
+            }
+        
+        }
+    }
+    
+    return nullptr;
 }
 ```
 ### SoulLikeItemTypes.h
@@ -116,47 +116,47 @@ DataTable에 저장된 FSL_ItemData를 UItemData로 변환 과정
 bool USoulLikeFunctionLibrary::MakeWidgetControllerParams(const UObject* WorldContextObject,
                                                           ASoulLikeHUD*& OutSoulLikeHUD, FWidgetControllerParams& OutWCParams)
 {
-	if(APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
-	{
-		OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
-		if(OutSoulLikeHUD != nullptr)
-		{
-			ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
-			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-			UAttributeSet* AS = PS->GetAttributeSet();
-			OutWCParams.PlayerController = PC;
-			OutWCParams.PlayerState = PS;
-			OutWCParams.AbilitySystemComponent = ASC;
-			OutWCParams.AttributeSet = AS;
-			return true;
-		}
-	}
-	return false;
+    if(APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
+    {
+        OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
+        if(OutSoulLikeHUD != nullptr)
+        {
+            ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
+            UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+            UAttributeSet* AS = PS->GetAttributeSet();
+            OutWCParams.PlayerController = PC;
+            OutWCParams.PlayerState = PS;
+            OutWCParams.AbilitySystemComponent = ASC;
+            OutWCParams.AttributeSet = AS;
+            return true;
+        }
+    }
+    return false;
 }
-
+    
 UInventoryWidgetController* USoulLikeFunctionLibrary::GetInventoryWidgetController(const UObject* WorldContextObject)
 {
-	FWidgetControllerParams Params;
-	ASoulLikeHUD* SoulLikeHUD;
-	const bool bSuccessfulMakingParams = MakeWidgetControllerParams(WorldContextObject, SoulLikeHUD, Params);
-	if(bSuccessfulMakingParams)
-	{
-		return SoulLikeHUD->GetInventoryWidgetController(Params);
-	}
-	return nullptr;
+    FWidgetControllerParams Params;
+    ASoulLikeHUD* SoulLikeHUD;
+    const bool bSuccessfulMakingParams = MakeWidgetControllerParams(WorldContextObject, SoulLikeHUD, Params);
+    if(bSuccessfulMakingParams)
+    {
+        return SoulLikeHUD->GetInventoryWidgetController(Params);
+    }
+    return nullptr;
 }
 ```
 ### SoulLikeHUD.cpp
 ```c++
 UInventoryWidgetController* ASoulLikeHUD::GetInventoryWidgetController(const FWidgetControllerParams& WCParams)
 {
-	if(InventoryWidgetController == nullptr){
+    if(InventoryWidgetController == nullptr){
     
-		InventoryWidgetController = NewObject<UInventoryWidgetController>(this, InventoryWidgetControllerClass);
-		InventoryWidgetController->SetWidgetControllerParams(WCParams);
-		InventoryWidgetController->BindCallbacksToModels();
-	}
-	return InventoryWidgetController;
+        InventoryWidgetController = NewObject<UInventoryWidgetController>(this, InventoryWidgetControllerClass);
+        InventoryWidgetController->SetWidgetControllerParams(WCParams);
+        InventoryWidgetController->BindCallbacksToModels();
+    }
+    return InventoryWidgetController;
 }
 ```
 WidgetController와 Widget, Model들과 WidgetController는 Delegate를 통해 통신     
