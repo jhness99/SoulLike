@@ -25,7 +25,7 @@ class SOULLIKE_API USoulLikeGameInstance : public UGameInstance
 public:
 
 	virtual void Init() override;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
 	TObjectPtr<UItemDataAsset> ItemDataAsset;
 	

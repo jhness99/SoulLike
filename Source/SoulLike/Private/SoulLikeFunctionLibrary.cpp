@@ -39,6 +39,7 @@ bool USoulLikeFunctionLibrary::MakeWidgetControllerParams(const UObject* WorldCo
 		if(OutSoulLikeHUD != nullptr)
 		{
 			ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
+			if(PS == nullptr) return false;
 			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
 			UAttributeSet* AS = PS->GetAttributeSet();
 			OutWCParams.PlayerController = PC;

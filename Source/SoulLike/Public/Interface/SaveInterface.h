@@ -31,4 +31,10 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void LoadActor();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool IsDirty() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void MarkAsClean();
 };

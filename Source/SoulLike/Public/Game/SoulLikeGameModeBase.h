@@ -20,6 +20,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 SaveSlotData(const FString& PlayerName);
+	UFUNCTION(BlueprintCallable)
+	void DeleteSaveSlotData(int32 SlotIndex);
 
 	void SaveWorldObject(UWorld* World) const;
 	void LoadWorldObject(UWorld* World) const;

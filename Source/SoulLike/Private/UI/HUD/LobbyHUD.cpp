@@ -4,6 +4,7 @@
 #include "UI/HUD/LobbyHUD.h"
 
 #include "UI/Widgets/SoulLikeUserWidget.h"
+#include "UI/WidgetController/ConfirmMenuWidgetController.h"
 
 void ALobbyHUD::BeginPlay()
 {
@@ -11,4 +12,13 @@ void ALobbyHUD::BeginPlay()
 
 	LobbyMenu = CreateWidget<USoulLikeUserWidget>(GetWorld(), LobbyMenuWidgetClass);
 	LobbyMenu->AddToViewport();
+}
+
+UConfirmMenuWidgetController* ALobbyHUD::GetConfirmMenuWidgetController()
+{
+	if(ConfirmMenuWidgetController == nullptr){
+    
+		ConfirmMenuWidgetController = NewObject<UConfirmMenuWidgetController>(this, ConfirmMenuWidgetControllerClass);
+	}
+	return ConfirmMenuWidgetController;
 }

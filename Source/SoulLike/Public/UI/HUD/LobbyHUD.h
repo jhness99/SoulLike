@@ -18,11 +18,20 @@ class SOULLIKE_API ALobbyHUD : public AHUD
 
 public:
 
+	UFUNCTION(BlueprintPure)
+	UConfirmMenuWidgetController* GetConfirmMenuWidgetController();
+
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<USoulLikeUserWidget> LobbyMenuWidgetClass;
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<USoulLikeUserWidget> LobbyMenu;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UConfirmMenuWidgetController> ConfirmMenuWidgetControllerClass;
+
+	UPROPERTY()
+	TObjectPtr<UConfirmMenuWidgetController> ConfirmMenuWidgetController;
 
 protected:
 

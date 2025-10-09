@@ -35,6 +35,16 @@ int32 ASoulLikeGameModeBase::SaveSlotData(const FString& PlayerName)
 	return SaveFiles.Num();
 }
 
+void ASoulLikeGameModeBase::DeleteSaveSlotData(int32 SlotIndex)
+{
+	USoulLikeGameInstance* SL_GameInstance = Cast<USoulLikeGameInstance>(GetGameInstance());
+	check(SL_GameInstance);
+
+	const FString SlotName = FString::Printf(TEXT("%s_%d"), *SL_GameInstance->LoadSlotName, SlotIndex);
+	
+	UGameplayStatics::DeleteGameInSlot(SlotName, SlotIndex);
+}
+
 void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World) const
 {
 	if(World == nullptr) return;
@@ -148,6 +158,7 @@ void ASoulLikeGameModeBase::SaveInGameProgressData(USoulLikeSaveGame *SaveObject
 	const int32 InGameLoadSlotIndex = SoulLikeGameInstance->LoadSlotIndex;
 
 	UGameplayStatics::SaveGameToSlot(SaveObject, InGameLoadSlotName, InGameLoadSlotIndex);
+	
 }
 
 USoulLikeSaveGame* ASoulLikeGameModeBase::GetSaveSlotData(const FString &SlotName, int32 SlotIndex) const
@@ -178,6 +189,6 @@ void ASoulLikeGameModeBase::TravelToMap(int32 SlotIndex)
 	if(SoulLikeGameInstance == nullptr) return;
 
 	SoulLikeGameInstance->LoadSlotIndex = SlotIndex;
-	
+
 	UGameplayStatics::OpenLevelBySoftObjectPtr(this, GameMap);
 }
