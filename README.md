@@ -20,7 +20,6 @@
 Unreal Engine 5 Portfolio
 - Unreal Engine 5 버전 : 5.4.4
 - 에디터 : VSCode, Rider
-- 제작기간 : 2025.03~2025.06 (4개월)
 - 개발 인원 : 1인개발
 
 소울라이크 액션을 레퍼런스로 한 액션 RPG     
