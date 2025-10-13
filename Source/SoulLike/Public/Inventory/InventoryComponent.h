@@ -7,6 +7,7 @@
 #include "Inventory/InventoryList.h"
 #include "SoulLikeItemTypes.h"
 #include "Game/SoulLikeSaveGame.h"
+#include "Interface/SaveInterface.h"
 #include "InventoryComponent.generated.h"
 
 
@@ -72,6 +73,9 @@ public:
 	// FOnRegistedItemSignature OnRegistedItem;
 	FOnRegistedItemSignature RefreshRegistSlotAtOverlay;
 	FOnPickedUpItemSignature PickedUpDelegate;
+
+	//Save Interface
+	FMarkAsDirtyDelegate MarkAsDirtyDelegate;
 
 protected:
 	

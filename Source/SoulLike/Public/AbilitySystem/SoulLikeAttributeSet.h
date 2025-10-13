@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
+#include "Interface/SaveInterface.h"
 #include "SoulLikeAttributeSet.generated.h"
 
 /**
@@ -285,6 +286,8 @@ public:
 	UFUNCTION()
 	void OnRep_LightningDamageBoost(const FGameplayAttributeData& OldLightningDamageBoost) const;
 
+	//Save Interface
+	FMarkAsDirtyDelegate MarkAsDirtyDelegate;
 	
 private:
 

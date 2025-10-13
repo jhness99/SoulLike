@@ -13,9 +13,8 @@ class USaveInterface : public UInterface
 	GENERATED_BODY()
 };
 
-/**
- * 
- */
+DECLARE_DELEGATE(FMarkAsDirtyDelegate);
+
 class SOULLIKE_API ISaveInterface
 {
 	GENERATED_BODY()
@@ -31,10 +30,8 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void LoadActor();
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool IsDirty() const;
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void MarkAsClean();
+	
+	virtual bool IsDirty() const = 0;
+	virtual void MarkAsDirty() = 0;
+	virtual void MarkAsClean() = 0;
 };

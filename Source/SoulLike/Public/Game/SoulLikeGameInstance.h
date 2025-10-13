@@ -56,4 +56,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	int32 LoadSlotIndex = 0;
+
+	/** AutoSaveSubsystem Properties*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AutoSaveSubsystem")
+	float AutoSaveFrequency = 60.f;
 };

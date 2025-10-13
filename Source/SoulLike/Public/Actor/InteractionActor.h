@@ -26,9 +26,13 @@ public:
 	virtual FGameplayTag GetInteractionTag_Implementation() const override { return InteractionTag; }
 	virtual FString GetActorName_Implementation() const override { return ActorName; }
 	virtual const FInteractionTaskInfo GetInteractionActorInfo_Implementation() const override;
+	virtual void Interaction_Implementation(AActor* InteractionActor) override;
 
 	/** Save Interface */
 	bool GetIsUsedObject_Implementation() const override;
+	virtual bool IsDirty() const override;
+	virtual void MarkAsDirty() override;
+	virtual void MarkAsClean() override;
 
 private:
 	
@@ -40,4 +44,8 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess=true))
 	FString ActorName = FString("");
+
+	//Save Interface
+	UPROPERTY(Transient)
+	bool bIsDirty = false;
 };

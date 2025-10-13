@@ -31,7 +31,7 @@ public:
 	
 	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
 	virtual UAnimMontage* GetRiposteReactMontage_Implementation() override;
-
+	
 	UCameraComponent* GetPlayerCameraComponent() const;
 	float GetMouseXInput() const;
 
@@ -92,4 +92,5 @@ private:
 	FTransform RespawnPoint;
 
 	FTimerHandle RebirthTimerHandle;
+	
 };

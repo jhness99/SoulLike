@@ -29,6 +29,9 @@ protected:
 
 	/** Save Interface */
 	bool GetIsUsedObject_Implementation() const override;
+	virtual bool IsDirty() const override;
+	virtual void MarkAsDirty() override;
+	virtual void MarkAsClean() override;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<USceneComponent> Root;
@@ -70,4 +73,8 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SpawnData", meta=(AllowPrivateAccess=true))
 	bool bIsBoss = false;
+
+	//Save Interface
+	UPROPERTY(Transient)
+	bool bIsDirty = false;
 };

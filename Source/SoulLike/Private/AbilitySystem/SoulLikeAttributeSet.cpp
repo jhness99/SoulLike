@@ -15,6 +15,7 @@
 
 #include "Net/UnrealNetwork.h"
 
+
 TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> USoulLikeAttributeSet::TagsToAttributes;
 
 USoulLikeAttributeSet::USoulLikeAttributeSet()

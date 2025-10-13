@@ -21,7 +21,27 @@ const FInteractionTaskInfo AInteractionActor::GetInteractionActorInfo_Implementa
 	return USoulLikeFunctionLibrary::GetInteractionTaskInfoForTag(this, InteractionTag);
 }
 
+void AInteractionActor::Interaction_Implementation(AActor* InteractionActor)
+{
+	MarkAsDirty();
+}
+
 bool AInteractionActor::GetIsUsedObject_Implementation() const
 {
 	return false;
+}
+
+bool AInteractionActor::IsDirty() const
+{
+	return bIsDirty;
+}
+
+void AInteractionActor::MarkAsDirty()
+{
+	bIsDirty = true;
+}
+
+void AInteractionActor::MarkAsClean()
+{
+	bIsDirty = false;
 }

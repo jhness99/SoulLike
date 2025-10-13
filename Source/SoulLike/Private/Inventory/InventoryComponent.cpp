@@ -343,6 +343,11 @@ void UInventoryComponent::RegistItem_Implementation(URegisterableItemInstance* I
 	if(!ItemInstance) return;
 	FEquipmentInventoryList& EquipmentSlot = FindEquipmentSlotWithTag(SlotTag);
 	if(EquipmentSlot.GetMaxIndex() <= Index) return;
+
+	if(MarkAsDirtyDelegate.IsBound())
+	{
+		MarkAsDirtyDelegate.Execute();
+	}
 	
 	URegisterableItemInstance* CurrentItem = EquipmentSlot.GetEquipmentItemInstance(Index);
 
@@ -457,6 +462,11 @@ void UInventoryComponent::EquipItem()
 void UInventoryComponent::AddItemToInventoryList(FInventoryData InventoryData)
 {
 	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+
+	if(MarkAsDirtyDelegate.IsBound())
+	{
+		MarkAsDirtyDelegate.Execute();
+	}
 	
 	UInventoryItemInstance* ItemInstance;
 	
@@ -495,6 +505,11 @@ void UInventoryComponent::UpgradeItem(URegisterableItemInstance* ItemInstance)
 {
 	if(ItemInstance == nullptr) return;
 
+	if(MarkAsDirtyDelegate.IsBound())
+	{
+		MarkAsDirtyDelegate.Execute();
+	}
+	
 	const int32 CurrentUpgradeLevel = ItemInstance->GetUpgradeLevel();
 	const int32 CurrentUpgradeMaterial = GetItemNumWithTag(FSoulLikeGameplayTags::Get().ItemType_Item_UpgradeMaterial);
 
@@ -513,6 +528,11 @@ void UInventoryComponent::UpdateInventoryListToWidgetController() const
 	if(UInventoryWidgetController* InventoryWC = USoulLikeFunctionLibrary::GetInventoryWidgetController(this))
 	{
 		InventoryWC->OnChangedInventory.Broadcast(InventoryList);
+
+		if(MarkAsDirtyDelegate.IsBound())
+		{
+			MarkAsDirtyDelegate.Execute();
+		}
 	}
 }
 

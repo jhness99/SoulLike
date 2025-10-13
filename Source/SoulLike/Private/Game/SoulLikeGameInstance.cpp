@@ -2,10 +2,10 @@
 
 
 #include "Game/SoulLikeGameInstance.h"
+
+#include "Game/AutoSaveSubsystem.h"
 #include "Game/ObjectPoolingSubsystem.h"
 
-#include "Perception/AIPerceptionSystem.h"
-#include "Perception/AISense_Damage.h"
 
 void USoulLikeGameInstance::Init()
 {
@@ -16,5 +16,10 @@ void USoulLikeGameInstance::Init()
 		PoolSubsystem->EnemyDataAssset = this->EnemyDataAssset;
 		PoolSubsystem->MaxPoolSize = this->MaxPoolSize;
 		PoolSubsystem->MaxMobGenerateDistance = this->MaxMobGenerateDistance;
+	}
+
+	if (UAutoSaveSubsystem* AutoSaveSubsystem = GetSubsystem<UAutoSaveSubsystem>())
+	{
+		AutoSaveSubsystem->AutoSaveFrequency = AutoSaveFrequency;
 	}
 }

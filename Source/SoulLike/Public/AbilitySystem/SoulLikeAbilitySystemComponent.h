@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
 #include "SoulLikeAbilityTypes.h"
+#include "Interface/SaveInterface.h"
 #include "SoulLikeAbilitySystemComponent.generated.h"
 
 class UKeybindMenuWidgetController;
@@ -56,6 +57,9 @@ public:
 	FGameplayTag GetInputTagFromAbilityTag(const FGameplayTag& AbilityTag);
 	
 	FOnInputTagStartedWaitingSignature WaitInputDelegate;
+
+	//Save Interface
+	FMarkAsDirtyDelegate MarkAsDirtyDelegate;
 
 protected:
 

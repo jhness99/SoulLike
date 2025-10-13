@@ -10,6 +10,7 @@
 
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/SoulLikePlayerState.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 
@@ -58,6 +59,14 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World) const
 			AActor* Actor = *It;
 	
 			if(!IsValid(Actor) || !Actor->Implements<USaveInterface>()) continue;
+
+			if(TScriptInterface<ISaveInterface> SaveInterface = Actor)
+			{
+				if(!SaveInterface->IsDirty() || Actor->Implements<ASoulLikePlayerState>())
+				{
+					continue;
+				}
+			}
 	
 			FSavedActor SavedActor;
 			SavedActor.ActorName = Actor->GetFName();

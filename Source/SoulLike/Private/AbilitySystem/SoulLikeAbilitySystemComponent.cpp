@@ -13,6 +13,9 @@
 
 #include "UI/WidgetController/KeybindMenuWidgetController.h"
 
+#include "Kismet/GameplayStatics.h"
+
+#include "Player/SoulLikePlayerState.h"
 
 void USoulLikeAbilitySystemComponent::GiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities, APawn* Instigator)
 {
@@ -30,6 +33,10 @@ void USoulLikeAbilitySystemComponent::GiveAbilities(const TArray<TSubclassOf<UGa
 		}
 		AbilitySpec.SourceObject = Instigator;
 		GiveAbility(AbilitySpec);
+		if(MarkAsDirtyDelegate.IsBound())
+		{
+			MarkAsDirtyDelegate.Execute();
+		}
 	}
 }
 
@@ -82,6 +89,11 @@ void USoulLikeAbilitySystemComponent::ChangeAbilityInputTag(UKeybindMenuWidgetCo
 		
 		KeybindMenuWidgetController->SelectedAbilityTag = FGameplayTag();
 		KeybindMenuWidgetController->OnReceiveInputTagDelegate.Broadcast(SelectedAbilityTag);
+	}
+
+	if(MarkAsDirtyDelegate.IsBound())
+	{
+		MarkAsDirtyDelegate.Execute();
 	}
 }
 

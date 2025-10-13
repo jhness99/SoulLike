@@ -27,6 +27,7 @@
 #include "AbilitySystem/SoulLikeAbilitySystemLibrary.h"
 #include "AbilitySystem/Data/AbilityInfo.h"
 #include "Character/Data/CharacterDataAsset.h"
+#include "Game/AutoSaveSubsystem.h"
 #include "Game/ObjectPoolingSubsystem.h"
 #include "Game/SoulLikeGameInstance.h"
 #include "Game/SoulLikeGameModeBase.h"
@@ -140,6 +141,7 @@ UAnimMontage* ASoulLikeCharacter::GetRiposteReactMontage_Implementation()
 	}
 	return nullptr;
 }
+
 UCameraComponent* ASoulLikeCharacter::GetPlayerCameraComponent() const
 {
 	return CameraComponent;
@@ -166,13 +168,14 @@ void ASoulLikeCharacter::LoadProgress()
 {
 	if(!HasAuthority()) return;
 	ASoulLikeGameModeBase* SL_GameMode = Cast<ASoulLikeGameModeBase>(UGameplayStatics::GetGameMode(this));
+	ASoulLikePlayerState* SL_PlayerState = Cast<ASoulLikePlayerState>(GetPlayerState());
 	
 	if(UObjectPoolingSubsystem* ObjectPoolingSubsystem = GetGameInstance()->GetSubsystem<UObjectPoolingSubsystem>())
 	{
 		ObjectPoolingSubsystem->Init();
 	}
 	
-	if(SL_GameMode)
+	if(SL_GameMode && SL_PlayerState)
 	{
 		if(InventoryComponent)
 		{
@@ -201,12 +204,9 @@ void ASoulLikeCharacter::LoadProgress()
 				SL_ASC->GiveAbilitiesFromSaveData(SaveData, this);
 			}
 
-			if(ASoulLikePlayerState* SoulLikePlayerState = Cast<ASoulLikePlayerState>(GetPlayerState())){
-        
-				SoulLikePlayerState->SetPlayerLevel(SaveData->PlayerLevel);
-				SoulLikePlayerState->SetExp(SaveData->EXP);
-				SoulLikePlayerState->SetMaxPotion(SaveData->MaxPotion);
-			}
+			SL_PlayerState->SetPlayerLevel(SaveData->PlayerLevel);
+			SL_PlayerState->SetExp(SaveData->EXP);
+			SL_PlayerState->SetMaxPotion(SaveData->MaxPotion);
         
 			USoulLikeAbilitySystemLibrary::InitializeDefaultAttributesFromSaveData(this, AbilitySystemComponent, SaveData);
 
@@ -221,8 +221,13 @@ void ASoulLikeCharacter::LoadProgress()
     	
 			SetActorTransform(SaveData->Transform);
 		}
-
+		
+		SL_PlayerState->MarkAsClean();
 		SL_GameMode->LoadWorldObject(GetWorld());
+	}
+	if(UAutoSaveSubsystem* AutoSaveSubsystem = GetGameInstance()->GetSubsystem<UAutoSaveSubsystem>())
+	{
+		AutoSaveSubsystem->Init();
 	}
 }
 
@@ -321,59 +326,63 @@ void ASoulLikeCharacter::SaveProgress_Implementation() const
 {
 	if(!IsLocallyControlled()) return;
 	ASoulLikeGameModeBase* AuraGameMode = Cast<ASoulLikeGameModeBase>(UGameplayStatics::GetGameMode(this));
+	ASoulLikePlayerState* AuraPlayerState = Cast<ASoulLikePlayerState>(GetPlayerState());
 	if(!IsValid(AuraGameMode)) return;
-    if(AuraGameMode)
+    if(AuraGameMode && AuraPlayerState)
     {
         USoulLikeSaveGame* SaveData = AuraGameMode->RetrieveInGameSaveData();
         if(SaveData == nullptr) return;
 
     	SaveData->bFirstTimeLoadIn = false;	
     	
-        if(ASoulLikePlayerState* AuraPlayerState = Cast<ASoulLikePlayerState>(GetPlayerState()))
+        if(AuraPlayerState->IsDirty())
         {
-            SaveData->PlayerLevel = AuraPlayerState->GetPlayerLevel();
-            SaveData->EXP = AuraPlayerState->GetExp();
-        	SaveData->MaxPotion = AuraPlayerState->GetMaxPotion();
-        }
-    	SaveData->Vigor = USoulLikeAttributeSet::GetVigorAttribute().GetNumericValue(GetAttributeSet());
-    	SaveData->Mind = USoulLikeAttributeSet::GetMindAttribute().GetNumericValue(GetAttributeSet());
-    	SaveData->Endurance = USoulLikeAttributeSet::GetEnduranceAttribute().GetNumericValue(GetAttributeSet());
-        SaveData->Strength = USoulLikeAttributeSet::GetStrengthAttribute().GetNumericValue(GetAttributeSet());
-    	SaveData->Dexterity = USoulLikeAttributeSet::GetDexterityAttribute().GetNumericValue(GetAttributeSet());
-        SaveData->Intelligence = USoulLikeAttributeSet::GetIntelligenceAttribute().GetNumericValue(GetAttributeSet());
-    	
-        USoulLikeAbilitySystemComponent* SL_ASC = Cast<USoulLikeAbilitySystemComponent>(AbilitySystemComponent);
-        FForEachAbility SaveAbilityDelegate;
-        SaveData->SavedAbilities.Empty();
-        SaveAbilityDelegate.BindLambda([this, SL_ASC, SaveData](const FGameplayAbilitySpec& AbilitySpec)
-        {
-            const FGameplayTag AbilityTag = SL_ASC->GetAbilityTagFromSpec(AbilitySpec);
-            UAbilityInfo* AbilityInfo = USoulLikeFunctionLibrary::GetAbilityInfo(this);
-            FSoulLikeAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
-        
-            FSavedAbility SavedAbility;
-            SavedAbility.GameplayAbility = Info.Ability;
-            SavedAbility.InputTag = SL_ASC->GetInputTagFromAbilityTag(AbilityTag);
-            SavedAbility.AbilityTag = AbilityTag;
-            SavedAbility.AbilityType = Info.AbilityType;
-        
-            SaveData->SavedAbilities.AddUnique(SavedAbility);
-        });
-        SL_ASC->ForEachAbility(SaveAbilityDelegate);
-
-    	if(InventoryComponent)
-    	{
-    		SaveData->SavedItems = InventoryComponent->GetSavedItemFromInventoryList();
+	        SaveData->PlayerLevel = AuraPlayerState->GetPlayerLevel();
+	        SaveData->EXP = AuraPlayerState->GetExp();
+	        SaveData->MaxPotion = AuraPlayerState->GetMaxPotion();
     		
-    		SaveData->RightWeaponSlotIndex = InventoryComponent->GetRightWeaponSlotIndex();
-    		SaveData->LeftWeaponSlotIndex = InventoryComponent->GetLeftWeaponSlotIndex();
-    		SaveData->ToolSlotIndex = InventoryComponent->GetToolSlotIndex();
-    	}
+    		SaveData->Vigor = USoulLikeAttributeSet::GetVigorAttribute().GetNumericValue(GetAttributeSet());
+    		SaveData->Mind = USoulLikeAttributeSet::GetMindAttribute().GetNumericValue(GetAttributeSet());
+    		SaveData->Endurance = USoulLikeAttributeSet::GetEnduranceAttribute().GetNumericValue(GetAttributeSet());
+	        SaveData->Strength = USoulLikeAttributeSet::GetStrengthAttribute().GetNumericValue(GetAttributeSet());
+    		SaveData->Dexterity = USoulLikeAttributeSet::GetDexterityAttribute().GetNumericValue(GetAttributeSet());
+	        SaveData->Intelligence = USoulLikeAttributeSet::GetIntelligenceAttribute().GetNumericValue(GetAttributeSet());
+    		
+	        USoulLikeAbilitySystemComponent* SL_ASC = Cast<USoulLikeAbilitySystemComponent>(AbilitySystemComponent);
+	        FForEachAbility SaveAbilityDelegate;
+	        SaveData->SavedAbilities.Empty();
+	        SaveAbilityDelegate.BindLambda([this, SL_ASC, SaveData](const FGameplayAbilitySpec& AbilitySpec)
+	        {
+	            const FGameplayTag AbilityTag = SL_ASC->GetAbilityTagFromSpec(AbilitySpec);
+	            UAbilityInfo* AbilityInfo = USoulLikeFunctionLibrary::GetAbilityInfo(this);
+	            FSoulLikeAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	        
+	            FSavedAbility SavedAbility;
+	            SavedAbility.GameplayAbility = Info.Ability;
+	            SavedAbility.InputTag = SL_ASC->GetInputTagFromAbilityTag(AbilityTag);
+	            SavedAbility.AbilityTag = AbilityTag;
+	            SavedAbility.AbilityType = Info.AbilityType;
+	        
+	            SaveData->SavedAbilities.AddUnique(SavedAbility);
+	        });
+	        SL_ASC->ForEachAbility(SaveAbilityDelegate);
+
+    		if(InventoryComponent)
+    		{
+    			SaveData->SavedItems = InventoryComponent->GetSavedItemFromInventoryList();
+    			
+    			SaveData->RightWeaponSlotIndex = InventoryComponent->GetRightWeaponSlotIndex();
+    			SaveData->LeftWeaponSlotIndex = InventoryComponent->GetLeftWeaponSlotIndex();
+    			SaveData->ToolSlotIndex = InventoryComponent->GetToolSlotIndex();
+    		}
+        }
     	
     	SaveData->Transform = GetActorTransform();
 
         AuraGameMode->SaveInGameProgressData(SaveData);
     	AuraGameMode->SaveWorldObject(GetWorld());
+    	
+    	AuraPlayerState->MarkAsClean();
     }
 }
 

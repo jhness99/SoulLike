@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerState.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/SoulLikeAttributeSet.h"
+#include "Interface/SaveInterface.h"
 #include "SoulLikePlayerState.generated.h"
 
 class UAbilitySystemComponent;
@@ -13,6 +14,7 @@ class UAttributeSet;
 class USoulLikeAttributeSet;
 class UInventoryComponent;
 class UEquipmentData;
+class ISaveInterface;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChanged, int32);
 
@@ -20,7 +22,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChanged, int32);
  * 
  */
 UCLASS()
-class SOULLIKE_API ASoulLikePlayerState : public APlayerState, public IAbilitySystemInterface
+class SOULLIKE_API ASoulLikePlayerState : public APlayerState, public IAbilitySystemInterface, public ISaveInterface
 {
 	GENERATED_BODY()
 
@@ -48,7 +50,14 @@ public:
 	FOnPlayerStatChanged OnExpChangedDelegate;
 	FOnPlayerStatChanged OnMaxPotionChangedDelegate;
 
+	//Save Interface
+	virtual bool IsDirty() const override;
+	virtual void MarkAsDirty() override;
+	virtual void MarkAsClean() override;
+
 protected:
+
+	virtual void PostInitializeComponents() override;
 
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -79,4 +88,9 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_MaxPotionNum(int32 OldMaxPotionNum);
+
+private:
+
+	UPROPERTY(Transient)
+	bool bIsDirty = false;
 };

@@ -101,9 +101,25 @@ bool ASpawnPointActor::GetIsUsedObject_Implementation() const
 	return false;
 }
 
+bool ASpawnPointActor::IsDirty() const
+{
+	return bIsDirty;
+}
+
+void ASpawnPointActor::MarkAsDirty()
+{
+	bIsDirty = true;
+}
+
+void ASpawnPointActor::MarkAsClean()
+{
+	bIsDirty = false;
+}
+
 void ASpawnPointActor::OnDeathEnemy()
 {
 	bIsDeadEnemy = true;
+	MarkAsDirty();
 }
 
 void ASpawnPointActor::OnResetLevel()
