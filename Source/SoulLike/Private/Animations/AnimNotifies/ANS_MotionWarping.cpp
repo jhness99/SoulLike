@@ -11,7 +11,9 @@
 UANS_MotionWarping::UANS_MotionWarping(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+#if WITH_EDITOR	
 	bShouldFireInEditor = false;
+#endif
 }
 
 void UANS_MotionWarping::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,

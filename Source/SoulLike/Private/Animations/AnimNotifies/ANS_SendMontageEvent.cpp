@@ -8,7 +8,9 @@
 
 UANS_SendMontageEvent::UANS_SendMontageEvent()
 {
+#if WITH_EDITOR	
 	bShouldFireInEditor = false;
+#endif
 }
 
 void UANS_SendMontageEvent::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,

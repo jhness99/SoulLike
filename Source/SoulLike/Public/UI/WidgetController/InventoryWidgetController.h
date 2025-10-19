@@ -9,7 +9,7 @@
 #include "GameplayTagContainer.h"
 #include "InventoryWidgetController.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChangedInventorySignature, const FInventoryList&, InventoryList);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnChangedInventorySignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpgradedItemSignature, URegisterableItemInstance*, ItemInstance);
 
 /**
@@ -54,6 +54,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	FGameplayTag SelectedSlotTag;
+
+	UPROPERTY(BlueprintReadOnly)
+	FInventoryList InventoryList;
 
 protected:
 

@@ -89,7 +89,10 @@ protected:
 	 * InventoryData를 사용해서 ItemData를 생성
 	 */
 	void SetupItemData(UObject* Outer);
-
+	
+	//test
+	virtual void BeginDestroy() override;
+	
 	/**
 	 * InventoryData가 서버에서 Replicate 될 때 클라이언트에서
 	 * ItemDataAsset에 접근해서 해당하는 ItemData를 가져옴

@@ -11,7 +11,9 @@
 
 UANS_MeleeTrace::UANS_MeleeTrace()
 {
+#if WITH_EDITOR	
 	bShouldFireInEditor = false;
+#endif
 }
 
 void UANS_MeleeTrace::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration,

@@ -44,7 +44,7 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void NextSlot(const FGameplayTag& SlotTag);
-	void UpdateInventoryListToWidgetController() const;
+	void UpdateInventoryListToWidgetController();
 
 	void UsingTool(URegisterableItemInstance*& ItemInstance);
 	void RefillPotion();
@@ -98,6 +98,9 @@ private:
 
 	int32 GetSlotIndex(const FGameplayTag& SlotTag) const;
 
+	void AddItem(UInventoryItemInstance* InItemInstance);
+	void RemoveItem(UInventoryItemInstance* InItemInstance);
+
 	UPROPERTY(Replicated)
 	TObjectPtr<UEquipmentItemInstance> CurrentRightWeapon;
 
@@ -136,5 +139,8 @@ private:
 
 	UPROPERTY(Replicated)
 	FEquipmentInventoryList ToolList;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UInventoryItemInstance>> OwnedItemInstances;
 	
 };

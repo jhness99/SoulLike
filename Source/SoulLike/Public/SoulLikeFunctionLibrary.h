@@ -115,7 +115,10 @@ public:
 	static FString GetToolTypeFromGameplayTag(const UObject* WorldContextObject, const FGameplayTag& Tag);
 
 	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|ItemData")
-	static TArray<FInventoryListItem>& GetInvenoryListItems(FInventoryList InventoryList);
+	static TArray<FInventoryListItem>& GetInvenoryListItemsRef(FInventoryList InventoryList);
+
+	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|ItemData")
+	static const TArray<FInventoryListItem>& GetInvenoryListItems(const FInventoryList& InventoryList);
 
 	/**
 	 * Gameplay Mechanics

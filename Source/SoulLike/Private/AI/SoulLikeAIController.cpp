@@ -87,7 +87,7 @@ UBehaviorTreeComponent* ASoulLikeAIController::GetBehaviorComponent() const
 
 ETeamAttitude::Type ASoulLikeAIController::GetTeamAttitudeTowards(const AActor& Other) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("GetTeamAttitudeTowards's other actor is %s"), *Other.GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("GetTeamAttitudeTowards's other actor is %s"), *Other.GetName());
 	return Super::GetTeamAttitudeTowards(Other);
 }
 

@@ -17,7 +17,7 @@ struct FInventoryListItem : public FFastArraySerializerItem
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UInventoryItemInstance> ItemInstance;
+	TObjectPtr<UInventoryItemInstance> ItemInstance = nullptr;
 
 	bool operator<(const FInventoryListItem& other) const;
 };
@@ -39,6 +39,7 @@ struct FInventoryList : public FFastArraySerializer
 	void SortItems();
 	
 	TArray<FInventoryListItem>& GetItemsRef() { return Items; }
+	const TArray<FInventoryListItem>& GetItems() const { return Items; }
 
 protected:
 	

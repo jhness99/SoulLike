@@ -5,6 +5,11 @@
 
 bool FInventoryListItem::operator<(const FInventoryListItem& other) const
 {
+	if (!ItemInstance || !other.ItemInstance)
+	{
+		return ItemInstance != nullptr;
+	}
+	
 	if(ItemInstance->GetItemType() < other.ItemInstance->GetItemType())
 	{
 		return true;
@@ -18,6 +23,12 @@ bool FInventoryListItem::operator<(const FInventoryListItem& other) const
 
 void FInventoryList::AddItem(UInventoryItemInstance* InItemInstance)
 {
+	if (!IsValid(InItemInstance))
+	{
+		//UE_LOG(LogTemp, Display, TEXT("InItemInstance not valid"));
+		return;
+	}
+	
 	FInventoryListItem& Item = Items.AddDefaulted_GetRef();
 	Item.ItemInstance = InItemInstance;
 	MarkItemDirty(Item);
@@ -25,13 +36,20 @@ void FInventoryList::AddItem(UInventoryItemInstance* InItemInstance)
 
 void FInventoryList::RemoveItem(UInventoryItemInstance* InItemInstance)
 {
+	if (!IsValid(InItemInstance))
+	{
+		return;
+	}
+	
 	for(auto ItemIter = Items.CreateIterator(); ItemIter; ++ItemIter)
 	{
-		FInventoryListItem Item = *ItemIter;
+		FInventoryListItem& Item = *ItemIter;
 		if(Item.ItemInstance && Item.ItemInstance == InItemInstance)
 		{
+			MarkItemDirty(Item);
 			ItemIter.RemoveCurrent();
-			MarkArrayDirty();
+			Item.ItemInstance = nullptr;
+			//MarkArrayDirty();
 			break;
 		}
 	}
@@ -39,52 +57,91 @@ void FInventoryList::RemoveItem(UInventoryItemInstance* InItemInstance)
 
 void FInventoryList::RemoveAll()
 {
-	for(auto ItemIter = Items.CreateIterator(); ItemIter; ++ItemIter)
-	{
-		FInventoryListItem Item = *ItemIter;
-		ItemIter.RemoveCurrent();
-		MarkArrayDirty();
-	}
+	// for(auto ItemIter = Items.CreateIterator(); ItemIter; ++ItemIter)
+	// {
+	// 	FInventoryListItem Item = *ItemIter;
+	// 	ItemIter.RemoveCurrent();
+	// 	MarkArrayDirty();
+	// }
+	Items.Empty();
+	MarkArrayDirty();
 }
 
 void FInventoryList::SortItems()
 {
-	Items.Sort();
+	// Items.Sort();
+	// MarkArrayDirty();
 }
 
 void FEquipmentInventoryList::Init(int32 InMaxIndex)
 {
 	MaxIndex = InMaxIndex;
-	for(int i = 0; i < MaxIndex; i++)
-	{
-		FInventoryListItem& Item = Items.AddDefaulted_GetRef();
-		MarkItemDirty(Item);
-	}
+	// for(int i = 0; i < MaxIndex; i++)
+	// {
+	// 	FInventoryListItem& Item = Items.AddDefaulted_GetRef();
+	// 	MarkItemDirty(Item);
+	// }
+	MaxIndex = InMaxIndex;
+	Items.Empty(); // 초기화 시 기존 아이템을 모두 비웁니다.
+	Items.SetNum(MaxIndex); // 지정된 크기만큼 null 아이템으로 채웁니다.
+	MarkArrayDirty();
 }
 
 void FEquipmentInventoryList::Register(UInventoryItemInstance* InItemInstance, int32 Index)
 {
-	if(Items[Index].ItemInstance != nullptr)
+	// if(Items[Index].ItemInstance != nullptr)
+	// {
+	// 	Items[Index].ItemInstance->SetRegisted(false);
+	// }
+	//
+	// Items[Index].ItemInstance = InItemInstance;
+	// Items[Index].ItemInstance->SetRegisted(true);
+	// MarkItemDirty(Items[Index]);
+	if (!Items.IsValidIndex(Index))
+	{
+		return;
+	}
+	if (IsValid(Items[Index].ItemInstance))
 	{
 		Items[Index].ItemInstance->SetRegisted(false);
 	}
-	
 	Items[Index].ItemInstance = InItemInstance;
-	Items[Index].ItemInstance->SetRegisted(true);
+
+	if (IsValid(Items[Index].ItemInstance))
+	{
+		Items[Index].ItemInstance->SetRegisted(true);
+	}
+    
 	MarkItemDirty(Items[Index]);
 }
 
 void FEquipmentInventoryList::UnRegister(int32 Index)
 {
-	if(Items[Index].ItemInstance == nullptr) return;
+	// if(Items[Index].ItemInstance == nullptr) return;
+	// Items[Index].ItemInstance->SetRegisted(false);
+	// Items[Index].ItemInstance = nullptr;
+	// MarkArrayDirty();
+	if (!Items.IsValidIndex(Index) || !IsValid(Items[Index].ItemInstance))
+	{
+		return;
+	}
+    
 	Items[Index].ItemInstance->SetRegisted(false);
 	Items[Index].ItemInstance = nullptr;
-	MarkArrayDirty();
+    
+	// [수정 7] 전체 배열(MarkArrayDirty) 대신 변경된 아이템만 업데이트
+	MarkItemDirty(Items[Index]);
 }
 
 UEquipmentItemInstance* FEquipmentInventoryList::GetEquipmentItemInstance(int32 Index)
 {
-	if(GetMaxIndex() <= Index) return nullptr;
-	
-	return Cast<UEquipmentItemInstance>(GetItemsRef()[Index].ItemInstance);
+	// if(GetMaxIndex() <= Index) return nullptr;
+	//
+	// return Cast<UEquipmentItemInstance>(GetItemsRef()[Index].ItemInstance);
+	if (!Items.IsValidIndex(Index))
+	{
+		return nullptr;
+	}
+    
+	return Cast<UEquipmentItemInstance>(Items[Index].ItemInstance);
 }

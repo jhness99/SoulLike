@@ -18,6 +18,7 @@
 #include "Interface/InteractionInterface.h"
 
 #include "MotionWarpingComponent.h"
+#include "OnlineSubsystem.h"
 #include "SoulLikeFunctionLibrary.h"
 
 #include "Inventory/InventoryComponent.h"
@@ -29,6 +30,7 @@
 #include "Character/Data/CharacterDataAsset.h"
 #include "Game/AutoSaveSubsystem.h"
 #include "Game/ObjectPoolingSubsystem.h"
+#include "Game/OnlineSessionSubsystem.h"
 #include "Game/SoulLikeGameInstance.h"
 #include "Game/SoulLikeGameModeBase.h"
 #include "Game/SoulLikeSaveGame.h"
@@ -48,6 +50,28 @@ ASoulLikeCharacter::ASoulLikeCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
+}
+
+void ASoulLikeCharacter::CreateOrphanObjects()
+{
+	OrphanActors.Empty(); // 이전 객체 배열 초기화
+	for (int32 i = 0; i < 10; ++i)
+	{
+		// Owner를 지정했지만 UPROPERTY()로 참조하지 않는 객체 10개를 생성합니다.
+		// 이 객체들은 생성된 직후 '고아' 상태가 됩니다.
+		AActor* NewOrphan = NewObject<AActor>(this);
+		OrphanActors.Add(NewOrphan);
+	}
+	UE_LOG(LogTemp, Error, TEXT("!!! Created 10 Orphan UObjects. Watch the logs. !!!"));
+}
+
+void ASoulLikeCharacter::ForceGarbageCollection()
+{
+	if (GEngine)
+	{
+		GEngine->ForceGarbageCollection(true);
+		UE_LOG(LogTemp, Error, TEXT("!!! Manually Forced Garbage Collection !!!"));
+	}
 }
 
 void ASoulLikeCharacter::SetWarpingLocationAndRotation(FVector Location, FRotator Rotation)
@@ -274,7 +298,10 @@ void ASoulLikeCharacter::BeginPlay()
 		GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &ASoulLikeCharacter::OnEndOverlap);
 	}
 
-	
+	// if(UOnlineSessionSubsystem* OSSS = GetGameInstance()->GetSubsystem<UOnlineSessionSubsystem>())
+	// {
+	// 	OSSS->HostSession(2, FString(""));
+	// }
 }
 
 void ASoulLikeCharacter::PossessedBy(AController* NewController)

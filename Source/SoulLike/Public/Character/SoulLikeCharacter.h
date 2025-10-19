@@ -24,6 +24,14 @@ public:
 
 	ASoulLikeCharacter();
 
+	//GC Test Func
+	TArray<AActor*> OrphanActors;
+	UFUNCTION(BlueprintCallable)
+	void CreateOrphanObjects();
+    
+	UFUNCTION(BlueprintCallable)
+	void ForceGarbageCollection();
+	
 	//Combat Interface
 	virtual void SetWarpingLocationAndRotation(FVector Location, FRotator Rotation) override;
 	virtual void SetWarpingLocation() override;

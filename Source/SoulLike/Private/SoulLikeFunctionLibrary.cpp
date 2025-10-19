@@ -286,13 +286,18 @@ FString USoulLikeFunctionLibrary::GetToolTypeFromGameplayTag(const UObject* Worl
 	return FString();
 }
 
-TArray<FInventoryListItem>& USoulLikeFunctionLibrary::GetInvenoryListItems(FInventoryList InventoryList)
+TArray<FInventoryListItem>& USoulLikeFunctionLibrary::GetInvenoryListItemsRef(FInventoryList InventoryList)
 {
 	return InventoryList.GetItemsRef();
 }
 
+const TArray<FInventoryListItem>& USoulLikeFunctionLibrary::GetInvenoryListItems(const FInventoryList& InventoryList)
+{
+	return InventoryList.GetItems();
+}
+
 AActor* USoulLikeFunctionLibrary::ClosestActorWithHitResults(const UObject* WorldContextObject,
-	const TArray<FHitResult>& HitResults)
+                                                             const TArray<FHitResult>& HitResults)
 {
 	const AActor* Instigator = Cast<AActor>(WorldContextObject);
 	if(Instigator == nullptr) return nullptr;

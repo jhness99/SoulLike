@@ -78,7 +78,8 @@ void UInventoryComponent::LoadInventoryListFromSavedItems(const TArray<FSavedIte
 			ItemInstance = NewObject<UEquipmentItemInstance>(GetOwner());
 			ItemInstance->Init(Data);
 		}
-		InventoryList.AddItem(ItemInstance);
+		AddItem(ItemInstance);
+		//InventoryList.AddItem(ItemInstance);
 		
 		FRegistInfo RegistInfo = SavedItem.RegistInfo;
 		
@@ -267,6 +268,28 @@ int32 UInventoryComponent::GetSlotIndex(const FGameplayTag& SlotTag) const
 	return 0;
 }
 
+void UInventoryComponent::AddItem(UInventoryItemInstance* InItemInstance)
+{
+	if (!IsValid(InItemInstance)) return;
+
+	// 복제용 리스트에 추가
+	InventoryList.AddItem(InItemInstance);
+
+	// GC 방지용 소유권 리스트에도 추가
+	//OwnedItemInstances.Add(InItemInstance);
+}
+
+void UInventoryComponent::RemoveItem(UInventoryItemInstance* InItemInstance)
+{
+	if (!IsValid(InItemInstance)) return;
+
+	// 복제용 리스트에서 제거
+	InventoryList.RemoveItem(InItemInstance);
+
+	// 소유권 리스트에서도 제거
+	//OwnedItemInstances.Remove(InItemInstance);
+}
+
 void UInventoryComponent::UsingTool(URegisterableItemInstance*& ItemInstance)
 {
 	if(ItemInstance == nullptr) ItemInstance = CurrentTool;
@@ -417,8 +440,9 @@ void UInventoryComponent::SetupDefaultInventoryList()
 			ItemInstance = NewObject<UEquipmentItemInstance>(GetOwner());
 			ItemInstance->Init(Data);
 		}
-		
-		InventoryList.AddItem(ItemInstance);
+		//InventoryList.AddItem(ItemInstance);
+		AddItem(ItemInstance);
+		//OwnedItemInstances.Add(ItemInstance);
 	}
 	
 	int32 Index = 0;
@@ -429,12 +453,20 @@ void UInventoryComponent::SetupDefaultInventoryList()
 		ItemInstance->Init(Data);
 		
 		RightWeaponList.Register(ItemInstance, Index);
-		InventoryList.AddItem(ItemInstance);
-		
+		//InventoryList.AddItem(ItemInstance);
+		AddItem(ItemInstance);
 		Index++;
 	}
 	
 	InventoryList.SortItems();
+
+	if(GetOwner())
+	{
+		if(ASoulLikePlayerState* SL_PS = Cast<ASoulLikePlayerState>(GetOwner()))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SL_PS name is : %s"), *SL_PS->GetName());
+		}
+	}
 }
 
 void UInventoryComponent::Reset()
@@ -496,7 +528,8 @@ void UInventoryComponent::AddItemToInventoryList(FInventoryData InventoryData)
 	}
 	
 	ItemInstance->Init(InventoryData);
-	InventoryList.AddItem(ItemInstance);
+	//InventoryList.AddItem(ItemInstance);
+	AddItem(ItemInstance);
 	InventoryList.SortItems();
 	PickedUpDelegate.Broadcast(ItemInstance->GetItemData());
 }
@@ -523,11 +556,12 @@ void UInventoryComponent::UpgradeItem(URegisterableItemInstance* ItemInstance)
 	}
 }
 
-void UInventoryComponent::UpdateInventoryListToWidgetController() const
+void UInventoryComponent::UpdateInventoryListToWidgetController()
 {
 	if(UInventoryWidgetController* InventoryWC = USoulLikeFunctionLibrary::GetInventoryWidgetController(this))
 	{
-		InventoryWC->OnChangedInventory.Broadcast(InventoryList);
+		InventoryWC->InventoryList = InventoryList;
+		InventoryWC->OnChangedInventory.Broadcast();
 
 		if(MarkAsDirtyDelegate.IsBound())
 		{

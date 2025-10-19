@@ -7,7 +7,9 @@
 
 UAN_MontageEvent::UAN_MontageEvent()
 {
+#if WITH_EDITOR	
 	bShouldFireInEditor = false;
+#endif
 }
 
 void UAN_MontageEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,

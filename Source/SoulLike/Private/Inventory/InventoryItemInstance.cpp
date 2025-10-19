@@ -83,6 +83,11 @@ void UInventoryItemInstance::SetupItemData(UObject* Outer)
 	}
 }
 
+void UInventoryItemInstance::BeginDestroy()
+{
+	Super::BeginDestroy();
+}
+
 void UInventoryItemInstance::OnRep_InventoryData(FInventoryData OldInventoryData)
 {
 	SetupItemData(GetOuter());
