@@ -14,11 +14,6 @@ void UUsingToolGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle
                                                 const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-	if(TriggerEventData != nullptr)
-	{
-		ToolItemInstance = Cast<URegisterableItemInstance>(const_cast<UObject*>(TriggerEventData->OptionalObject.Get()));
-	}
 	
 	UAnimMontage* Montage = nullptr;
 
@@ -33,6 +28,12 @@ void UUsingToolGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle
 			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);	
 			return;
 		}
+	}
+
+	if(TriggerEventData != nullptr)
+	{
+		ToolItemInstance = Cast<URegisterableItemInstance>(const_cast<UObject*>(TriggerEventData->OptionalObject.Get()));
+		Montage = ToolItemInstance->GetUsingMontage();
 	}
 
 	if(Montage == nullptr)

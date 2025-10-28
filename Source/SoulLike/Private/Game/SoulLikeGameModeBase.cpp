@@ -9,6 +9,7 @@
 #include "Interface/SaveInterface.h"
 
 #include "EngineUtils.h"
+#include "Game/OnlineSessionSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/SoulLikePlayerState.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
@@ -30,7 +31,7 @@ int32 ASoulLikeGameModeBase::SaveSlotData(const FString& PlayerName)
 	USaveGame* SaveGameObject = UGameplayStatics::CreateSaveGameObject(SoulLikeSaveGameClass);
 	USoulLikeSaveGame* SoulLikeSaveGame = Cast<USoulLikeSaveGame>(SaveGameObject);
 
-	SoulLikeSaveGame->PlayerName = PlayerName;
+	SoulLikeSaveGame->ProfileName = PlayerName;
 	
 	UGameplayStatics::SaveGameToSlot(SoulLikeSaveGame, InGameLoadSlotName, SaveFiles.Num());
 	return SaveFiles.Num();
@@ -198,6 +199,29 @@ void ASoulLikeGameModeBase::TravelToMap(int32 SlotIndex)
 	if(SoulLikeGameInstance == nullptr) return;
 
 	SoulLikeGameInstance->LoadSlotIndex = SlotIndex;
+	FString LongPackageName = GameMap.ToString();
 
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, GameMap);
+	// 2. 첫 번째 '.'를 기준으로 문자열을 자릅니다.
+	FString MapPath;
+	LongPackageName.Split(TEXT("."), &MapPath, nullptr);
+
+	// 3. "?listen" 옵션을 붙입니다.
+	FString TravelURL = FString::Printf(TEXT("%s?listen"), *MapPath);
+	
+	UE_LOG(LogTemp, Warning, TEXT("Attempting to ServerTravel to: %s"), *TravelURL);
+	
+	// 3. GetWorld()->ServerTravel을 호출합니다.
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		World->ServerTravel(TravelURL);
+	}
+}
+
+void ASoulLikeGameModeBase::OpenSession(int32 SlotIndex)
+{
+	if(UOnlineSessionSubsystem* OnlineSubsystem = GetGameInstance()->GetSubsystem<UOnlineSessionSubsystem>())
+	{
+		OnlineSubsystem->HostSession(4, FString());
+	}
 }

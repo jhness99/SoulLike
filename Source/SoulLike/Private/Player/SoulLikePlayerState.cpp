@@ -29,6 +29,11 @@ UAbilitySystemComponent* ASoulLikePlayerState::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void ASoulLikePlayerState::SetProfileName(FString InProfileName)
+{
+	ProfileName = InProfileName;
+}
+
 void ASoulLikePlayerState::SetPlayerLevel(int32 InLevel)
 {
 	PlayerLevel = InLevel;

@@ -22,4 +22,6 @@ void USoulLikeGameInstance::Init()
 	{
 		AutoSaveSubsystem->AutoSaveFrequency = AutoSaveFrequency;
 	}
+
+	
 }

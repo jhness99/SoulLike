@@ -211,6 +211,7 @@ void ASoulLikeCharacter::LoadProgress()
 
 		if(SaveData->bFirstTimeLoadIn)
 		{
+			SL_PlayerState->SetProfileName(SaveData->ProfileName);
 			InitializeDefaultAttributes();
 			GiveAbilities();
 			
@@ -227,7 +228,7 @@ void ASoulLikeCharacter::LoadProgress()
 			{
 				SL_ASC->GiveAbilitiesFromSaveData(SaveData, this);
 			}
-
+			SL_PlayerState->SetProfileName(SaveData->ProfileName);
 			SL_PlayerState->SetPlayerLevel(SaveData->PlayerLevel);
 			SL_PlayerState->SetExp(SaveData->EXP);
 			SL_PlayerState->SetMaxPotion(SaveData->MaxPotion);
@@ -364,6 +365,7 @@ void ASoulLikeCharacter::SaveProgress_Implementation() const
     	
         if(AuraPlayerState->IsDirty())
         {
+        	SaveData->ProfileName = AuraPlayerState->GetProfileName();
 	        SaveData->PlayerLevel = AuraPlayerState->GetPlayerLevel();
 	        SaveData->EXP = AuraPlayerState->GetExp();
 	        SaveData->MaxPotion = AuraPlayerState->GetMaxPotion();
@@ -428,10 +430,10 @@ void ASoulLikeCharacter::Interaction_Implementation(AActor* InteractionActor)
 
 	if(UOverlayWidgetController* OverlayWidgetController = USoulLikeFunctionLibrary::GetOverlayWidgetController(this))
 	{
-		OverlayWidgetController->OnBeginOverlappedInteractionActorDelegate.Broadcast(FGameplayTag());
+		OverlayWidgetController->OnBeginOverlappedInteractionActorDelegate.Broadcast(nullptr);
 	}
 
-	if(SelectedInteractionActor->Implements<UInteractionInterface>())
+	if(SelectedInteractionActor && SelectedInteractionActor->Implements<UInteractionInterface>())
 	{
 		InteractionTag = Execute_GetInteractionTag(SelectedInteractionActor);
 		Execute_Interaction(SelectedInteractionActor, this);
@@ -466,6 +468,7 @@ void ASoulLikeCharacter::Interaction_Implementation(AActor* InteractionActor)
 	{
 		SetWarpingTargetFromInteractionActor(true);
 	}
+	
 }
 
 const FInteractionTaskInfo ASoulLikeCharacter::GetInteractionActorInfo_Implementation() const
@@ -489,8 +492,8 @@ void ASoulLikeCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent
 		
 		if(UOverlayWidgetController* OverlayWidgetController = USoulLikeFunctionLibrary::GetOverlayWidgetController(this))
 		{
-			const FGameplayTag& InteractionTag = IInteractionInterface::Execute_GetInteractionTag(SelectedInteractionActor);
-			OverlayWidgetController->OnBeginOverlappedInteractionActorDelegate.Broadcast(InteractionTag);
+			//const FGameplayTag& InteractionTag = IInteractionInterface::Execute_GetInteractionTag(SelectedInteractionActor);
+			OverlayWidgetController->OnBeginOverlappedInteractionActorDelegate.Broadcast(SelectedInteractionActor);
 		}
 	}
 	InteractionActors.AddUnique(OtherActor);
@@ -505,7 +508,7 @@ void ASoulLikeCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 	{
 		if(UOverlayWidgetController* OverlayWidgetController = USoulLikeFunctionLibrary::GetOverlayWidgetController(this))
 		{
-			OverlayWidgetController->OnBeginOverlappedInteractionActorDelegate.Broadcast(FGameplayTag());
+			OverlayWidgetController->OnBeginOverlappedInteractionActorDelegate.Broadcast(nullptr);
 		}
 		SelectedInteractionActor = nullptr;
 	}

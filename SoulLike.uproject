@@ -15,7 +15,8 @@
 				"UMG",
 				"CoreUObject",
 				"MotionWarping",
-				"AIModule"
+				"AIModule",
+				"DeveloperSettings"
 			]
 		}
 	],

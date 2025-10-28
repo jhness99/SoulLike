@@ -636,6 +636,11 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FName("Interaction.Pickup"),
 		FString("Interaction Pickup Item")
 	);
+
+	GameplayTags.Interaction_SummonSign = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Interaction.SummonSign"),
+		FString("Interaction Summon Sign")
+	);
 	
 	/**
 	 * Effect Tag
@@ -732,6 +737,11 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.ItemType_Tool_Potion = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("ItemType.Tool.Potion"),
 		FString("ItemType Tool Potion")
+	);
+	
+	GameplayTags.ItemType_Tool_WhiteStone = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("ItemType.Tool.WhiteStone"),
+		FString("ItemType Tool WhiteStone")
 	);
 
 	GameplayTags.ItemType_Item = UGameplayTagsManager::Get().AddNativeGameplayTag(

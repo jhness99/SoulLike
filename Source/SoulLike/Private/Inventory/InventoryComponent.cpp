@@ -491,7 +491,7 @@ void UInventoryComponent::EquipItem()
 	}
 }
 
-void UInventoryComponent::AddItemToInventoryList(FInventoryData InventoryData)
+void UInventoryComponent::AddItemToInventoryList(const FInventoryData& InventoryData)
 {
 	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
 
@@ -528,7 +528,6 @@ void UInventoryComponent::AddItemToInventoryList(FInventoryData InventoryData)
 	}
 	
 	ItemInstance->Init(InventoryData);
-	//InventoryList.AddItem(ItemInstance);
 	AddItem(ItemInstance);
 	InventoryList.SortItems();
 	PickedUpDelegate.Broadcast(ItemInstance->GetItemData());

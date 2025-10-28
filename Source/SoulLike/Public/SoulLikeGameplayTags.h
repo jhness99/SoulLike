@@ -201,6 +201,8 @@ public:
 	
 	FGameplayTag Interaction_Pickup;
 
+	FGameplayTag Interaction_SummonSign;
+
 	/**
 	 * Effect Tag
 	 */
@@ -233,6 +235,7 @@ public:
 	FGameplayTag ItemType_Tool;
 	FGameplayTag ItemType_Tool_None;
 	FGameplayTag ItemType_Tool_Potion;
+	FGameplayTag ItemType_Tool_WhiteStone;
 
 	FGameplayTag ItemType_Item;
 	FGameplayTag ItemType_Item_UpgradeMaterial;

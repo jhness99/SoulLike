@@ -37,7 +37,7 @@ public:
 	void SetupDefaultInventoryList();
 	void Reset();
 	void EquipItem();
-	void AddItemToInventoryList(FInventoryData InventoryData);
+	void AddItemToInventoryList(const FInventoryData& InventoryData);
 	
 	UFUNCTION()
 	void UpgradeItem(URegisterableItemInstance* ItemInstance);

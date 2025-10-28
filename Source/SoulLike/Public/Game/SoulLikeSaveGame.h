@@ -79,7 +79,7 @@ class SOULLIKE_API USoulLikeSaveGame : public USaveGame
 public:
 
 	UFUNCTION(BlueprintPure)
-	FString GetPlayerName() const { return PlayerName; }
+	FString GetPlayerName() const { return ProfileName; }
 	
 	UFUNCTION(BlueprintPure)
 	int32 GetPlayerLevel() const { return PlayerLevel; }
@@ -96,7 +96,7 @@ public:
 	/** Player Status */
 	
 	UPROPERTY()
-	FString PlayerName = FString("");
+	FString ProfileName = FString("");
 	
 	UPROPERTY()
 	int32 PlayerLevel = 1;

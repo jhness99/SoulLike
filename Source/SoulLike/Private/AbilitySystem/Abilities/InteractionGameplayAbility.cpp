@@ -39,11 +39,11 @@ void UInteractionGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHand
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 	}
 	
-	if(InteractionTaskInfo.Montage == nullptr)
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
+	// if(InteractionTaskInfo.Montage == nullptr)
+	// {
+	// 	EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+	// 	return;
+	// }
 
 	/**
 	 * AbilityTask로 Interaction을 구분해서 작동

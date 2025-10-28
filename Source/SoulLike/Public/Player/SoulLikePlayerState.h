@@ -34,10 +34,12 @@ public:
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
 	UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
-	int32 GetPlayerLevel() const { return PlayerLevel; }
-	int32 GetExp() const { return Exp; }
-	int32 GetMaxPotion() const { return MaxPotion; }
+	FORCEINLINE FString GetProfileName() const { return ProfileName; }
+	FORCEINLINE int32 GetPlayerLevel() const { return PlayerLevel; }
+	FORCEINLINE int32 GetExp() const { return Exp; }
+	FORCEINLINE int32 GetMaxPotion() const { return MaxPotion; }
 
+	void SetProfileName(FString InProfileName);
 	void SetPlayerLevel(int32 InLevel);
 	void SetExp(int32 InExp);
 	void SetMaxPotion(int32 InMaxPotion);
@@ -71,6 +73,9 @@ protected:
 	UPROPERTY()
 	TSubclassOf<UGameplayEffect> AttributeEffectClass;
 
+	UPROPERTY(VisibleAnywhere)
+	FString ProfileName = FString("");
+	
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_PlayerLevel)
 	int32 PlayerLevel = 1;
 

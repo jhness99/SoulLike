@@ -69,13 +69,13 @@ void FInventoryList::RemoveAll()
 
 void FInventoryList::SortItems()
 {
-	// Items.Sort();
-	// MarkArrayDirty();
+	Items.Sort();
+	MarkArrayDirty();
 }
 
 void FEquipmentInventoryList::Init(int32 InMaxIndex)
 {
-	MaxIndex = InMaxIndex;
+	//MaxIndex = InMaxIndex;
 	// for(int i = 0; i < MaxIndex; i++)
 	// {
 	// 	FInventoryListItem& Item = Items.AddDefaulted_GetRef();

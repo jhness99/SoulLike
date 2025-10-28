@@ -60,4 +60,11 @@ public:
 	/** AutoSaveSubsystem Properties*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AutoSaveSubsystem")
 	float AutoSaveFrequency = 60.f;
+
+	/** OnlineSessionSubsystem Properties*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OnlineSessionSubsystem")
+	TSubclassOf<AActor> WhiteSignActorClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OnlineSessionSubsystem")
+	float MaxSearchSignDistance = 750.f;
 };

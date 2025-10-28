@@ -34,6 +34,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void TravelToMap(int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable)
+	void OpenSession(int32 SlotIndex);
 	
 	UPROPERTY(EditDefaultsOnly)
 	TSoftObjectPtr<UWorld> LobbyMap;

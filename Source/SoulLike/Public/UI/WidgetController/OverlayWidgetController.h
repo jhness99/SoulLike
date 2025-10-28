@@ -7,9 +7,11 @@
 #include "Inventory/InventoryComponent.h"
 #include "OverlayWidgetController.generated.h"
 
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnChangedVisibleSignature, bool, bVisible, float, Duration);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginOverlappedInteractionActor, const FGameplayTag&, InteractionTag);
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginOverlappedInteractionActor, const FGameplayTag&, InteractionTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginOverlappedInteractionActor, AActor*, InteractionActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEncounteredBoss, AActor*, EnemyActor);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickedUpItem, UItemData*, ItemData);
 

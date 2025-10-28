@@ -22,6 +22,15 @@ UAbilityTask_Interaction* UAbilityTask_Interaction::CreateInteractionTask(UGamep
 void UAbilityTask_Interaction::Activate()
 {
 	Super::Activate();
+
+	if(InteractionTaskInfo.Montage == nullptr)
+	{
+		if(OnFinishedTask.IsBound())
+		{
+			OnFinishedTask.Execute();
+			return;
+		}
+	}
 	
 	FName Section = GetStartSectionName();
 	PlayMontage(Section);
