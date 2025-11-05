@@ -164,6 +164,8 @@ void ASoulLikeGameModeBase::SaveInGameProgressData(USoulLikeSaveGame *SaveObject
 {
 	USoulLikeGameInstance* SoulLikeGameInstance = Cast<USoulLikeGameInstance>(GetGameInstance());
 
+	SoulLikeGameInstance->SetClientSaveData(SaveObject);
+
 	const FString InGameLoadSlotName = FString::Printf(TEXT("%s_%d"), *SoulLikeGameInstance->LoadSlotName, SoulLikeGameInstance->LoadSlotIndex);
 	const int32 InGameLoadSlotIndex = SoulLikeGameInstance->LoadSlotIndex;
 
@@ -200,17 +202,14 @@ void ASoulLikeGameModeBase::TravelToMap(int32 SlotIndex)
 
 	SoulLikeGameInstance->LoadSlotIndex = SlotIndex;
 	FString LongPackageName = GameMap.ToString();
-
-	// 2. 첫 번째 '.'를 기준으로 문자열을 자릅니다.
+	
 	FString MapPath;
 	LongPackageName.Split(TEXT("."), &MapPath, nullptr);
-
-	// 3. "?listen" 옵션을 붙입니다.
+	
 	FString TravelURL = FString::Printf(TEXT("%s?listen"), *MapPath);
 	
 	UE_LOG(LogTemp, Warning, TEXT("Attempting to ServerTravel to: %s"), *TravelURL);
 	
-	// 3. GetWorld()->ServerTravel을 호출합니다.
 	UWorld* World = GetWorld();
 	if (World)
 	{
@@ -224,4 +223,45 @@ void ASoulLikeGameModeBase::OpenSession(int32 SlotIndex)
 	{
 		OnlineSubsystem->HostSession(4, FString());
 	}
+}
+
+void ASoulLikeGameModeBase::RestartPlayer(AController* NewPlayer)
+{
+	if(NewPlayer->IsLocalPlayerController())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Listen Server Controller"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Client Controller"));
+
+		APlayerController* PC = Cast<APlayerController>(NewPlayer);
+		if(PC == nullptr) return;
+		
+		APlayerState* PS = PC->GetPlayerState<APlayerState>();
+		if(PS == nullptr) return;
+
+		TSharedPtr<const FUniqueNetId> LocalUserId = PS->GetUniqueId().GetUniqueNetId();
+		FString SteamUID = LocalUserId.Get()->ToString();
+		UE_LOG(LogTemp, Warning, TEXT("SteamUID : %s"), *SteamUID);
+
+		UOnlineSessionSubsystem* SessionSubsystem = GetGameInstance()->GetSubsystem<UOnlineSessionSubsystem>();
+		if(SessionSubsystem == nullptr) return;
+
+		const FVector& Location = SessionSubsystem->GetLocationWithSteamUID(SteamUID);
+		UE_LOG(LogTemp, Warning, TEXT("SpawnTransform : %s"), *Location.ToString());
+
+		if(Location == FVector::ZeroVector)
+		{
+			Super::RestartPlayer(NewPlayer);
+			return;
+		}
+		
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(SessionSubsystem->GetLocationWithSteamUID(SteamUID));
+		
+		RestartPlayerAtTransform(NewPlayer, SpawnTransform);
+	}
+
+	Super::RestartPlayer(NewPlayer);
 }

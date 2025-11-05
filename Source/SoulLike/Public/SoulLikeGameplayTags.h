@@ -172,8 +172,10 @@ public:
 	FGameplayTag Abilities_Riposte;
 	FGameplayTag Abilities_Backstab;
 	FGameplayTag Abilities_Rolling;
+	
 	FGameplayTag Abilities_UsingTool;
-
+	FGameplayTag Abilities_SummonSign_White;
+	
 	FGameplayTag Abilities_Interaction;
 	FGameplayTag Abilities_TargetLock;
 	

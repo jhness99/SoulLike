@@ -23,10 +23,11 @@ class SOULLIKE_API USoulLikeAbilitySystemComponent : public UAbilitySystemCompon
 	GENERATED_BODY()
 
 public:
-
 	
 	void GiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& Abilities, APawn* Instigator);
 	void GiveAbilitiesFromSaveData(USoulLikeSaveGame* SaveData, APawn* Instigator);
+
+	void ApplyEffectToSelf(const TSubclassOf<UGameplayEffect>& GameplayEffectClass, float Level);
 	
 	void ChangeAbilityInputTag(UKeybindMenuWidgetController* KeybindMenuWidgetController, const FGameplayTag& InputTag);
 

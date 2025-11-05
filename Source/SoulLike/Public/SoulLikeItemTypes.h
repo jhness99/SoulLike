@@ -10,6 +10,13 @@
 class UGameplayAbility;
 class UGameplayEffect;
 
+UENUM(BlueprintType)
+enum class EToolActionType : uint8
+{
+	ETAT_Effect UMETA(DisplayName = "Effect"),
+	ETAT_Ability UMETA(DisplayName = "Ability")
+};
+
 USTRUCT(BlueprintType)
 struct FWeaponDamageInfo
 {
@@ -114,6 +121,12 @@ struct FSL_ToolData : public FSL_ItemData
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> UsingEffect = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag UsingAbilityTag;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	EToolActionType ToolActionType;
 };
 
 USTRUCT(BlueprintType)
@@ -234,6 +247,8 @@ public:
 		bConsume = ToolData->bConsume;
 		UsingMontage = ToolData->UsingMontage;
 		UsingEffect = ToolData->UsingEffect;
+		UsingAbilityTag = ToolData->UsingAbilityTag;
+		ToolActionType = ToolData->ToolActionType;
 	}
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -244,6 +259,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> UsingEffect = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag UsingAbilityTag;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	EToolActionType ToolActionType;
 };
 
 UCLASS(BlueprintType)

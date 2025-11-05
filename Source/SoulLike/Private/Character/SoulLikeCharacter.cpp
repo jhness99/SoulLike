@@ -52,27 +52,7 @@ ASoulLikeCharacter::ASoulLikeCharacter()
 	bUseControllerRotationYaw = false;
 }
 
-void ASoulLikeCharacter::CreateOrphanObjects()
-{
-	OrphanActors.Empty(); // 이전 객체 배열 초기화
-	for (int32 i = 0; i < 10; ++i)
-	{
-		// Owner를 지정했지만 UPROPERTY()로 참조하지 않는 객체 10개를 생성합니다.
-		// 이 객체들은 생성된 직후 '고아' 상태가 됩니다.
-		AActor* NewOrphan = NewObject<AActor>(this);
-		OrphanActors.Add(NewOrphan);
-	}
-	UE_LOG(LogTemp, Error, TEXT("!!! Created 10 Orphan UObjects. Watch the logs. !!!"));
-}
 
-void ASoulLikeCharacter::ForceGarbageCollection()
-{
-	if (GEngine)
-	{
-		GEngine->ForceGarbageCollection(true);
-		UE_LOG(LogTemp, Error, TEXT("!!! Manually Forced Garbage Collection !!!"));
-	}
-}
 
 void ASoulLikeCharacter::SetWarpingLocationAndRotation(FVector Location, FRotator Rotation)
 {
@@ -188,9 +168,8 @@ void ASoulLikeCharacter::Pickup(FInventoryData InventoryData)
 	}
 }
 
-void ASoulLikeCharacter::LoadProgress()
+void ASoulLikeCharacter::LoadProgress(USoulLikeSaveGame* SaveGame)
 {
-	if(!HasAuthority()) return;
 	ASoulLikeGameModeBase* SL_GameMode = Cast<ASoulLikeGameModeBase>(UGameplayStatics::GetGameMode(this));
 	ASoulLikePlayerState* SL_PlayerState = Cast<ASoulLikePlayerState>(GetPlayerState());
 	
@@ -205,8 +184,11 @@ void ASoulLikeCharacter::LoadProgress()
 		{
 			InventoryComponent->Init();
 		}
+
+		USoulLikeSaveGame* SaveData = SaveGame;
+		if(SaveData == nullptr)
+			SaveData = SL_GameMode->RetrieveInGameSaveData();
 		
-		USoulLikeSaveGame* SaveData = SL_GameMode->RetrieveInGameSaveData();
 		if(SaveData == nullptr) return;
 
 		if(SaveData->bFirstTimeLoadIn)
@@ -254,6 +236,8 @@ void ASoulLikeCharacter::LoadProgress()
 	{
 		AutoSaveSubsystem->Init();
 	}
+	UE_LOG(LogTemp, Warning, TEXT("ASoulLikeCharacter::LoadProgress 호출 및 성공"))
+		
 }
 
 void ASoulLikeCharacter::DisableCharacter_Implementation()
@@ -271,6 +255,14 @@ void ASoulLikeCharacter::DisableCharacter_Implementation()
 
 void ASoulLikeCharacter::InitAbilityActorInfo()
 {
+	if(HasAuthority())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Authority ASoulLikeCharacter::InitAbilityActorInfo / Actor Name Is : %s"), *GetNameSafe(this));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Not Authority ASoulLikeCharacter::InitAbilityActorInfo / Actor Name Is : %s"), *GetNameSafe(this));
+	}
 	ASoulLikePlayerState* SoulLikePlayerState = GetPlayerState<ASoulLikePlayerState>();
 	check(SoulLikePlayerState);
 
@@ -279,14 +271,18 @@ void ASoulLikeCharacter::InitAbilityActorInfo()
 	AttributeSet = SoulLikePlayerState->GetAttributeSet();
 	InventoryComponent = SoulLikePlayerState->GetInventoryComponent();
 
-	if(ASoulLikePlayerController* SoulLikePlayerController = Cast<ASoulLikePlayerController>(GetController())){
-    
-		if(ASoulLikeHUD* SoulLikeHUD = Cast<ASoulLikeHUD>(SoulLikePlayerController->GetHUD())){
-
-			SoulLikeHUD->InitOverlay(SoulLikePlayerController, SoulLikePlayerState, AbilitySystemComponent, AttributeSet);
-			InventoryComponent->BindToWidgetController();
-		}
-	}
+	// if(IsLocallyControlled())
+	// {
+	// 	if(ASoulLikePlayerController* SoulLikePlayerController = Cast<ASoulLikePlayerController>(GetController())){
+	//       
+	// 		if(ASoulLikeHUD* SoulLikeHUD = Cast<ASoulLikeHUD>(SoulLikePlayerController->GetHUD())){
+	//
+	// 			UE_LOG(LogTemp, Warning, TEXT("Pre InitOverlay"));
+	// 			SoulLikeHUD->InitOverlay(SoulLikePlayerController, SoulLikePlayerState, AbilitySystemComponent, AttributeSet);
+	// 			InventoryComponent->BindToWidgetController();
+	// 		}
+	// 	}
+	// }
 }
 
 void ASoulLikeCharacter::BeginPlay()
@@ -298,7 +294,7 @@ void ASoulLikeCharacter::BeginPlay()
 		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ASoulLikeCharacter::OnBeginOverlap);
 		GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &ASoulLikeCharacter::OnEndOverlap);
 	}
-
+	
 	// if(UOnlineSessionSubsystem* OSSS = GetGameInstance()->GetSubsystem<UOnlineSessionSubsystem>())
 	// {
 	// 	OSSS->HostSession(2, FString(""));
@@ -310,6 +306,7 @@ void ASoulLikeCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	InitAbilityActorInfo();
+	if(!IsLocallyControlled()) return;
 	LoadProgress();
 }
 

@@ -4,6 +4,7 @@
 #include "Inventory/InventoryComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 #include "Inventory/EquipmentItemInstance.h"
 
 #include "Player/SoulLikePlayerState.h"
@@ -298,6 +299,26 @@ void UInventoryComponent::UsingTool(URegisterableItemInstance*& ItemInstance)
 	ItemInstance->SetItemNum(ItemInstance->GetItemNum() - 1);
 	RemoveConsumeItem(ItemInstance);
 	UpdateInventoryListToWidgetController();
+	
+	// if(ItemInstance != nullptr)
+	// {
+	// 	UToolData* ToolData = ItemInstance->GetToolData();
+	// 	if(ToolData->ToolActionType == EToolActionType::ETAT_Effect)
+	// 	{
+	// 		if(ToolData->UsingEffect->IsValidLowLevel())
+	// 		{
+	// 			if(USoulLikeAbilitySystemComponent* SL_ASC = Cast<USoulLikeAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner())))
+	// 			{
+	// 				SL_ASC->ApplyEffectToSelf(ToolData->UsingEffect, 1);
+	// 			}
+	// 			//ApplyEffectToSelf(ItemInstance->GetToolData()->UsingEffect, 1);
+	// 		}
+	// 	}
+	// 	else if(ToolData->ToolActionType == EToolActionType::ETAT_Ability)
+	// 	{
+	// 		
+	// 	}
+	// }
 }
 
 void UInventoryComponent::RefillPotion()

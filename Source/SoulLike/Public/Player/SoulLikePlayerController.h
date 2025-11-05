@@ -13,7 +13,9 @@ class USL_InputConfig;
 class USL_UITaskConfig;
 class USoulLikeAbilitySystemComponent;
 class UUISubSystem;
+class USoulLikeSaveGame;
 struct FInputActionValue;
+struct FClientSaveData;
 
 DECLARE_DELEGATE(FOnOpenedMenuWidget);
 DECLARE_DELEGATE_OneParam(FOnOpenSavePointMenuWidget, const FString&);
@@ -40,6 +42,9 @@ public:
 	float GetLadderMoveInput() const { return LadderMoveInput; }
 	float GetMouseXInput() const { return MouseXInput; }
 
+	UFUNCTION(Server, Reliable)
+	void Server_SendClientSaveData(const FClientSaveData& SaveDataStruct);
+
 	FGameplayTag FindInputTagForAbilityTags(const FGameplayTagContainer& AbilityTags) const;
 	
 	FOnOpenedMenuWidget OnPressedMainMenuButton;
@@ -49,6 +54,8 @@ protected:
 
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnRep_PlayerState() override;
 
 	UUISubSystem* GetUISubSystem();
 	
@@ -71,8 +78,7 @@ private:
 
 	void ChangeAbilityInputTag(const FGameplayTag& InputTag);
 
-	//UPROPERTY()
-	//bool bUIMode = false;
+	void InitOverlay();
 
 	UPROPERTY()
 	FGameplayTag InputMode;

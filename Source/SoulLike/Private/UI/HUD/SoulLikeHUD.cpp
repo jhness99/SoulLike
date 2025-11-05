@@ -163,6 +163,7 @@ void ASoulLikeHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbility
 	{
 		UISubSystem->OnCloseMainMenu.BindUObject(this, &ASoulLikeHUD::OnPressedMainMenuButton);
 	}
+	UE_LOG(LogTemp, Warning, TEXT("InitOverlay Finished"));
 }
 
 void ASoulLikeHUD::BeginPlay()

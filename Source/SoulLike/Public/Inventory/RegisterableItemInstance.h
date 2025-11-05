@@ -18,6 +18,8 @@ class SOULLIKE_API URegisterableItemInstance : public UInventoryItemInstance
 	GENERATED_BODY()
 	
 public:
+
+	void UsingItem();
 	
 	UAnimMontage* GetUsingMontage() const;
 	

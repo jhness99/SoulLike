@@ -7,6 +7,8 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSubsystem.generated.h"
 
+class ASummonSignActor;
+
 UENUM()
 enum class ESessionState : uint8
 {
@@ -56,6 +58,18 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartSearchSign();
+	UFUNCTION(BlueprintCallable)
+	void StopSearchSign();
+
+	UFUNCTION(BlueprintCallable)
+	void CreateClientSummonSign(const TSubclassOf<ASummonSignActor>& SummonSignActorClass, const FVector& Location);
+	UFUNCTION(BlueprintCallable)
+	void DeleteClientSummonSign();
+
+	void DestroySummonSignSession();
+
+	UFUNCTION(BlueprintPure)
+	bool CheckIsClientUID(const FString& UID);
 	
 	FORCEINLINE void SetMaxSearchSignDistance(float Distance)
 	{
@@ -66,8 +80,15 @@ public:
 	{
 		WhiteSignActorClass = InActorClass;
 	}
-
-	void SendInviteWithSteamUID(FString SteamUID);
+	
+	bool SendInviteWithSteamUID(const FString& SteamUID);
+	FORCEINLINE const FVector& GetLocationWithSteamUID(const FString& SteamUID)
+	{
+		if(SteamUIDToSpawnLocation.Contains(SteamUID))
+			return SteamUIDToSpawnLocation[SteamUID];
+		else
+			return FVector::ZeroVector;
+	}
 
 protected:
 	// 세션 인터페이스 포인터
@@ -80,30 +101,33 @@ protected:
 	FOnlineState OnlineState;
 
 	// 세션 검색 결과 객체 포인터
-	TSharedPtr<FOnlineSessionSearch> SessionSearch;
-
-	// 델리게이트 핸들러 함수들
+	TSharedPtr<FOnlineSessionSearch> SummonSignSessionSearch;
+	
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnFindSessionsComplete(bool bWasSuccessful);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-	// 세션 파괴 완료 콜백
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
 	void OnCreateSummonSignSessionComplete(FName SessionName, bool bWasSuccessful);
 	void OnFindSummonSignSessionComplete(bool bWasSuccessful);
+	void OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 
-	void SpawnSignObject(const FOnlineSessionSettings& SessionSettings, const FVector& SpawnLocation);
-
-	
+	ASummonSignActor* SpawnSignObject(const FOnlineSessionSettings& SessionSettings, const FVector& SpawnLocation);
 
 private:
 	
 	/** OnlineSessionSubsystem Properties*/
 	UPROPERTY()
-	TMap<FString, TObjectPtr<class ASummonSignActor>> SteamIDToSummonSignMap;
+	TMap<FString, TObjectPtr<ASummonSignActor>> SteamUIDToSummonSignMap;
 
 	UPROPERTY()
+	TMap<FString, FVector> SteamUIDToSpawnLocation;
+	
+	UPROPERTY()
 	TSubclassOf<AActor> WhiteSignActorClass;
+
+	UPROPERTY()
+	TObjectPtr<ASummonSignActor> ClientSummonSign;
 
 	UPROPERTY()
 	float MaxSearchSignDistance = 750.f;

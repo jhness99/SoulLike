@@ -549,6 +549,11 @@ void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
 		FString("Tool Using Action")
 	);
 	
+	GameplayTags.Abilities_SummonSign_White = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Abilities.SummonSign.White"),
+		FString("White SummonSign Using Action")
+	);
+	
 	GameplayTags.Abilities_Interaction = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Abilities.Interaction"),
 		FString("Interaction")

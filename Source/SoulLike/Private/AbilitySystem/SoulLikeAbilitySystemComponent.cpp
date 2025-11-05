@@ -55,6 +55,17 @@ void USoulLikeAbilitySystemComponent::GiveAbilitiesFromSaveData(USoulLikeSaveGam
 	}
 }
 
+void USoulLikeAbilitySystemComponent::ApplyEffectToSelf(const TSubclassOf<UGameplayEffect>& GameplayEffectClass,
+	float Level)
+{
+	check(GameplayEffectClass);
+
+	FGameplayEffectContextHandle ContextHandle = MakeEffectContext();
+	ContextHandle.AddSourceObject(this);
+	const FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(GameplayEffectClass, Level, ContextHandle);
+	ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+}
+
 void USoulLikeAbilitySystemComponent::ChangeAbilityInputTag(UKeybindMenuWidgetController* KeybindMenuWidgetController, const FGameplayTag& InputTag)
 {
 	UAbilityInfo* AbilityInfo = USoulLikeFunctionLibrary::GetAbilityInfo(this);

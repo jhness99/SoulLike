@@ -9,6 +9,7 @@
 #include "Interface/SaveInterface.h"
 #include "SoulLikePlayerState.generated.h"
 
+class USoulLikeSaveGame;
 class UAbilitySystemComponent;
 class UAttributeSet;
 class USoulLikeAttributeSet;
@@ -93,6 +94,7 @@ protected:
 	
 	UFUNCTION()
 	void OnRep_MaxPotionNum(int32 OldMaxPotionNum);
+
 
 private:
 

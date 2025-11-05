@@ -46,4 +46,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<USaveGame> SoulLikeSaveGameClass;
+
+protected:
+
+	virtual void RestartPlayer(AController* NewPlayer) override;
 };

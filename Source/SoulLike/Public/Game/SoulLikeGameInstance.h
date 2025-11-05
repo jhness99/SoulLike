@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Game/SoulLikeSaveGame.h"
 #include "SoulLikeGameInstance.generated.h"
 
+class USoulLikeSaveGame;
 class UEnemyDataAsset;
 class UAttributeInfo;
 class UItemDataAsset;
@@ -25,6 +27,13 @@ class SOULLIKE_API USoulLikeGameInstance : public UGameInstance
 public:
 
 	virtual void Init() override;
+
+	void SetClientSaveData(USoulLikeSaveGame* InSaveData)
+	{
+		UE_LOG(LogTemp, Display, TEXT("SetClientSaveData"));
+		ClientSaveData = FClientSaveData(InSaveData);
+	}
+	const FClientSaveData& GetClientSaveData() const { return ClientSaveData; }
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ItemData")
 	TObjectPtr<UItemDataAsset> ItemDataAsset;
@@ -67,4 +76,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "OnlineSessionSubsystem")
 	float MaxSearchSignDistance = 750.f;
+
+
+private:
+
+	UPROPERTY()
+	FClientSaveData ClientSaveData;
 };

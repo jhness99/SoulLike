@@ -127,9 +127,22 @@ void ASoulLikeCharacterBase::UsingTool_Implementation(URegisterableItemInstance*
 	InventoryComponent->UsingTool(ItemInstance);
 	if(ItemInstance != nullptr)
 	{
-		if(ItemInstance->GetToolData()->UsingEffect->IsValidLowLevel())
+		UToolData* ToolData = ItemInstance->GetToolData();
+		if(ToolData->ToolActionType == EToolActionType::ETAT_Effect)
 		{
-			ApplyEffectToSelf(ItemInstance->GetToolData()->UsingEffect, 1);
+			if(ToolData->UsingEffect->IsValidLowLevel())
+			{
+				ApplyEffectToSelf(ToolData->UsingEffect, 1);
+			}
+		}
+		else if(ToolData->ToolActionType == EToolActionType::ETAT_Ability)
+		{
+			FGameplayTagContainer AbilityTags;
+			AbilityTags.AddTag(ToolData->UsingAbilityTag);
+			
+			bool result = GetAbilitySystemComponent()->TryActivateAbilitiesByTag(AbilityTags);
+			if(result)
+				UE_LOG(LogTemp, Warning, TEXT("White Sign : true"));
 		}
 	}
 }
@@ -411,13 +424,17 @@ void ASoulLikeCharacterBase::GiveAbilities()
 
 void ASoulLikeCharacterBase::ApplyEffectToSelf(const TSubclassOf<UGameplayEffect>& GameplayEffectClass, float Level) const
 {
-	check(IsValid(GetAbilitySystemComponent()));
-	check(GameplayEffectClass);
-
-	FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
-	ContextHandle.AddSourceObject(this);
-	const FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffectClass, Level, ContextHandle);
-	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	// check(IsValid(GetAbilitySystemComponent()));
+	// check(GameplayEffectClass);
+	//
+	// FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+	// ContextHandle.AddSourceObject(this);
+	// const FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffectClass, Level, ContextHandle);
+	// AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	if(USoulLikeAbilitySystemComponent* SL_ASC = Cast<USoulLikeAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		SL_ASC->ApplyEffectToSelf(GameplayEffectClass, Level);
+	}
 }
 
 void ASoulLikeCharacterBase::SetupDamageParams(FDamageEffectParams& DamageEffectParams, float DamageBoost)

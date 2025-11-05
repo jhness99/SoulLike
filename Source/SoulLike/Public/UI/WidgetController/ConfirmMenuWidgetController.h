@@ -8,7 +8,8 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAddToViewportSignature, FText, Message);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnClickedConfirmButtonSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRemoveFromParentSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnClickedConfirmMenuButtonSignature);
 /**
  * 
  */
@@ -19,15 +20,29 @@ class SOULLIKE_API UConfirmMenuWidgetController : public USoulLikeWidgetControll
 
 public:
 
+	void SetInputModeWithTag(const FGameplayTag& UIMode);
+	
 	UFUNCTION(BlueprintCallable)
 	void BroadcastAddToViewport(FText Message);
+
+	UFUNCTION(BlueprintCallable)
+	void BroadcastRemoveFromParent();
 	
 	UFUNCTION(BlueprintCallable)
 	void BroadcastOnClickedConfirmButton();
+
+	UFUNCTION(BlueprintCallable)
+	void BroadcastOnClickedCancelButton();
 
 	UPROPERTY(BlueprintAssignable)
 	FOnAddToViewportSignature OnAddToViewPort;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnClickedConfirmButtonSignature OnClickedConfirmButtonDelegate;
+	FOnRemoveFromParentSignature OnRemoveFromParent;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnClickedConfirmMenuButtonSignature OnClickedConfirmButtonDelegate;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnClickedConfirmMenuButtonSignature OnClickedCancelButtonDelegate;
 };

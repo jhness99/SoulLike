@@ -25,8 +25,6 @@ AItemActor::AItemActor()
 	MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeshComponent->SetIsReplicated(true);
 	MeshComponent->SetGenerateOverlapEvents(true);
-
-	
 }
 
 bool AItemActor::ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags){
@@ -72,7 +70,7 @@ void AItemActor::BeginPlay()
 	Super::BeginPlay();
 
 	APawn* Pawn = Cast<APawn>(GetOwner());
-	
+	if(Pawn == nullptr) return;
 	if(Pawn->IsLocallyControlled() || Pawn->GetLocalRole() == ROLE_SimulatedProxy)
 	{
 		if(MeshComponent)

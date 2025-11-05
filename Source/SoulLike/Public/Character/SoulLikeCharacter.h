@@ -11,6 +11,7 @@ class IInteractionInterface;
 class UItemDataAsset;
 class USpringArmComponent;
 class UCameraComponent;
+class USoulLikeSaveGame;
 
 /**
  * 
@@ -23,14 +24,6 @@ class SOULLIKE_API ASoulLikeCharacter : public ASoulLikeCharacterBase, public IP
 public:
 
 	ASoulLikeCharacter();
-
-	//GC Test Func
-	TArray<AActor*> OrphanActors;
-	UFUNCTION(BlueprintCallable)
-	void CreateOrphanObjects();
-    
-	UFUNCTION(BlueprintCallable)
-	void ForceGarbageCollection();
 	
 	//Combat Interface
 	virtual void SetWarpingLocationAndRotation(FVector Location, FRotator Rotation) override;
@@ -46,7 +39,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Pickup(FInventoryData InventoryData);
 	
-	void LoadProgress();
+	void LoadProgress(USoulLikeSaveGame* SaveGame = nullptr);
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UItemDataAsset> ItemDataAsset;
@@ -80,6 +73,8 @@ protected:
 	void SetWarpingTargetFromInteractionActor(bool bHasWarpingPoint = false);
 
 private:
+
+	bool bAbilityActorInfoInitialized = false;
 
 	UFUNCTION()
 	void Rebirth();

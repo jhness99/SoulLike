@@ -32,6 +32,7 @@ void UOnlineSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
     if ( IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get())
     {
+        // SteamOnlineSubsystem Test 코드
         // SessionInterface = Subsystem->GetSessionInterface();
         // if (SessionInterface.IsValid())
         // {
@@ -48,7 +49,8 @@ void UOnlineSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         {
             SummonSignSessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UOnlineSessionSubsystem::OnCreateSummonSignSessionComplete);
             SummonSignSessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UOnlineSessionSubsystem::OnFindSummonSignSessionComplete);
-            UE_LOG(LogTemp, Warning, TEXT("OnlineSessionSubsystem Initialized."));
+            SummonSignSessionInterface->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &UOnlineSessionSubsystem::OnSessionUserInviteAccepted);
+            SummonSignSessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UOnlineSessionSubsystem::OnJoinSessionComplete);
         }
 
         IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
@@ -67,28 +69,47 @@ void UOnlineSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         {
             UE_LOG(LogTemp, Warning, TEXT("Failed to get Identity Interface."));
         }
+        
+        if(UWorld* World = GetWorld())
+        {
+            World->GetTimerManager().SetTimer(SearchSignTimerHandle, this, &UOnlineSessionSubsystem::FindNearBySign, SearchFrequency, true);
+        }
     }
 }
 
 void UOnlineSessionSubsystem::Deinitialize()
 {
-    if (SessionInterface.IsValid())
-    {
-        SessionInterface->ClearOnCreateSessionCompleteDelegates(this);
-        SessionInterface->ClearOnFindSessionsCompleteDelegates(this);
-        SessionInterface->ClearOnJoinSessionCompleteDelegates(this);
-        SessionInterface->ClearOnDestroySessionCompleteDelegates(this);
-    }
+    // if (SessionInterface.IsValid())
+    // {
+    //     SessionInterface->ClearOnCreateSessionCompleteDelegates(this);
+    //     SessionInterface->ClearOnFindSessionsCompleteDelegates(this);
+    //     SessionInterface->ClearOnJoinSessionCompleteDelegates(this);
+    //     SessionInterface->ClearOnDestroySessionCompleteDelegates(this);
+    // }
 
     if (SummonSignSessionInterface.IsValid())
     {
         SummonSignSessionInterface->ClearOnCreateSessionCompleteDelegates(this);
         SummonSignSessionInterface->ClearOnFindSessionsCompleteDelegates(this);
-    
+        SummonSignSessionInterface->ClearOnSessionUserInviteAcceptedDelegates(this);
+        SummonSignSessionInterface->ClearOnJoinSessionCompleteDelegates(this);
+        
         FNamedOnlineSession* ExistingSession = SummonSignSessionInterface->GetNamedSession(FName("SummonSignLobby"));
-        if (ExistingSession != nullptr)
+        
+        if (ExistingSession != nullptr && 
+            (ExistingSession->SessionState == EOnlineSessionState::Pending || 
+             ExistingSession->SessionState == EOnlineSessionState::InProgress))
         {
             SummonSignSessionInterface->DestroySession(FName("SummonSignLobby"));
+        }
+
+        ExistingSession = SummonSignSessionInterface->GetNamedSession(NAME_GameSession);
+        
+        if (ExistingSession != nullptr && 
+            (ExistingSession->SessionState == EOnlineSessionState::Pending || 
+             ExistingSession->SessionState == EOnlineSessionState::InProgress))
+        {
+            SummonSignSessionInterface->DestroySession(NAME_GameSession);
         }
     }
     
@@ -97,16 +118,35 @@ void UOnlineSessionSubsystem::Deinitialize()
 
 void UOnlineSessionSubsystem::HostSession(int32 NumPublicConnections, FString MapName)
 {
-    if (!SessionInterface.IsValid())
-    {
-        UE_LOG(LogTemp, Error, TEXT("SessionInterface is not valid!"));
-        return;
-    }
+    // if (!SessionInterface.IsValid())
+    // {
+    //     UE_LOG(LogTemp, Error, TEXT("SessionInterface is not valid!"));
+    //     return;
+    // }
+    //
+    // auto ExistingSession = SessionInterface->GetNamedSession(NAME_GameSession);
+    // if (ExistingSession != nullptr)
+    // {
+    //     SessionInterface->DestroySession(NAME_GameSession);
+    // }
+    //
+    // TSharedPtr<FOnlineSessionSettings> SessionSettings = MakeShareable(new FOnlineSessionSettings());
+    // SessionSettings->NumPublicConnections = NumPublicConnections;
+    // SessionSettings->bIsLANMatch = false;
+    // SessionSettings->bAllowJoinInProgress = true;
+    // SessionSettings->bUsesPresence = true;
+    // SessionSettings->bShouldAdvertise = true;
+    // SessionSettings->Set(FName("GAMENAME"), FString("SOULLIKE"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+    // SessionSettings->bUseLobbiesIfAvailable = true;
+    //
+    // SessionInterface->CreateSession(0, NAME_GameSession, *SessionSettings);
     
-    auto ExistingSession = SessionInterface->GetNamedSession(NAME_GameSession);
+    if (!SummonSignSessionInterface.IsValid()) return;
+    
+    auto ExistingSession = SummonSignSessionInterface->GetNamedSession(NAME_GameSession);
     if (ExistingSession != nullptr)
     {
-        SessionInterface->DestroySession(NAME_GameSession);
+        SummonSignSessionInterface->DestroySession(NAME_GameSession);
     }
     
     TSharedPtr<FOnlineSessionSettings> SessionSettings = MakeShareable(new FOnlineSessionSettings());
@@ -118,7 +158,7 @@ void UOnlineSessionSubsystem::HostSession(int32 NumPublicConnections, FString Ma
     SessionSettings->Set(FName("GAMENAME"), FString("SOULLIKE"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
     SessionSettings->bUseLobbiesIfAvailable = true;
 
-    SessionInterface->CreateSession(0, NAME_GameSession, *SessionSettings);
+    SummonSignSessionInterface->CreateSession(0, NAME_GameSession, *SessionSettings);
 }
 
 void UOnlineSessionSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -135,11 +175,11 @@ void UOnlineSessionSubsystem::OnCreateSessionComplete(FName SessionName, bool bW
 
 void UOnlineSessionSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 {
-    if (bWasSuccessful && SessionSearch.IsValid())
+    if (bWasSuccessful && SummonSignSessionSearch.IsValid())
     {
-        if (SessionSearch->SearchResults.Num() > 0)
+        if (SummonSignSessionSearch->SearchResults.Num() > 0)
         {
-            FOnlineSessionSearchResult FirstResult = SessionSearch->SearchResults[0];
+            FOnlineSessionSearchResult FirstResult = SummonSignSessionSearch->SearchResults[0];
             SessionInterface->JoinSession(0, NAME_GameSession, FirstResult);
         }
         else
@@ -158,15 +198,14 @@ void UOnlineSessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSe
     if (Result == EOnJoinSessionCompleteResult::Success)
     {
         FString ConnectString;
-        if (SessionInterface->GetResolvedConnectString(SessionName, ConnectString))
+        if (SummonSignSessionInterface->GetResolvedConnectString(SessionName, ConnectString))
         {
-            UE_LOG(LogTemp, Warning, TEXT("Joining server with connect string: %s"), *ConnectString);
-
             APlayerController* PC = UGameplayStatics::GetPlayerControllerFromID(this, 0);
             if (PC)
             {
                 PC->ClientTravel(ConnectString, ETravelType::TRAVEL_Absolute);
             }
+            DestroySummonSignSession();
         }
     }
     else
@@ -183,14 +222,14 @@ void UOnlineSessionSubsystem::FindAndJoinSession()
     }
 
     // 세션 검색 객체 생성
-    SessionSearch = MakeShareable(new FOnlineSessionSearch());
-    SessionSearch->MaxSearchResults = 10000; // 최대 검색 결과
-    SessionSearch->bIsLanQuery = false; // LAN이 아닌 인터넷에서 검색
-    SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
-    SessionSearch->QuerySettings.Set(FName("GAMENAME"), FString("SOULLIKE"), EOnlineComparisonOp::Equals);
+    SummonSignSessionSearch = MakeShareable(new FOnlineSessionSearch());
+    SummonSignSessionSearch->MaxSearchResults = 10000; // 최대 검색 결과
+    SummonSignSessionSearch->bIsLanQuery = false; // LAN이 아닌 인터넷에서 검색
+    SummonSignSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+    SummonSignSessionSearch->QuerySettings.Set(FName("GAMENAME"), FString("SOULLIKE"), EOnlineComparisonOp::Equals);
     
     // 세션 검색 요청
-    SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+    SessionInterface->FindSessions(0, SummonSignSessionSearch.ToSharedRef());
 }
 
 void UOnlineSessionSubsystem::RegistrationSummon(const FTransform& Transform)
@@ -214,7 +253,7 @@ void UOnlineSessionSubsystem::RegistrationSummon(const FTransform& Transform)
     SessionSettings->NumPublicConnections = 0;
     SessionSettings->bIsLANMatch = false;
     SessionSettings->bAllowJoinInProgress = false;
-    SessionSettings->bUsesPresence = false;
+    SessionSettings->bUsesPresence = true;
     SessionSettings->bShouldAdvertise = true;
     SessionSettings->Set(FName("GAMENAME"), FString("SOULLIKE"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
     SessionSettings->Set<float>(FName("LOC_X"), Transform.GetLocation().X, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
@@ -223,10 +262,7 @@ void UOnlineSessionSubsystem::RegistrationSummon(const FTransform& Transform)
     SessionSettings->Set(FName("CLIENT_STEAMID"), OnlineState.SteamUID, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
     SessionSettings->Set(FName("PROFILE_NAME"), SL_PS->GetProfileName(), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
     SessionSettings->Set<int32>(FName("PLAYER_LEVEL"), SL_PS->GetPlayerLevel(), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-
-    UE_LOG(LogTemp, Warning, TEXT("X : %f, Y : %f, Z : %f"), Transform.GetLocation().X, Transform.GetLocation().Y, Transform.GetLocation().Z);
-    UE_LOG(LogTemp, Warning, TEXT("PROFILE_NAME : %s"), *SL_PS->GetProfileName());
-    UE_LOG(LogTemp, Warning, TEXT("PLAYER_LEVEL : %d"), SL_PS->GetPlayerLevel());
+    
     SessionSettings->bUseLobbiesIfAvailable = true;
 
     SummonSignSessionInterface->CreateSession(0, FName("SummonSignLobby"), *SessionSettings);
@@ -234,20 +270,19 @@ void UOnlineSessionSubsystem::RegistrationSummon(const FTransform& Transform)
 
 void UOnlineSessionSubsystem::FindNearBySign()
 {
-    if (!SummonSignSessionInterface.IsValid())
-    {
-        return;
-    }
+    if(OnlineState.SessionState != ESessionState::ESS_Searching) return;
+    
+    if (!SummonSignSessionInterface.IsValid()) return;
 
     // 세션 검색 객체 생성
-    SessionSearch = MakeShareable(new FOnlineSessionSearch());
-    SessionSearch->MaxSearchResults = 10000; // 최대 검색 결과
-    SessionSearch->bIsLanQuery = false; // LAN이 아닌 인터넷에서 검색
-    SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
-    SessionSearch->QuerySettings.Set(FName("GAMENAME"), FString("SOULLIKE"), EOnlineComparisonOp::Equals);
+    SummonSignSessionSearch = MakeShareable(new FOnlineSessionSearch());
+    SummonSignSessionSearch->MaxSearchResults = 10000; // 최대 검색 결과
+    SummonSignSessionSearch->bIsLanQuery = false; // LAN이 아닌 인터넷에서 검색
+    SummonSignSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+    SummonSignSessionSearch->QuerySettings.Set(FName("GAMENAME"), FString("SOULLIKE"), EOnlineComparisonOp::Equals);
     
     // 세션 검색 요청
-    SummonSignSessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+    SummonSignSessionInterface->FindSessions(0, SummonSignSessionSearch.ToSharedRef());
 }
 
 void UOnlineSessionSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
@@ -267,36 +302,35 @@ void UOnlineSessionSubsystem::OnCreateSummonSignSessionComplete(FName SessionNam
 }
 
 void UOnlineSessionSubsystem::OnFindSummonSignSessionComplete(bool bWasSuccessful)
-{
+{ 
     if(APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0))
     {
-        for(auto Pair : SteamIDToSummonSignMap)
+        if (bWasSuccessful && SummonSignSessionSearch.IsValid())
         {
-            const float Distance = (Pair.Value->GetActorLocation() - Player->GetActorLocation()).Length();
-
-            if(MaxSearchSignDistance < Distance)
-            {
-                Pair.Value->Destroy();
-                Pair.Value = nullptr;
-
-                SteamIDToSummonSignMap.Remove(Pair.Key);
-            }
-        }
-        if (bWasSuccessful && SessionSearch.IsValid())
-        {
-            for(const FOnlineSessionSearchResult& Result : SessionSearch->SearchResults)
+            TMap<FString, TObjectPtr<class ASummonSignActor>> TempMap;
+            
+            for(const FOnlineSessionSearchResult& Result : SummonSignSessionSearch->SearchResults)
             {
                 const FOnlineSessionSettings& SessionSettings = Result.Session.SessionSettings;
 
                 FString SteamUID;
                 SessionSettings.Get<FString>(FName("CLIENT_STEAMID"), SteamUID);
 
-                if(SteamIDToSummonSignMap.Contains(SteamUID)) continue;
+                if(SteamUIDToSummonSignMap.Contains(SteamUID))
+                {
+                    ASummonSignActor* SignActor = SteamUIDToSummonSignMap[SteamUID];
+                    const float Distance = (SignActor->GetActorLocation() - Player->GetActorLocation()).Length();
+
+                    if(MaxSearchSignDistance >= Distance)
+                    {
+                        TempMap.Add(SteamUID, SignActor);
+                        SteamUIDToSummonSignMap[SteamUID] = nullptr;
+                        SteamUIDToSummonSignMap.Remove(SteamUID);
+                    }
+                    continue;
+                }
                 
-                float SignX;
-                float SignY;
-                float SignZ;
-                
+                float SignX, SignY, SignZ;
                 bool bFoundLocationX = SessionSettings.Get<float>(FName("LOC_X"), SignX);
                 bool bFoundLocationY = SessionSettings.Get<float>(FName("LOC_Y"), SignY);
                 bool bFoundLocationZ = SessionSettings.Get<float>(FName("LOC_Z"), SignZ);
@@ -309,9 +343,15 @@ void UOnlineSessionSubsystem::OnFindSummonSignSessionComplete(bool bWasSuccessfu
 
                 if(MaxSearchSignDistance >= Distance)
                 {
-                    SpawnSignObject(SessionSettings, SignLocation);
+                    TempMap.Add(SteamUID, SpawnSignObject(SessionSettings, SignLocation));
                 }
             }
+            for(auto Pair : SteamUIDToSummonSignMap)
+            {
+                Pair.Value->Destroy();
+                Pair.Value = nullptr;
+            }
+            SteamUIDToSummonSignMap = TempMap;
         }
         else
         {
@@ -324,11 +364,30 @@ void UOnlineSessionSubsystem::OnFindSummonSignSessionComplete(bool bWasSuccessfu
     }
 }
 
-void UOnlineSessionSubsystem::SpawnSignObject(const FOnlineSessionSettings& SessionSettings, const FVector& SpawnLocation)
+void UOnlineSessionSubsystem::OnSessionUserInviteAccepted(const bool bWasSuccessful, const int32 ControllerId,
+    FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult)
+{
+    UE_LOG(LogTemp, Log, TEXT("Invite Accepted! bSuccess: %d, ControllerId: %d"), bWasSuccessful, ControllerId);
+
+    if (bWasSuccessful && InviteResult.IsValid())
+    {
+        if (SummonSignSessionInterface.IsValid())
+        {
+            UE_LOG(LogTemp, Log, TEXT("Joining session from invite..."));
+            SummonSignSessionInterface->JoinSession(ControllerId, NAME_GameSession, InviteResult);
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to process invite acceptance or InviteResult is invalid."));
+    }
+}
+
+ASummonSignActor* UOnlineSessionSubsystem::SpawnSignObject(const FOnlineSessionSettings& SessionSettings, const FVector& SpawnLocation)
 {
     FTransform SpawnTransform;
     SpawnTransform.SetLocation(SpawnLocation);
-    UE_LOG(LogTemp, Error, TEXT("SpawnSignObject"));
+    
     if(ASummonSignActor* SignActor = GetWorld()->SpawnActorDeferred<ASummonSignActor>(WhiteSignActorClass, SpawnTransform))
     {
         FSummonSignState SummonSignState;
@@ -337,11 +396,10 @@ void UOnlineSessionSubsystem::SpawnSignObject(const FOnlineSessionSettings& Sess
         bool bFoundProfileName = SessionSettings.Get<FString>(FName("PROFILE_NAME"), SummonSignState.ProfileName);
         bool bFoundLevel = SessionSettings.Get<int32>(FName("PLAYER_LEVEL"), SummonSignState.Level);
 
-        UE_LOG(LogTemp, Error, TEXT("SignActor spawn success"));
-        UE_LOG(LogTemp, Error, TEXT("SteamUID : %s, ProfileName : %s, PLAYER_LEVEL : %d"), *SummonSignState.SteamUID, *SummonSignState.ProfileName, SummonSignState.Level);
         if(bFoundSteamUID && bFoundProfileName && bFoundLevel)
         {
             SignActor->Init(SummonSignState);
+            SteamUIDToSpawnLocation.Add(SummonSignState.SteamUID, SpawnLocation);
         }
         else
         {
@@ -349,33 +407,95 @@ void UOnlineSessionSubsystem::SpawnSignObject(const FOnlineSessionSettings& Sess
         }
 
         SignActor->FinishSpawning(SpawnTransform);
-        SteamIDToSummonSignMap.Add(SummonSignState.SteamUID, SignActor);
+        return SignActor;
     }
+    return nullptr;
 }
 
 void UOnlineSessionSubsystem::StartSearchSign()
 {
+    OnlineState.SessionState = ESessionState::ESS_Searching;
+    HostSession(2, FString(""));
+}
+
+void UOnlineSessionSubsystem::StopSearchSign()
+{
+    OnlineState.SessionState = ESessionState::ESS_SinglePlay;
+}
+
+void UOnlineSessionSubsystem::CreateClientSummonSign(const TSubclassOf<ASummonSignActor>& SummonSignActorClass, const FVector& Location)
+{
+    if(ClientSummonSign != nullptr)
+    {
+        DeleteClientSummonSign();
+    }
     if(UWorld* World = GetWorld())
     {
-        World->GetTimerManager().SetTimer(SearchSignTimerHandle, this, &UOnlineSessionSubsystem::FindNearBySign, SearchFrequency, true);
+        FTransform SpawnTransform;
+        SpawnTransform.SetLocation(Location);
+        
+        if(ClientSummonSign = World->SpawnActorDeferred<ASummonSignActor>(SummonSignActorClass, SpawnTransform))
+        {
+            FSummonSignState SummonSignState;
+
+            if(ASoulLikePlayerState* SL_PS = Cast<ASoulLikePlayerState>(UGameplayStatics::GetPlayerState(this, 0)))
+            {
+                SummonSignState.Level = SL_PS->GetPlayerLevel();
+                SummonSignState.ProfileName = SL_PS->GetProfileName();
+                SummonSignState.SteamUID = OnlineState.SteamUID;
+            }
+            
+            ClientSummonSign->Init(SummonSignState);
+            ClientSummonSign->FinishSpawning(SpawnTransform);
+            RegistrationSummon(SpawnTransform);
+        }
     }
 }
 
-void UOnlineSessionSubsystem::SendInviteWithSteamUID(FString SteamUID)
+void UOnlineSessionSubsystem::DeleteClientSummonSign()
 {
+    if(ClientSummonSign == nullptr) return;
+    
+    ClientSummonSign->Destroy();
+    ClientSummonSign = nullptr;
+
+    StopSearchSign(); 
+}
+
+void UOnlineSessionSubsystem::DestroySummonSignSession()
+{
+    if (SummonSignSessionInterface.IsValid())
+    {
+        FNamedOnlineSession* ExistingSession = SummonSignSessionInterface->GetNamedSession(FName("SummonSignLobby"));
+        if (ExistingSession != nullptr)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Client successfully traveled. Destroying SummonSignLobby."));
+            SummonSignSessionInterface->DestroySession(FName("SummonSignLobby"));
+        }
+    }
+}
+
+bool UOnlineSessionSubsystem::CheckIsClientUID(const FString& UID)
+{
+    return OnlineState.SteamUID == UID;
+}
+
+bool UOnlineSessionSubsystem::SendInviteWithSteamUID(const FString& SteamUID)
+{
+    bool bWasSuccessful =  false;
     if(SummonSignSessionInterface.IsValid())
     {
         ULocalPlayer* LocalPlayer =  UGameplayStatics::GetPlayerController(this, 0)->GetLocalPlayer();
-        if (!LocalPlayer) return;
+        if (!LocalPlayer) return bWasSuccessful;
 
         TSharedPtr<const FUniqueNetId> LocalUserId = LocalPlayer->GetPreferredUniqueNetId().GetUniqueNetId();
-        if (!LocalUserId.IsValid()) return;
+        if (!LocalUserId.IsValid()) return bWasSuccessful;
         
         IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
-        if (!Subsystem) return;
+        if (!Subsystem) return bWasSuccessful;
 
         IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
-        if (!Identity.IsValid()) return;
+        if (!Identity.IsValid()) return bWasSuccessful;
 
         TSharedPtr<const FUniqueNetId> TargetUserId = Identity->CreateUniquePlayerId(SteamUID);
         if (!TargetUserId.IsValid())
@@ -383,15 +503,12 @@ void UOnlineSessionSubsystem::SendInviteWithSteamUID(FString SteamUID)
             UE_LOG(LogTemp, Warning, TEXT("Failed to create UniqueNetId from string: %s"), *SteamUID);
         }
         
-        // bool bWasSuccessful = SessionInterface->SendSessionInviteToFriend(*LocalUserId, NAME_GameSession, *TargetUserId);
-        //
-        // if (bWasSuccessful)
-        // {
-        //     UE_LOG(LogTemp, Log, TEXT("Successfully sent session invite to user %s (using SendSessionInviteToFriend)"), *SteamUID);
-        // }
-        // else
-        // {
-        //     UE_LOG(LogTemp, Warning, TEXT("Failed to send session invite to user %s (using SendSessionInviteToFriend)"), *SteamUID);
-        // }
+        bWasSuccessful = SummonSignSessionInterface->SendSessionInviteToFriend(*LocalUserId, NAME_GameSession, *TargetUserId);
+        
+        if (bWasSuccessful)
+        {
+            SteamUIDToSummonSignMap.Remove(SteamUID);
+        }
     }
+    return bWasSuccessful;
 }

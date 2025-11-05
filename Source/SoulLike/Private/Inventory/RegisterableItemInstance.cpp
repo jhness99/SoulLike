@@ -3,7 +3,20 @@
 
 #include "Inventory/RegisterableItemInstance.h"
 
+#include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
+
+void URegisterableItemInstance::UsingItem()
+{
+	// if(GetToolData()->UsingEffect->IsValidLowLevel())
+	// {
+	// 	if(USoulLikeAbilitySystemComponent* SL_ASC = Cast<USoulLikeAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner())))
+	// 	{
+	// 		SL_ASC->ApplyEffectToSelf(GetToolData()->UsingEffect, 1);
+	// 	}
+	// 	//ApplyEffectToSelf(ItemInstance->GetToolData()->UsingEffect, 1);
+	// }
+}
 
 UAnimMontage* URegisterableItemInstance::GetUsingMontage() const
 {
