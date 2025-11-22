@@ -47,14 +47,14 @@ void ASoulLikeGameModeBase::DeleteSaveSlotData(int32 SlotIndex)
 	UGameplayStatics::DeleteGameInSlot(SlotName, SlotIndex);
 }
 
-void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World) const
+void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* SaveGame) const
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveWorldObject"));
 	if(World == nullptr) return;
 	USoulLikeGameInstance* SL_GameInstance = Cast<USoulLikeGameInstance>(GetGameInstance());
 	check(SL_GameInstance);
 	
-	if(USoulLikeSaveGame* SaveGame = RetrieveInGameSaveData())
+	if(SaveGame)
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::ActorIteration_Loop"));
 		
@@ -94,10 +94,10 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World) const
 			}
 		}
 		
-		{
-			TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveInGameProgressData"));
-			SaveInGameProgressData(SaveGame);
-		}
+		// {
+		// 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveInGameProgressData"));
+		// 	SaveInGameProgressData(SaveGame);
+		// }
 	}
 }
 
@@ -183,6 +183,8 @@ void ASoulLikeGameModeBase::SaveInGameProgressData(USoulLikeSaveGame *SaveObject
 	const FString InGameLoadSlotName = FString::Printf(TEXT("%s_%d"), *SoulLikeGameInstance->LoadSlotName, SoulLikeGameInstance->LoadSlotIndex);
 	const int32 InGameLoadSlotIndex = SoulLikeGameInstance->LoadSlotIndex;
 
+	SaveWorldObject(GetWorld(), SaveObject);
+	
 	UGameplayStatics::SaveGameToSlot(SaveObject, InGameLoadSlotName, InGameLoadSlotIndex);
 }
 

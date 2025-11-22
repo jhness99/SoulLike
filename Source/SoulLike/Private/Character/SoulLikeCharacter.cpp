@@ -408,7 +408,7 @@ void ASoulLikeCharacter::SaveProgress_Implementation() const
         	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Character::SaveInGameProgressData"));
 	        AuraGameMode->SaveInGameProgressData(SaveData);
         }
-    	AuraGameMode->SaveWorldObject(GetWorld());
+    	//AuraGameMode->SaveWorldObject(GetWorld());
     	UE_LOG(LogTemp, Warning, TEXT("SaveProgress"));
     	AuraPlayerState->MarkAsClean();
     }
