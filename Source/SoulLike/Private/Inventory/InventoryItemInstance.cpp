@@ -6,8 +6,11 @@
 
 #include "Game/SoulLikeGameInstance.h"
 
+#include "UI/WidgetController/InventoryWidgetController.h"
+
 #include "SoulLikeItemTypes.h"
 #include "SoulLikeGameplayTags.h"
+#include "SoulLikeFunctionLibrary.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -43,7 +46,9 @@ int32 UInventoryItemInstance::GetItemId() const
 
 void UInventoryItemInstance::SetItemNum(int32 InCount)
 {
-	InventoryData.Count = InCount;
+	FInventoryData TempData = InventoryData;
+	TempData.Count = InCount;
+	InventoryData = TempData;
 }
 
 int32 UInventoryItemInstance::GetItemNum() const
@@ -53,7 +58,9 @@ int32 UInventoryItemInstance::GetItemNum() const
 
 void UInventoryItemInstance::SetUpgradeLevel(int32 InUpgradeLevel)
 {
+	FInventoryData TempData = InventoryData;
 	InventoryData.UpgradeLevel = InUpgradeLevel;
+	InventoryData = TempData;
 }
 
 int32 UInventoryItemInstance::GetUpgradeLevel() const
@@ -91,6 +98,11 @@ void UInventoryItemInstance::BeginDestroy()
 void UInventoryItemInstance::OnRep_InventoryData(FInventoryData OldInventoryData)
 {
 	SetupItemData(GetOuter());
+
+	if(UInventoryWidgetController* InventoryWC = USoulLikeFunctionLibrary::GetInventoryWidgetController(this))
+	{
+		InventoryWC->OnChangedInventory.Broadcast();
+	}
 }
 
 

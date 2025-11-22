@@ -34,9 +34,10 @@ void UANS_MeleeTrace::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceB
 
 void UANS_MeleeTrace::SetWeaponCollisionEnable(USkeletalMeshComponent* MeshComp, bool bEnable)
 {
+	
 	ACharacter* Character = Cast<ACharacter>(MeshComp->GetOwner());
 	if(Character == nullptr) return;
-
+	
 	if(Character->Implements<UCombatInterface>())
 	{
 		ICombatInterface::Execute_SetWeaponCollisionEnable(Character, bEnable, MeleeTraceType, AbilityIndex);

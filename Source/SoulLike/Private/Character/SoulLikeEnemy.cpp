@@ -19,7 +19,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/SoulLikeCharacter.h"
-#include "Game/SoulLikeGameInstance.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Inventory/EquipmentItemInstance.h"
 
@@ -373,7 +373,7 @@ void ASoulLikeEnemy::OnOverlapMeleeTraceCollision(UPrimitiveComponent* Overlappe
 	FTransform TipStartRelativeToParent = TipStartTransform.GetRelativeTransform(ParentWorldTransform);
 	FTransform TipEndRelativeToParent = TipEndTransform.GetRelativeTransform(ParentWorldTransform);
 	
-	MeleeTrace_Implementation(TipStartRelativeToParent, TipEndRelativeToParent, Radius);
+	MeleeTrace(TipStartRelativeToParent, TipEndRelativeToParent, Radius);
 }
 
 void ASoulLikeEnemy::SetupActorWithEnmeyData()
@@ -450,7 +450,9 @@ void ASoulLikeEnemy::SetupActorWithEnmeyData()
 			TraceCollision->SetRelativeRotation(FRotator(0.f, 0.f, -90.f));
 			
 			if(!TraceCollision->OnComponentBeginOverlap.IsBound())
+			{
 				TraceCollision->OnComponentBeginOverlap.AddDynamic(this, &ASoulLikeEnemy::OnOverlapMeleeTraceCollision);
+			}
 		}
 	}
 

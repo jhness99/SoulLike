@@ -16,14 +16,13 @@ void UUsingToolGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
 	UAnimMontage* Montage = nullptr;
-
 	if(GetAvatarActorFromActorInfo() && GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
 	{
 		Montage = ICombatInterface::Execute_GetCurrentToolMontage(GetAvatarActorFromActorInfo());
 		ICombatInterface::Execute_SwitchWalkSpeed(GetAvatarActorFromActorInfo());
 		
 		UEquipmentItemInstance* CurrentTool = ICombatInterface::Execute_GetCurrentTool(GetAvatarActorFromActorInfo());
-		if(CurrentTool && CurrentTool->GetItemNum() == 0)
+		if(CurrentTool && CurrentTool->GetItemNum() <= 0)
 		{
 			EndAbility(Handle, ActorInfo, ActivationInfo, true, true);	
 			return;
@@ -47,7 +46,14 @@ void UUsingToolGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle
 	MontageTask->OnBlendOut.AddDynamic(this, &UUsingToolGameplayAbility::K2_EndAbility);
 	MontageTask->ReadyForActivation();
 
-	WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FSoulLikeGameplayTags::Get().Event_Montage_UsingTool);
+	// if(APawn* Pawn = Cast<APawn>(GetAvatarActorFromActorInfo()))
+	// {
+	// 	if(Pawn->IsLocallyControlled())
+	// 	{
+	// 		
+	// 	}
+	// }
+	WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FSoulLikeGameplayTags::Get().Event_Montage_UsingTool, nullptr, true);
 	WaitEventTask->EventReceived.AddDynamic(this, &UUsingToolGameplayAbility::ReceiveEvent);
 	WaitEventTask->ReadyForActivation();
 }
@@ -71,6 +77,7 @@ void UUsingToolGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Hand
 
 void UUsingToolGameplayAbility::ReceiveEvent(FGameplayEventData Payload)
 {
+	UE_LOG(LogTemp, Warning, TEXT("%hs"), __FUNCTION__);
 	if(GetAvatarActorFromActorInfo() && GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
 	{
 		ICombatInterface::Execute_UsingTool(GetAvatarActorFromActorInfo(), ToolItemInstance);

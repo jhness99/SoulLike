@@ -33,14 +33,11 @@ class UCameraComponent;
 bool USoulLikeFunctionLibrary::MakeWidgetControllerParams(const UObject* WorldContextObject,
                                                           ASoulLikeHUD*& OutSoulLikeHUD, FWidgetControllerParams& OutWCParams)
 {
-	UE_LOG(LogTemp, Warning, TEXT("MakeWidgetControllerParams GetPlayerController 시도"));
 	if(APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("MakeWidgetControllerParams GetHUD 시도"));
 		OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
 		if(OutSoulLikeHUD != nullptr)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("MakeWidgetControllerParams GetPlayerState 시도"));
 			ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
 			if(PS == nullptr) return false;
 			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
@@ -49,7 +46,6 @@ bool USoulLikeFunctionLibrary::MakeWidgetControllerParams(const UObject* WorldCo
 			OutWCParams.PlayerState = PS;
 			OutWCParams.AbilitySystemComponent = ASC;
 			OutWCParams.AttributeSet = AS;
-			UE_LOG(LogTemp, Warning, TEXT("MakeWidgetControllerParams 성공"));
 			return true;
 		}
 	}
@@ -70,7 +66,6 @@ UOverlayWidgetController* USoulLikeFunctionLibrary::GetOverlayWidgetController(c
 
 UInventoryWidgetController* USoulLikeFunctionLibrary::GetInventoryWidgetController(const UObject* WorldContextObject)
 {
-	UE_LOG(LogTemp, Warning, TEXT("GetInventoryWidgetController 시도"));
 	FWidgetControllerParams Params;
 	ASoulLikeHUD* SoulLikeHUD;
 	const bool bSuccessfulMakingParams = MakeWidgetControllerParams(WorldContextObject, SoulLikeHUD, Params);
@@ -78,7 +73,6 @@ UInventoryWidgetController* USoulLikeFunctionLibrary::GetInventoryWidgetControll
 	{
 		return SoulLikeHUD->GetInventoryWidgetController(Params);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("GetInventoryWidgetController 실패"));
 	return nullptr;
 }
 

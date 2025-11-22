@@ -236,8 +236,6 @@ void ASoulLikeCharacter::LoadProgress(USoulLikeSaveGame* SaveGame)
 	{
 		AutoSaveSubsystem->Init();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("ASoulLikeCharacter::LoadProgress 호출 및 성공"))
-		
 }
 
 void ASoulLikeCharacter::DisableCharacter_Implementation()
@@ -362,6 +360,7 @@ void ASoulLikeCharacter::SaveProgress_Implementation() const
     	
         if(AuraPlayerState->IsDirty())
         {
+        	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Character::SetSaveDataWithCharacter"));
         	SaveData->ProfileName = AuraPlayerState->GetProfileName();
 	        SaveData->PlayerLevel = AuraPlayerState->GetPlayerLevel();
 	        SaveData->EXP = AuraPlayerState->GetExp();
@@ -404,10 +403,13 @@ void ASoulLikeCharacter::SaveProgress_Implementation() const
         }
     	
     	SaveData->Transform = GetActorTransform();
-
-        AuraGameMode->SaveInGameProgressData(SaveData);
+		
+        {
+        	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Character::SaveInGameProgressData"));
+	        AuraGameMode->SaveInGameProgressData(SaveData);
+        }
     	AuraGameMode->SaveWorldObject(GetWorld());
-    	
+    	UE_LOG(LogTemp, Warning, TEXT("SaveProgress"));
     	AuraPlayerState->MarkAsClean();
     }
 }
@@ -482,6 +484,7 @@ const FInteractionTaskInfo ASoulLikeCharacter::GetInteractionActorInfo_Implement
 void ASoulLikeCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if(!IsLocallyControlled() || !HasAuthority()) return;
 	if(!OtherActor->Implements<UInteractionInterface>()) return;
 	if(InteractionActors.IsEmpty())
 	{
@@ -499,6 +502,7 @@ void ASoulLikeCharacter::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent
 void ASoulLikeCharacter::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if(!IsLocallyControlled() || !HasAuthority()) return;
 	if(!OtherActor->Implements<UInteractionInterface>()) return;
 	InteractionActors.Remove(OtherActor);
 	if(InteractionActors.IsEmpty())
@@ -535,18 +539,28 @@ void ASoulLikeCharacter::SetWarpingTargetFromInteractionActor(bool bHasWarpingPo
 
 void ASoulLikeCharacter::Rebirth()
 {
-	SetActorTransform(RespawnPoint);
+	// SetActorTransform(RespawnPoint);
+	//
+	// GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	// GetMesh()->SetSimulatePhysics(false);
+	// GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
+	// GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
+	// GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90.f));
+	// GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+	// GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
 	
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-	GetMesh()->SetSimulatePhysics(false);
-	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
-	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90.f));
-	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
-
 	if(HasAuthority())
 	{
+		SetActorTransform(RespawnPoint);
+	
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+		GetMesh()->SetSimulatePhysics(false);
+		GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
+		GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -90.f));
+		GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+		
 		ApplyEffectToSelf(FullHealthEffectClass, 1.f);
 		if(UObjectPoolingSubsystem* ObjectPoolingSubsystem = GetGameInstance()->GetSubsystem<UObjectPoolingSubsystem>())
 		{
@@ -556,11 +570,18 @@ void ASoulLikeCharacter::Rebirth()
 		{
 			InventoryComponent->EquipItem();
 		}
+
+		if(UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(RebirthTimerHandle);
+		}
 	}
-	
-	if(UWorld* World = GetWorld())
+	else
 	{
-		World->GetTimerManager().ClearTimer(RebirthTimerHandle);
+		if(APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			PC->ClientTravel(TEXT("/Game/Blueprints/Map/Dungeon"), TRAVEL_Absolute, false);
+		}
 	}
 }
 

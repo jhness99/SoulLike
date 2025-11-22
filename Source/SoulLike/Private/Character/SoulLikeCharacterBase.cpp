@@ -122,7 +122,10 @@ UAnimMontage* ASoulLikeCharacterBase::EvaluateRollingMontage_Implementation()
 
 void ASoulLikeCharacterBase::UsingTool_Implementation(URegisterableItemInstance* ItemInstance)
 {
+	if(!HasAuthority()) return;
 	if(InventoryComponent == nullptr) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("%hs"), __FUNCTION__);
 	
 	InventoryComponent->UsingTool(ItemInstance);
 	if(ItemInstance != nullptr)
@@ -156,9 +159,9 @@ void ASoulLikeCharacterBase::NextSlot_Implementation(const FGameplayTag& SlotTag
 
 void ASoulLikeCharacterBase::MeleeTrace_Implementation(const FTransform& TraceStart, const FTransform& TraceEnd, float Radius)
 {
-	if(GetLocalRole() == ROLE_SimulatedProxy)
+	if(HasAuthority())
 	{
-		ClientMeleeTrace(TraceStart, TraceEnd, Radius);
+		TryMeleeTrace(TraceStart, TraceEnd, Radius);
 	}
 	else
 	{
@@ -458,7 +461,7 @@ void ASoulLikeCharacterBase::SetupDamageParams(FDamageEffectParams& DamageEffect
 
 void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartRelativeTransform,
 	const FTransform& TraceEndRelativeTransform, float Radius)
-{
+{       
 	const bool bDebug = static_cast<bool>(CVarShowAttackTrace.GetValueOnAnyThread());
 
 	TArray<FHitResult> HitResults;

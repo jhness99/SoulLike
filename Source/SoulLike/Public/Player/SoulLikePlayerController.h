@@ -33,7 +33,7 @@ public:
 	ASoulLikePlayerController();
 
 	UFUNCTION(BlueprintCallable)
-	void SetInputModeTag(FGameplayTag InInputMode);
+	void SetInputModeTag(const FGameplayTag& InInputMode);
 	bool GetUIMode() const;
 
 	UFUNCTION(BlueprintCallable)
@@ -44,6 +44,9 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_SendClientSaveData(const FClientSaveData& SaveDataStruct);
+
+	UFUNCTION(BlueprintCallable)
+	void ReturnToClient();
 
 	FGameplayTag FindInputTagForAbilityTags(const FGameplayTagContainer& AbilityTags) const;
 	

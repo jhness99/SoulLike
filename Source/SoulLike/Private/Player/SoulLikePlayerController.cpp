@@ -43,7 +43,7 @@ void ASoulLikePlayerController::OnRep_PlayerState()
 	Server_SendClientSaveData(SL_GameInstance->GetClientSaveData());
 }
 
-void ASoulLikePlayerController::SetInputModeTag(FGameplayTag InInputMode)
+void ASoulLikePlayerController::SetInputModeTag(const FGameplayTag& InInputMode)
 {
 	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
 	InputMode = InInputMode;
@@ -81,8 +81,6 @@ void ASoulLikePlayerController::Server_SendClientSaveData_Implementation(const F
 {
 	if(ASoulLikeCharacter* SL_Character = Cast<ASoulLikeCharacter>(GetPawn()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ASoulLikePlayerController::Server_SendClientSaveData_Implementation LoadProgress 호출"));
-
         // 1. (서버에서) 클라이언트 데이터를 담을 "임시" SaveGame 객체를 생성합니다.
         USoulLikeSaveGame* TempSaveGame = NewObject<USoulLikeSaveGame>();
         if (!TempSaveGame)
@@ -94,7 +92,7 @@ void ASoulLikePlayerController::Server_SendClientSaveData_Implementation(const F
         // 2. RPC로 받은 Struct의 데이터를 임시 SaveGame 객체로 "복사"합니다.
         TempSaveGame->SlotName            = SaveDataStruct.SlotName;
         TempSaveGame->SlotIndex           = SaveDataStruct.SlotIndex;
-        TempSaveGame->bFirstTimeLoadIn    = false; // 접속한 클라이언트는 항상 false여야 함
+        TempSaveGame->bFirstTimeLoadIn    = true; // 접속한 클라이언트는 항상 false여야 함
         TempSaveGame->ProfileName         = SaveDataStruct.ProfileName;
         TempSaveGame->PlayerLevel         = SaveDataStruct.PlayerLevel;
         TempSaveGame->EXP                 = SaveDataStruct.EXP;
@@ -111,11 +109,17 @@ void ASoulLikePlayerController::Server_SendClientSaveData_Implementation(const F
         TempSaveGame->RightWeaponSlotIndex= SaveDataStruct.RightWeaponSlotIndex;
         TempSaveGame->LeftWeaponSlotIndex = SaveDataStruct.LeftWeaponSlotIndex;
         TempSaveGame->ToolSlotIndex       = SaveDataStruct.ToolSlotIndex;
-        TempSaveGame->Transform           = SaveDataStruct.Transform;
+        //TempSaveGame->Transform           = SaveDataStruct.Transform;
 
         // 3. LoadProgress에는 이 "임시 SaveGame" 객체를 전달합니다.
         SL_Character->LoadProgress(TempSaveGame);
 	}
+}
+
+void ASoulLikePlayerController::ReturnToClient()
+{
+	ClientTravel(TEXT("/Game/Blueprints/Map/Dungeon"), TRAVEL_Absolute, false);
+	SetInputModeTag(FSoulLikeGameplayTags::Get().InputMode_Game);
 }
 
 FGameplayTag ASoulLikePlayerController::FindInputTagForAbilityTags(const FGameplayTagContainer& AbilityTags) const
@@ -278,7 +282,6 @@ void ASoulLikePlayerController::InitOverlay()
 	{
 		if(ASoulLikeHUD* SoulLikeHUD = Cast<ASoulLikeHUD>(GetHUD()))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Pre InitOverlay"));
 			SoulLikeHUD->InitOverlay(this, SL_PS, SL_PS->GetAbilitySystemComponent(), SL_PS->GetAttributeSet());
 			SL_PS->GetInventoryComponent()->BindToWidgetController();
 		}

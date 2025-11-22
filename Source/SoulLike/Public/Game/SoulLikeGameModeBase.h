@@ -23,7 +23,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DeleteSaveSlotData(int32 SlotIndex);
 
-	void SaveWorldObject(UWorld* World) const;
+	void SaveWorldObject(UWorld* World, USoulLikeSaveGame* SaveGame = nullptr) const;
 	void LoadWorldObject(UWorld* World) const;
 	
 	UFUNCTION(BlueprintCallable)

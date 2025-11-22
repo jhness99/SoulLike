@@ -10,6 +10,7 @@
 
 #include "SoulLikeItemTypes.h"
 #include "Character/SoulLikeCharacterBase.h"
+#include "Character/SoulLikeEnemy.h"
 
 #include "Interface/CombatInterface.h"
 
@@ -71,7 +72,14 @@ void AItemActor::BeginPlay()
 
 	APawn* Pawn = Cast<APawn>(GetOwner());
 	if(Pawn == nullptr) return;
-	if(Pawn->IsLocallyControlled() || Pawn->GetLocalRole() == ROLE_SimulatedProxy)
+	// if(Pawn->IsLocallyControlled() || Pawn->GetLocalRole() == ROLE_SimulatedProxy)
+	// {
+	// 	if(MeshComponent)
+	// 	{
+	// 		MeshComponent->OnComponentBeginOverlap.AddDynamic(this, &AItemActor::OnOverlap);
+	// 	}
+	// }
+	if(Pawn->IsLocallyControlled() || (Pawn->HasAuthority() && Cast<ASoulLikeEnemy>(Pawn) != nullptr))
 	{
 		if(MeshComponent)
 		{
@@ -111,7 +119,7 @@ void AItemActor::OnOverlap(UPrimitiveComponent* OverlappedComponent,
 	const FHitResult& SweepResult)
 {
 	if(OtherActor == GetOwner()) return;
- 	
+	
 	// 서버에서 검증하지 않는 단순한 방법
 	// const FVector TipStart = MeshComponent->GetSocketLocation(FName("TipStart"));
 	// const FVector TipEnd = MeshComponent->GetSocketLocation(FName("TipEnd"));

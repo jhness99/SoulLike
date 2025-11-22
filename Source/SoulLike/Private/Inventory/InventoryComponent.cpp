@@ -4,7 +4,6 @@
 #include "Inventory/InventoryComponent.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
-#include "AbilitySystem/SoulLikeAbilitySystemComponent.h"
 #include "Inventory/EquipmentItemInstance.h"
 
 #include "Player/SoulLikePlayerState.h"
@@ -291,14 +290,41 @@ void UInventoryComponent::RemoveItem(UInventoryItemInstance* InItemInstance)
 	//OwnedItemInstances.Remove(InItemInstance);
 }
 
+void UInventoryComponent::OnRep_CurrentRightWeapon(UEquipmentItemInstance* OldCurrentRightWeapon)
+{
+	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+	const FGameplayTag& SlotTag = GameplayTags.EquipSlot_RightWeapon;
+	
+	RefreshRegistSlotAtOverlay.Broadcast(CurrentRightWeapon, SlotTag, GetSlotIndex(SlotTag));
+}
+
+void UInventoryComponent::OnRep_CurrentLeftWeapon(UEquipmentItemInstance* OldCurrentLeftWeapon)
+{
+	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+	const FGameplayTag& SlotTag = GameplayTags.EquipSlot_LeftWeapon;
+	
+	RefreshRegistSlotAtOverlay.Broadcast(CurrentLeftWeapon, SlotTag, GetSlotIndex(SlotTag));
+}
+
+void UInventoryComponent::OnRep_CurrentTool(UEquipmentItemInstance* OldCurrentTool)
+{
+	const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
+	const FGameplayTag& SlotTag = GameplayTags.EquipSlot_Tool;
+	
+	RefreshRegistSlotAtOverlay.Broadcast(CurrentTool, SlotTag, GetSlotIndex(SlotTag));
+}
+
 void UInventoryComponent::UsingTool(URegisterableItemInstance*& ItemInstance)
 {
+	UE_LOG(LogTemp, Warning, TEXT("%hs"), __FUNCTION__);
 	if(ItemInstance == nullptr) ItemInstance = CurrentTool;
 	if(ItemInstance == nullptr) return;
 	
 	ItemInstance->SetItemNum(ItemInstance->GetItemNum() - 1);
 	RemoveConsumeItem(ItemInstance);
+
 	UpdateInventoryListToWidgetController();
+	//UpdateInventoryListToWidgetController();
 	
 	// if(ItemInstance != nullptr)
 	// {

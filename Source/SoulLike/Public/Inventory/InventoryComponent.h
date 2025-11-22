@@ -88,7 +88,7 @@ protected:
 	void UnRegistItem(URegisterableItemInstance* ItemInstance);
 
 private:
-
+	
 	FEquipmentInventoryList& FindEquipmentSlotWithTag(const FGameplayTag& SlotTag);
 	void RemoveConsumeItem(UInventoryItemInstance* ItemInstance);
 	void ApplyPassiveEffectRegisted(URegisterableItemInstance* ItemInstance) const;
@@ -101,13 +101,22 @@ private:
 	void AddItem(UInventoryItemInstance* InItemInstance);
 	void RemoveItem(UInventoryItemInstance* InItemInstance);
 
-	UPROPERTY(Replicated)
+	UFUNCTION()
+	void OnRep_CurrentRightWeapon(UEquipmentItemInstance* OldCurrentRightWeapon);
+
+	UFUNCTION()
+	void OnRep_CurrentLeftWeapon(UEquipmentItemInstance* OldCurrentLeftWeapon);
+
+	UFUNCTION()
+	void OnRep_CurrentTool(UEquipmentItemInstance* OldCurrentTool);
+	
+	UPROPERTY(ReplicatedUsing=OnRep_CurrentRightWeapon)
 	TObjectPtr<UEquipmentItemInstance> CurrentRightWeapon;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_CurrentLeftWeapon)
 	TObjectPtr<UEquipmentItemInstance> CurrentLeftWeapon;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_CurrentTool)
 	TObjectPtr<UEquipmentItemInstance> CurrentTool;
 
 	UPROPERTY(EditDefaultsOnly)

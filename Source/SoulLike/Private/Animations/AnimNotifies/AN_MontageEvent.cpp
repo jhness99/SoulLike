@@ -3,6 +3,7 @@
 
 #include "Animations/AnimNotifies/AN_MontageEvent.h"
 
+#include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 
 UAN_MontageEvent::UAN_MontageEvent()
@@ -16,8 +17,7 @@ void UAN_MontageEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBas
                               const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
-
-	FGameplayEventData Payload;
 	
+	FGameplayEventData Payload;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(MeshComp->GetOwner(), EventTag, Payload);
 }

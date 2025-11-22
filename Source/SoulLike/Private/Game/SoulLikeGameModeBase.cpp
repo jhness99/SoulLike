@@ -49,12 +49,15 @@ void ASoulLikeGameModeBase::DeleteSaveSlotData(int32 SlotIndex)
 
 void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveWorldObject"));
 	if(World == nullptr) return;
 	USoulLikeGameInstance* SL_GameInstance = Cast<USoulLikeGameInstance>(GetGameInstance());
 	check(SL_GameInstance);
 	
 	if(USoulLikeSaveGame* SaveGame = RetrieveInGameSaveData())
 	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::ActorIteration_Loop"));
+		
 		for(FActorIterator It(World); It; ++It)
 		{
 			AActor* Actor = *It;
@@ -68,22 +71,33 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World) const
 					continue;
 				}
 			}
-	
+		
 			FSavedActor SavedActor;
 			SavedActor.ActorName = Actor->GetFName();
 			SavedActor.bIsUsedObject = ISaveInterface::Execute_GetIsUsedObject(Actor);
-	
-			FMemoryWriter MemoryWriter(SavedActor.Bytes);
-	
-			FObjectAndNameAsStringProxyArchive Archive(MemoryWriter, true);
-			Archive.ArIsSaveGame = true;
-	
-			Actor->Serialize(Archive);
+
+			SaveGame->SavedActors.Remove(SavedActor);
 			
-			SaveGame->SavedActors.Add(SavedActor);
+			{
+				TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::Actor_Serialize"));
+				FMemoryWriter MemoryWriter(SavedActor.Bytes);
+	
+				FObjectAndNameAsStringProxyArchive Archive(MemoryWriter, true);
+				Archive.ArIsSaveGame = true;
+	
+				Actor->Serialize(Archive);
+			}
+			
+			{
+				TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::SavedActors_Add"));
+				SaveGame->SavedActors.Add(SavedActor);
+			}
 		}
 		
-		SaveInGameProgressData(SaveGame);
+		{
+			TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveInGameProgressData"));
+			SaveInGameProgressData(SaveGame);
+		}
 	}
 }
 
@@ -170,7 +184,6 @@ void ASoulLikeGameModeBase::SaveInGameProgressData(USoulLikeSaveGame *SaveObject
 	const int32 InGameLoadSlotIndex = SoulLikeGameInstance->LoadSlotIndex;
 
 	UGameplayStatics::SaveGameToSlot(SaveObject, InGameLoadSlotName, InGameLoadSlotIndex);
-	
 }
 
 USoulLikeSaveGame* ASoulLikeGameModeBase::GetSaveSlotData(const FString &SlotName, int32 SlotIndex) const
