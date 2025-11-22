@@ -104,13 +104,12 @@ void ASoulLikePlayerController::Server_SendClientSaveData_Implementation(const F
         TempSaveGame->Dexterity           = SaveDataStruct.Dexterity;
         TempSaveGame->Intelligence        = SaveDataStruct.Intelligence;
         TempSaveGame->SavedAbilities      = SaveDataStruct.SavedAbilities;
-        TempSaveGame->SavedActors         = SaveDataStruct.SavedActors;
         TempSaveGame->SavedItems          = SaveDataStruct.SavedItems;
         TempSaveGame->RightWeaponSlotIndex= SaveDataStruct.RightWeaponSlotIndex;
         TempSaveGame->LeftWeaponSlotIndex = SaveDataStruct.LeftWeaponSlotIndex;
         TempSaveGame->ToolSlotIndex       = SaveDataStruct.ToolSlotIndex;
         //TempSaveGame->Transform           = SaveDataStruct.Transform;
-
+		
         // 3. LoadProgress에는 이 "임시 SaveGame" 객체를 전달합니다.
         SL_Character->LoadProgress(TempSaveGame);
 	}

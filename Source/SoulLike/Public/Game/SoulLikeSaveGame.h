@@ -132,7 +132,7 @@ public:
 	TArray<FSavedAbility> SavedAbilities;
 
 	UPROPERTY()
-	TArray<FSavedActor> SavedActors;
+	TMap<FName, FSavedActor> SavedActorsMap;
 
 	/** Inventory */
 	UPROPERTY()
@@ -156,11 +156,9 @@ USTRUCT(BlueprintType)
 struct FClientSaveData
 {
 	GENERATED_BODY()
-
-	/** 1. 기본 생성자 (안전성을 위해 추가) */
+	
 	FClientSaveData() = default;
-
-	/** 2. USoulLikeSaveGame*를 받는 생성자 (요청한 기능) */
+	
 	FClientSaveData(const USoulLikeSaveGame* SaveGame)
 	{
 		if (SaveGame)
@@ -180,7 +178,6 @@ struct FClientSaveData
 			Dexterity            = SaveGame->Dexterity;
 			Intelligence         = SaveGame->Intelligence;
 			SavedAbilities       = SaveGame->SavedAbilities;
-			SavedActors          = SaveGame->SavedActors;
 			SavedItems           = SaveGame->SavedItems;
 			RightWeaponSlotIndex = SaveGame->RightWeaponSlotIndex;
 			LeftWeaponSlotIndex  = SaveGame->LeftWeaponSlotIndex;
@@ -235,9 +232,6 @@ struct FClientSaveData
 	/** Abilities */
 	UPROPERTY()
 	TArray<FSavedAbility> SavedAbilities;
-
-	UPROPERTY()
-	TArray<FSavedActor> SavedActors;
 
 	/** Inventory */
 	UPROPERTY()

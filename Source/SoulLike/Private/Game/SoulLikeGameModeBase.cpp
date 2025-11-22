@@ -57,7 +57,8 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* Sa
 	if(SaveGame)
 	{
 		TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::ActorIteration_Loop"));
-		
+
+		TArray<FSavedActor> SavedActors;
 		for(FActorIterator It(World); It; ++It)
 		{
 			AActor* Actor = *It;
@@ -75,8 +76,6 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* Sa
 			FSavedActor SavedActor;
 			SavedActor.ActorName = Actor->GetFName();
 			SavedActor.bIsUsedObject = ISaveInterface::Execute_GetIsUsedObject(Actor);
-
-			SaveGame->SavedActors.Remove(SavedActor);
 			
 			{
 				TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::Actor_Serialize"));
@@ -88,16 +87,13 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* Sa
 				Actor->Serialize(Archive);
 			}
 			
-			{
-				TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::SavedActors_Add"));
-				SaveGame->SavedActors.Add(SavedActor);
-			}
+			SaveGame->SavedActorsMap.Add(SavedActor.ActorName, SavedActor);
 		}
-		
 		// {
 		// 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveInGameProgressData"));
 		// 	SaveInGameProgressData(SaveGame);
 		// }
+		
 	}
 }
 
@@ -124,21 +120,17 @@ void ASoulLikeGameModeBase::LoadWorldObject(UWorld* World) const
 			AActor* Actor = *It;
 
 			if(!Actor->Implements<USaveInterface>()) continue;
-
-			for(FSavedActor SavedActor : SaveGame->SavedActors)
+			
+			if(const FSavedActor* FoundData = SaveGame->SavedActorsMap.Find(Actor->GetFName()))
 			{
-				if(SavedActor.ActorName == Actor->GetFName())
-				{
-					ISaveInterface::Execute_SetIsUsedObject(Actor, SavedActor.bIsUsedObject);
+				ISaveInterface::Execute_SetIsUsedObject(Actor, FoundData->bIsUsedObject);
 
-					FMemoryReader MemoryReader(SavedActor.Bytes);
+				FMemoryReader MemoryReader(FoundData->Bytes);
+				FObjectAndNameAsStringProxyArchive Archive(MemoryReader, true);
+				Archive.ArIsSaveGame = true;
+				Actor->Serialize(Archive);
 
-					FObjectAndNameAsStringProxyArchive Archive(MemoryReader, true);
-					Archive.ArIsSaveGame = true;
-					Actor->Serialize(Archive);
-
-					ISaveInterface::Execute_LoadActor(Actor);
-				}
+				ISaveInterface::Execute_LoadActor(Actor);
 			}
 		}
 	}
@@ -185,7 +177,7 @@ void ASoulLikeGameModeBase::SaveInGameProgressData(USoulLikeSaveGame *SaveObject
 
 	SaveWorldObject(GetWorld(), SaveObject);
 	
-	UGameplayStatics::SaveGameToSlot(SaveObject, InGameLoadSlotName, InGameLoadSlotIndex);
+	UGameplayStatics::AsyncSaveGameToSlot(SaveObject, InGameLoadSlotName, InGameLoadSlotIndex);
 }
 
 USoulLikeSaveGame* ASoulLikeGameModeBase::GetSaveSlotData(const FString &SlotName, int32 SlotIndex) const
