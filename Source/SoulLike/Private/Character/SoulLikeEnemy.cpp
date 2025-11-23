@@ -372,8 +372,8 @@ void ASoulLikeEnemy::OnOverlapMeleeTraceCollision(UPrimitiveComponent* Overlappe
 	FTransform ParentWorldTransform = GetActorTransform();  // AActor2는 AttachParent
 	FTransform TipStartRelativeToParent = TipStartTransform.GetRelativeTransform(ParentWorldTransform);
 	FTransform TipEndRelativeToParent = TipEndTransform.GetRelativeTransform(ParentWorldTransform);
-	
-	MeleeTrace(TipStartRelativeToParent, TipEndRelativeToParent, Radius);
+
+	MeleeTrace_Implementation(TipStartRelativeToParent, TipEndRelativeToParent, Radius);
 }
 
 void ASoulLikeEnemy::SetupActorWithEnmeyData()
@@ -399,10 +399,6 @@ void ASoulLikeEnemy::SetupActorWithEnmeyData()
 			GetMesh()->SetRelativeRotation(EnemyData.MeshRotation);
 		}else
 		{
-			//해결한 문제
-			//릭터 유형의 액터의 경우 메시 구성 요소의 위치는 게임 플레이 시작 시 캐시됩니다.
-			//서버가 클라이언트에 위치 업데이트를 보낼 때 이 캐시된 위치가 보간 대상 위치로 사용됩니다.
-			//하지만 안타깝게도 이 캐시된 위치는 메시 구성 요소의 위치에 적용된 동적 런타임 수정 사항을 완전히 무시합니다.
 			CacheInitialMeshOffset(EnemyData.MeshLocation, EnemyData.MeshRotation);
 		}
 	}

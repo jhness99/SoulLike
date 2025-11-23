@@ -49,15 +49,12 @@ void ASoulLikeGameModeBase::DeleteSaveSlotData(int32 SlotIndex)
 
 void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* SaveGame) const
 {
-	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveWorldObject"));
 	if(World == nullptr) return;
 	USoulLikeGameInstance* SL_GameInstance = Cast<USoulLikeGameInstance>(GetGameInstance());
 	check(SL_GameInstance);
 	
 	if(SaveGame)
 	{
-		TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::ActorIteration_Loop"));
-
 		TArray<FSavedActor> SavedActors;
 		for(FActorIterator It(World); It; ++It)
 		{
@@ -78,7 +75,6 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* Sa
 			SavedActor.bIsUsedObject = ISaveInterface::Execute_GetIsUsedObject(Actor);
 			
 			{
-				TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("SaveWorldObject::Actor_Serialize"));
 				FMemoryWriter MemoryWriter(SavedActor.Bytes);
 	
 				FObjectAndNameAsStringProxyArchive Archive(MemoryWriter, true);
@@ -89,11 +85,6 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* Sa
 			
 			SaveGame->SavedActorsMap.Add(SavedActor.ActorName, SavedActor);
 		}
-		// {
-		// 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveInGameProgressData"));
-		// 	SaveInGameProgressData(SaveGame);
-		// }
-		
 	}
 }
 

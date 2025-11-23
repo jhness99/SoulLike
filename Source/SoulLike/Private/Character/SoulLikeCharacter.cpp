@@ -360,7 +360,6 @@ void ASoulLikeCharacter::SaveProgress_Implementation() const
     	
         if(AuraPlayerState->IsDirty())
         {
-        	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Character::SetSaveDataWithCharacter"));
         	SaveData->ProfileName = AuraPlayerState->GetProfileName();
 	        SaveData->PlayerLevel = AuraPlayerState->GetPlayerLevel();
 	        SaveData->EXP = AuraPlayerState->GetExp();
@@ -403,13 +402,8 @@ void ASoulLikeCharacter::SaveProgress_Implementation() const
         }
     	
     	SaveData->Transform = GetActorTransform();
-		
-        {
-        	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("Character::SaveInGameProgressData"));
-	        AuraGameMode->SaveInGameProgressData(SaveData);
-        }
-    	//AuraGameMode->SaveWorldObject(GetWorld());
-    	UE_LOG(LogTemp, Warning, TEXT("SaveProgress"));
+    	
+    	AuraGameMode->SaveInGameProgressData(SaveData);
     	AuraPlayerState->MarkAsClean();
     }
 }
