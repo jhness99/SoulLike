@@ -34,7 +34,7 @@ class SOULLIKE_API UItemDataAsset : public UDataAsset
 public:
 
 	//UItemData* FindItemDataFromIndexAndItemType(FGameplayTag ItemType, FName ItemID) const;
-	UItemData* FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID) const;
+	UItemData* FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID);
 
 	FString FindTagNameFromGameplayTag(const FGameplayTag& Tag) const;
 	FString FindItemTypeFromGameplayTag(const FGameplayTag& Tag) const;
@@ -70,4 +70,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FItemDataTable> ItemDataTables;
+
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UItemData>> ItemDataToItemID;
 };

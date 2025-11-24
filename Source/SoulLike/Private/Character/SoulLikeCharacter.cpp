@@ -52,8 +52,6 @@ ASoulLikeCharacter::ASoulLikeCharacter()
 	bUseControllerRotationYaw = false;
 }
 
-
-
 void ASoulLikeCharacter::SetWarpingLocationAndRotation(FVector Location, FRotator Rotation)
 {
 	if(Location == FVector::ZeroVector)

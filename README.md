@@ -25,8 +25,15 @@ Unreal Engine 5 Portfolio
 소울라이크 액션을 레퍼런스로 한 액션 RPG     
 GAS 기반의 전투 시스템, 동적 키 바인딩, FastArray 기반 인벤토리, MVC 구조의 UI 연동, ObjectPooling 적 리스폰 등을 구현
 ## InventorySystem
-![InventorySystem](Images/InventoryComponentClassDiagram.png)       
-InventoryComponent를 통해 Inventory를 관리한다. 아이템의 기능과 정보를 저장한 ItemInstance로 저장
+![InventorySystem](Images/InventoryComponent1.png)
+각 캐릭터에 InventoryComponent를 통해 Inventory를 구현한다.      
+플레이어는 **PlayerState**, 적은 **Character** 클래스에 InventoryComponent를 소유한다.     
+캐릭터가 소지하고 장착하는 모든 로직을 **InventoryComponent**에서 관리한다.        
+**InventoryWidgetController**를 통해 Widget과 상호작용 할 수 있다.
+
+
+
+아이템의 기능과 정보를 저장한 ItemInstance로 저장
 * 멀티플레이를 고려하여 ItemInstance들의 리플리케이션을 최소화 하기 위해 Inventory를 FastArraySerializer를 사용        
 * Item의 내부 데이터는 ItemInstance에 UItemData와 FInventoryData에서 보관
   * UItemData : 아이템의 정적 정보
