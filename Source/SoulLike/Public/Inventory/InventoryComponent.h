@@ -44,7 +44,8 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void NextSlot(const FGameplayTag& SlotTag);
-	void UpdateInventoryListToWidgetController();
+	void UpdateInventoryListToWidgetController() const;
+	void UpdateRegistSlotToWidgetController() const;
 
 	void UsingTool(URegisterableItemInstance*& ItemInstance);
 	void RefillPotion();

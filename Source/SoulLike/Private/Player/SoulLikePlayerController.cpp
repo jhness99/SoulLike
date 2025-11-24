@@ -283,6 +283,7 @@ void ASoulLikePlayerController::InitOverlay()
 		{
 			SoulLikeHUD->InitOverlay(this, SL_PS, SL_PS->GetAbilitySystemComponent(), SL_PS->GetAttributeSet());
 			SL_PS->GetInventoryComponent()->BindToWidgetController();
+			SL_PS->GetInventoryComponent()->UpdateRegistSlotToWidgetController();
 		}
 	}
 }

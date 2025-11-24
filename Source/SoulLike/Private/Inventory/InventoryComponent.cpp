@@ -33,7 +33,7 @@ void UInventoryComponent::BindToWidgetController()
 	UInventoryWidgetController* InventoryWC = USoulLikeFunctionLibrary::GetInventoryWidgetController(this);
 	if(InventoryWC)
 	{
-		InventoryWC->BindToInventoryComponent(this);
+		InventoryWC->BindToInventoryComponent();
 		InventoryWC->OnRegistedItem.AddDynamic(this, &UInventoryComponent::RegistItem);
 		InventoryWC->OnUpgradedItem.AddDynamic(this, &UInventoryComponent::UpgradeItem);
 	}
@@ -79,7 +79,6 @@ void UInventoryComponent::LoadInventoryListFromSavedItems(const TArray<FSavedIte
 			ItemInstance->Init(Data);
 		}
 		AddItem(ItemInstance);
-		//InventoryList.AddItem(ItemInstance);
 		
 		FRegistInfo RegistInfo = SavedItem.RegistInfo;
 		
@@ -227,16 +226,13 @@ void UInventoryComponent::RefreshCurrentSlot(FEquipmentInventoryList EquipmentSl
 		if(CurrentTool) CurrentTool->OnUnEquip();
 		CurrentTool = EquipmentSlot.GetEquipmentItemInstance(ToolSlotIndex);
 		if(CurrentTool) CurrentTool->OnEquip(GetOwner(), SlotTag);
-
-		//TODO 
-		// RefreshRegistSlotAtOverlay ClinentRPC로 리팩토링해야함
+		
 		RefreshRegistSlotAtOverlay.Broadcast(CurrentTool, SlotTag, GetSlotIndex(SlotTag));
 	}
 	
-
 	if(ASoulLikePlayerState* SL_PS = CastChecked<ASoulLikePlayerState>(UGameplayStatics::GetPlayerState(this, 0)))
 	{
-		APawn* Pawn = SL_PS->GetPawn();
+		APawn* Pawn = SL_PS->GetPawn();	
 		if(Pawn && Pawn->Implements<UCombatInterface>())
 		{
 			if(CurrentRightWeapon == nullptr)
@@ -271,23 +267,15 @@ int32 UInventoryComponent::GetSlotIndex(const FGameplayTag& SlotTag) const
 void UInventoryComponent::AddItem(UInventoryItemInstance* InItemInstance)
 {
 	if (!IsValid(InItemInstance)) return;
-
-	// 복제용 리스트에 추가
+	
 	InventoryList.AddItem(InItemInstance);
-
-	// GC 방지용 소유권 리스트에도 추가
-	//OwnedItemInstances.Add(InItemInstance);
 }
 
 void UInventoryComponent::RemoveItem(UInventoryItemInstance* InItemInstance)
 {
 	if (!IsValid(InItemInstance)) return;
-
-	// 복제용 리스트에서 제거
+	
 	InventoryList.RemoveItem(InItemInstance);
-
-	// 소유권 리스트에서도 제거
-	//OwnedItemInstances.Remove(InItemInstance);
 }
 
 void UInventoryComponent::OnRep_CurrentRightWeapon(UEquipmentItemInstance* OldCurrentRightWeapon)
@@ -324,27 +312,6 @@ void UInventoryComponent::UsingTool(URegisterableItemInstance*& ItemInstance)
 	RemoveConsumeItem(ItemInstance);
 
 	UpdateInventoryListToWidgetController();
-	//UpdateInventoryListToWidgetController();
-	
-	// if(ItemInstance != nullptr)
-	// {
-	// 	UToolData* ToolData = ItemInstance->GetToolData();
-	// 	if(ToolData->ToolActionType == EToolActionType::ETAT_Effect)
-	// 	{
-	// 		if(ToolData->UsingEffect->IsValidLowLevel())
-	// 		{
-	// 			if(USoulLikeAbilitySystemComponent* SL_ASC = Cast<USoulLikeAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner())))
-	// 			{
-	// 				SL_ASC->ApplyEffectToSelf(ToolData->UsingEffect, 1);
-	// 			}
-	// 			//ApplyEffectToSelf(ItemInstance->GetToolData()->UsingEffect, 1);
-	// 		}
-	// 	}
-	// 	else if(ToolData->ToolActionType == EToolActionType::ETAT_Ability)
-	// 	{
-	// 		
-	// 	}
-	// }
 }
 
 void UInventoryComponent::RefillPotion()
@@ -487,9 +454,7 @@ void UInventoryComponent::SetupDefaultInventoryList()
 			ItemInstance = NewObject<UEquipmentItemInstance>(GetOwner());
 			ItemInstance->Init(Data);
 		}
-		//InventoryList.AddItem(ItemInstance);
 		AddItem(ItemInstance);
-		//OwnedItemInstances.Add(ItemInstance);
 	}
 	
 	int32 Index = 0;
@@ -500,7 +465,6 @@ void UInventoryComponent::SetupDefaultInventoryList()
 		ItemInstance->Init(Data);
 		
 		RightWeaponList.Register(ItemInstance, Index);
-		//InventoryList.AddItem(ItemInstance);
 		AddItem(ItemInstance);
 		Index++;
 	}
@@ -602,7 +566,7 @@ void UInventoryComponent::UpgradeItem(URegisterableItemInstance* ItemInstance)
 	}
 }
 
-void UInventoryComponent::UpdateInventoryListToWidgetController()
+void UInventoryComponent::UpdateInventoryListToWidgetController() const
 {
 	if(UInventoryWidgetController* InventoryWC = USoulLikeFunctionLibrary::GetInventoryWidgetController(this))
 	{
@@ -613,6 +577,23 @@ void UInventoryComponent::UpdateInventoryListToWidgetController()
 		{
 			MarkAsDirtyDelegate.Execute();
 		}
+	}
+}
+
+void UInventoryComponent::UpdateRegistSlotToWidgetController() const
+{
+	UInventoryWidgetController* InventoryWidgetController = USoulLikeFunctionLibrary::GetInventoryWidgetController(this);
+	if(InventoryWidgetController == nullptr) return;
+	
+	for(const FInventoryListItem& InventoryListItem : InventoryList.GetItems())
+	{
+		UEquipmentItemInstance* EquipmentItemInstance = Cast<UEquipmentItemInstance>(InventoryListItem.ItemInstance);
+		if(EquipmentItemInstance == nullptr) continue;
+
+		const FRegistInfo& RegistInfo = EquipmentItemInstance->GetRegistInfo();
+		
+		if(RegistInfo.Index == -1) continue;
+		InventoryWidgetController->OnRegistedItemToWidget.Broadcast(EquipmentItemInstance, RegistInfo.SlotTag, RegistInfo.Index);
 	}
 }
 

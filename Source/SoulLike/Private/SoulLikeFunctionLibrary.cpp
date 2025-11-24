@@ -296,6 +296,32 @@ const TArray<FInventoryListItem>& USoulLikeFunctionLibrary::GetInvenoryListItems
 	return InventoryList.GetItems();
 }
 
+bool USoulLikeFunctionLibrary::CheckRequirementItem(const APlayerState* PlayerState,
+	URegisterableItemInstance* ItemInstance)
+{
+	if(ASoulLikePlayerState* SL_PS = Cast<ASoulLikePlayerState>(const_cast<APlayerState*>(PlayerState)))
+	{
+		if(SL_PS->GetInventoryComponent())
+		{
+			return SL_PS->GetInventoryComponent()->CheckRequirement(ItemInstance);
+		}
+	}
+	return false;
+}
+
+int32 USoulLikeFunctionLibrary::GetItemNumWithTagAtInventory(const APlayerState* PlayerState,
+	const FGameplayTag& ItemTag)
+{
+	if(ASoulLikePlayerState* SL_PS = Cast<ASoulLikePlayerState>(const_cast<APlayerState*>(PlayerState)))
+	{
+		if(SL_PS->GetInventoryComponent())
+		{
+			return SL_PS->GetInventoryComponent()->GetItemNumWithTag(ItemTag);
+		}
+	}
+	return 0;
+}
+
 AActor* USoulLikeFunctionLibrary::ClosestActorWithHitResults(const UObject* WorldContextObject,
                                                              const TArray<FHitResult>& HitResults)
 {

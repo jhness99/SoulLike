@@ -22,19 +22,13 @@ class SOULLIKE_API UInventoryWidgetController : public USoulLikeWidgetController
 
 public:
 
-	void BindToInventoryComponent(UInventoryComponent* InInventoryComponent);
+	void BindToInventoryComponent();
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void BroadcastOnRegistedItem(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void BroadcastUpgrade(URegisterableItemInstance* ItemInstance);
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	int32 GetItemNumWithTag(FGameplayTag Tag);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	bool CheckRequirementItem(URegisterableItemInstance* ItemInstance);
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnChangedInventorySignature OnChangedInventory;
@@ -63,8 +57,4 @@ protected:
 	UFUNCTION()
 	void OnRegistedItemFunc(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
 	
-private:
-
-	UPROPERTY()
-	TWeakObjectPtr<UInventoryComponent> InventoryComponent;
 };
