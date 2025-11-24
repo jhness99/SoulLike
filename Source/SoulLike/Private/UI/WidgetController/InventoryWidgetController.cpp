@@ -5,10 +5,8 @@
 
 #include "Inventory/InventoryComponent.h"
 
-void UInventoryWidgetController::BindToInventoryComponent(UInventoryComponent* InInventoryComponent)
+void UInventoryWidgetController::BindToInventoryComponent()
 {
-	InventoryComponent = InInventoryComponent;
-
 	OnRegistedItemToInventoryComponent.AddDynamic(this, &UInventoryWidgetController::OnRegistedItemFunc);
 }
 
@@ -21,20 +19,6 @@ void UInventoryWidgetController::BroadcastOnRegistedItem(URegisterableItemInstan
 void UInventoryWidgetController::BroadcastUpgrade(URegisterableItemInstance* ItemInstance)
 {
 	OnUpgradedItem.Broadcast(ItemInstance);
-}
-
-int32 UInventoryWidgetController::GetItemNumWithTag(FGameplayTag Tag)
-{
-	if(InventoryComponent.IsValid())
-	{
-		return InventoryComponent->GetItemNumWithTag(Tag);
-	}
-	return 0;
-}
-
-bool UInventoryWidgetController::CheckRequirementItem(URegisterableItemInstance* ItemInstance)
-{
-	return InventoryComponent->CheckRequirement(ItemInstance);
 }
 
 void UInventoryWidgetController::OnRegistedItemFunc(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag,

@@ -120,6 +120,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|ItemData")
 	static const TArray<FInventoryListItem>& GetInvenoryListItems(const FInventoryList& InventoryList);
 
+	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|ItemData")
+	static bool CheckRequirementItem(const APlayerState* PlayerState, URegisterableItemInstance* ItemInstance);
+
+	UFUNCTION(BlueprintPure, Category = "SoulLikeFunctionLibrary|ItemData")
+	static int32 GetItemNumWithTagAtInventory(const APlayerState* PlayerState, const FGameplayTag& ItemTag);
+
 	/**
 	 * Gameplay Mechanics
 	 */

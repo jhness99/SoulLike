@@ -27,7 +27,7 @@ public:
 	virtual bool GetRegisted() const override { return RegistInfo.bRegisted; }
 
 	void SetAppliedActiveGEHandle(const FActiveGameplayEffectHandle& InAppliedActiveGEHandle) { AppliedActiveGEHandle = InAppliedActiveGEHandle; }
-	FActiveGameplayEffectHandle GetAppliedActiveGEHandle() const { return AppliedActiveGEHandle; }
+	const FActiveGameplayEffectHandle& GetAppliedActiveGEHandle() const { return AppliedActiveGEHandle; }
 
 	virtual void SetRegistInfo(const FRegistInfo& InRegistInfo) override { RegistInfo = InRegistInfo; }
 	virtual FRegistInfo GetRegistInfo() const override { return RegistInfo; }

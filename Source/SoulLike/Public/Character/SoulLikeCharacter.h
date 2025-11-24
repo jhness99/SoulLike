@@ -41,8 +41,8 @@ public:
 	
 	void LoadProgress(USoulLikeSaveGame* SaveGame = nullptr);
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UItemDataAsset> ItemDataAsset;
+	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	// TObjectPtr<UItemDataAsset> ItemDataAsset;
 
 protected:
 

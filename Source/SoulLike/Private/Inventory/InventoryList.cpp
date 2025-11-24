@@ -75,15 +75,9 @@ void FInventoryList::SortItems()
 
 void FEquipmentInventoryList::Init(int32 InMaxIndex)
 {
-	//MaxIndex = InMaxIndex;
-	// for(int i = 0; i < MaxIndex; i++)
-	// {
-	// 	FInventoryListItem& Item = Items.AddDefaulted_GetRef();
-	// 	MarkItemDirty(Item);
-	// }
 	MaxIndex = InMaxIndex;
-	Items.Empty(); // 초기화 시 기존 아이템을 모두 비웁니다.
-	Items.SetNum(MaxIndex); // 지정된 크기만큼 null 아이템으로 채웁니다.
+	Items.Empty();
+	Items.SetNum(MaxIndex);
 	MarkArrayDirty();
 }
 
