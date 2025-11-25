@@ -34,20 +34,20 @@ GAS 기반의 전투 시스템, 동적 키 바인딩, FastArray 기반 인벤토
 
 ![ItemInstance](Images/itemInstance.png)        
 
-**ItemInstance**는 아이탬의 데이터를 모아서 개념을 담당하는 `UObject`입니다.        
+**ItemInstance**는 아이템의 데이터를 모아서 개념을 담당하는 `UObject`입니다.        
 3가지로 구분되어 관리됩니다.
 1. **InventoryData**        
-    * 인벤토리에서 아이탬의 데이터를 저장하는 구조체
-    * 아이탬의 변화에 따라 동적으로 변화
+    * 인벤토리에서 아이템의 데이터를 저장하는 구조체
+    * 아이템의 변화에 따라 동적으로 변화
     * 리플리케이션 됨
 2. **ItemData**
-    * 변하지 않는 아이탬 데이터를 저장하고 있는 UObject
+    * 변하지 않는 아이템 데이터를 저장하고 있는 UObject
     * 언리얼 리플렉션의 **RTTI**를 사용하기 위해 `FTableRow` 구조체를 `UObject`로 변환해서 사용
 3. **ItemActor**
-    * 아이탬이 월드에 존재할 때만 사용
+    * 아이템이 월드에 존재할 때만 사용
     * 해당 클래스를 상속받은 액터를 통해 기능 추가
 
-중복적인 `UItemData` 생성을 막기 위해 `UItemDataAsset` 데이터애셋 객체에서 관리       
+중복적인 `UItemData` 생성을 막기 위해 `UItemDataAsset` 데이터애셋 객체에서 관리     
 
 ### ItemDataAsset.cpp
 ```c++
@@ -105,6 +105,29 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(const UObject* Outer
     return nullptr;
 }
 ```
+
+### 아이템 데이터를 UObject화 하는 이유
+언리얼 엔진의 DataTable은 기본적으로 **FStruct**(`FTableRowBase`) 구조를 사용한다.       
+하지만 해당 프로젝트에서는 FStruct를 **UObject**(`UItemData`)로 변환하는 구조로 구현했다.
+
+* 리플렉션 시스템과 RTTI의 한계 극복     
+    - 문제점: `FStruct`는 리플렉션 시스템`UStruct`에 등록되지만, UClass 기반이 아니기 때문에 RTTI(RunTime Type Information)를 완벽하게 지원하지 않음.
+    - 발생 문제: 언리얼 엔진의 핵심 기능인 `Cast<T>`을 사용할 수 없으며, 또한 블루프린트의 Cast 노드를 사용할 수 없음
+
+
+* 다형성(Polymorphism) 및 확장성 확보
+  - 해결책: 정적 데이터(`FStruct`)를 `UObject` 기반의 클래스(`UItemData`, `UWeaponData` 등)로 래핑하여 관리
+  - 이점: 
+    1. 안전한 캐스팅: `Cast<UWeaponData>(ItemData)`와 같은 엔진 표준 캐스팅 기능을 C++와 블루프린트 모두에서 사용 가능.
+    2. 상속 구조 활용: 아이템 타입(무기, 방어구, 소모품)에 따른 데이터 계층 구조 설계 및 확장 용이.
+    3. 블루프린트 호환성: `UObject`의 메모리 관리(GC) 및 리플렉션 기능을 활용하여 블루프린트에서 사용 용이.
+
+
+* **DataTable**에 저장된 `FSL_ItemData`를 `UItemData`로 변환 과정
+  1. **ItemInstance를** 생성할 때 `FindItemDataFromIndexAndItemType()` 팩토리 함수 사용
+  2. **ItemID**와 **ItemTag**로 `FSL_ItemData`를 탐색
+  3. 탐색한 `FSL_ItemData`로 `UItemData`를 생성, 생성한 **ItemData**를 **ItemInstance**에 저장
+
 ### SoulLikeItemTypes.h
 ```c++
 UCLASS(BlueprintType)
@@ -125,15 +148,12 @@ public:
     }
 }
 ```
-DataTable에 저장된 FSL_ItemData를 UItemData로 변환 과정
-1. ItemInstance를 생성할 때 FindItemDataFromIndexAndItemType() 팩토리 함수 사용
-2. ItemID와 ItemTag(FGameplayTag)로 FSL_ItemData를 탐색
-3. 탐색한 FSL_ItemData로 UItemData를 생성, 생성한 ItemData를 ItemInstance에 저장
+
 
 ## WidgetController
 ![WidgetController](Images/WidgetControllerDiagram.png)   
 결합도를 낮추고 코드의 재사용성을 높이기 위해 WidgetController를 사용하여 Model(게임로직)과 View(UI)를 분리하여 설계.    
-클라이언트를 조작중인 PlayerController는 한개만 존재할 수 있고, 해당 PlayerController에서만 HUD가 생성. 따라서 HUD는 싱글톤 처럼 동작.
+클라이언트를 조작중인 PlayerController는 한개만 존재할 수 있고, 해당 PlayerController에서만 HUD가 생성. 따라서 HUD는 해당 로컬 플레이어 기준 싱글톤 처럼 동작.
 - 현재 클라이언트를 조종하는 Controller는 싱글톤처럼 한개의 객체만 존재하고 HUD또한 한개만 존재
 - 클라이언트에 하나만 존재하는 Controller의 HUD에 WidgetController를 생성
 - UBlueprintFunctionLibrary를 재정의 한 Static Helper Function을 사용해서 HUD의 WidgetController를 사용
@@ -194,7 +214,7 @@ WidgetController와 Widget, Model들과 WidgetController는 Delegate를 통해 �
 > 인벤토리 갱신 시퀀스와 장비장착 시퀀스
 
 * InventoryList에 변화가 생긴다면, InventoryWidgetController의 Delegate에 의해 SoulLikeUserWidget에 Bind된 Callback함수로 InventoryWidget 갱신
-* Widget의 Button을 상호작용 했다면, InventoryWidgetController를 통해 InventoryComponent에 Bind 된 아이탬 장착 함수를 호출한다.
+* Widget의 Button을 상호작용 했다면, InventoryWidgetController를 통해 InventoryComponent에 Bind 된 아이템 장착 함수를 호출한다.
 
 ## KeyBind
 
@@ -493,7 +513,7 @@ void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartRelativeT
 
 ## GameplayAbilitySystem
 GAS는 캐릭터의 액션/상태 구현을 위해 사용한 프레임워크
-공격, 상호작용, 스테이터스, 아이탬 사용, 타겟고정, 구르기등의 핵심기능 구현
+공격, 상호작용, 스테이터스, 아이템 사용, 타겟고정, 구르기등의 핵심기능 구현
 
 ### FSoulLikeGameplayTags
 FGameplayTag는 문자열을 "."로 구분하여 계층을 나누어 분류하는 계층형 식별자
