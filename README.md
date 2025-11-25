@@ -25,19 +25,30 @@ Unreal Engine 5 Portfolio
 소울라이크 액션을 레퍼런스로 한 액션 RPG     
 GAS 기반의 전투 시스템, 동적 키 바인딩, FastArray 기반 인벤토리, MVC 구조의 UI 연동, ObjectPooling 적 리스폰 등을 구현
 ## InventorySystem
-![InventorySystem](Images/InventoryComponent1.png)
-각 캐릭터에 InventoryComponent를 통해 Inventory를 구현한다.      
-플레이어는 **PlayerState**, 적은 **Character** 클래스에 InventoryComponent를 소유한다.     
-캐릭터가 소지하고 장착하는 모든 로직을 **InventoryComponent**에서 관리한다.        
-**InventoryWidgetController**를 통해 Widget과 상호작용 할 수 있다.
+![InventorySystem](Images/InventoryComponent1.png)     
 
+각 캐릭터에 `UInventoryComponent`를 통해 **InventorySystem**을 구현한다.      
+플레이어는 **PlayerState**, 적은 **Character** 클래스에 `UInventoryComponent`를 소유한다.     
+캐릭터가 소지하고 장착하는 모든 로직을 `UInventoryComponent`에서 관리한다.        
+`UInventoryWidgetController`를 통해 **Widget**과 상호작용 할 수 있다.
 
+![ItemInstance](Images/itemInstance.png)        
 
-아이템의 기능과 정보를 저장한 ItemInstance로 저장
-* 멀티플레이를 고려하여 ItemInstance들의 리플리케이션을 최소화 하기 위해 Inventory를 FastArraySerializer를 사용        
-* Item의 내부 데이터는 ItemInstance에 UItemData와 FInventoryData에서 보관
-  * UItemData : 아이템의 정적 정보
-  * FInventoryData : 아이템의 동적 정보
+**ItemInstance**는 아이탬의 데이터를 모아서 개념을 담당하는 `UObject`입니다.        
+3가지로 구분되어 관리됩니다.
+1. **InventoryData**        
+    * 인벤토리에서 아이탬의 데이터를 저장하는 구조체
+    * 아이탬의 변화에 따라 동적으로 변화
+    * 리플리케이션 됨
+2. **ItemData**
+    * 변하지 않는 아이탬 데이터를 저장하고 있는 UObject
+    * 언리얼 리플렉션의 **RTTI**를 사용하기 위해 `FTableRow` 구조체를 `UObject`로 변환해서 사용
+3. **ItemActor**
+    * 아이탬이 월드에 존재할 때만 사용
+    * 해당 클래스를 상속받은 액터를 통해 기능 추가
+
+중복적인 `UItemData` 생성을 막기 위해 `UItemDataAsset` 데이터애셋 객체에서 관리       
+
 ### ItemDataAsset.cpp
 ```c++
 //ItemDataTable을 저장하는 구조체. 해당 DataTable에 맞는 UItemData의 Class를 저장
@@ -58,10 +69,8 @@ struct FItemDataTable
 
 ...
 //FSL_ItemData의 하위구조체를 기반으로 UItemData를 생성하고 초기화 해주는 함수
-UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID) const
+UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(const UObject* Outer, const FGameplayTag& ItemType, const FName& ItemID)
 {
-    const FSoulLikeGameplayTags& GameplayTags = FSoulLikeGameplayTags::Get();
-    
     for(const FItemDataTable& ItemDataTableStruct : ItemDataTables)
     {
         if(ItemType.MatchesTagExact(ItemDataTableStruct.ItemTypeTag))
@@ -71,9 +80,21 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGam
     
             if (Outer && ItemDataTableStruct.ItemDataClass != nullptr)
             {
-                    //등록되어있는 ItemDataClass로 형 변환해서 생성
-                UItemData* ItemDataObject = NewObject<UItemData>(Outer, ItemDataTableStruct.ItemDataClass.Get());
+                //저장해 둔 TMap에 ItemID를 통해 UItemData재활용
+                if (TObjectPtr<UItemData>* FoundItemPtr = ItemDataToItemID.Find(ItemData->ItemID))
+                {
+                    if (IsValid(*FoundItemPtr))
+                    {
+                        return *FoundItemPtr;
+                    }
+                    ItemDataToItemID.Remove(ItemData->ItemID);
+                }
+                
+                UItemData* ItemDataObject = NewObject<UItemData>(const_cast<UObject*>(Outer), ItemDataTableStruct.ItemDataClass.Get());
                 ItemDataObject->Init(ItemData);
+                
+                //TMap에 저장해서 UItemData재활용
+                ItemDataToItemID.Add(ItemData->ItemID, ItemDataObject);
     
                 return ItemDataObject;
             }
@@ -108,6 +129,7 @@ DataTable에 저장된 FSL_ItemData를 UItemData로 변환 과정
 1. ItemInstance를 생성할 때 FindItemDataFromIndexAndItemType() 팩토리 함수 사용
 2. ItemID와 ItemTag(FGameplayTag)로 FSL_ItemData를 탐색
 3. 탐색한 FSL_ItemData로 UItemData를 생성, 생성한 ItemData를 ItemInstance에 저장
+
 ## WidgetController
 ![WidgetController](Images/WidgetControllerDiagram.png)   
 결합도를 낮추고 코드의 재사용성을 높이기 위해 WidgetController를 사용하여 Model(게임로직)과 View(UI)를 분리하여 설계.    

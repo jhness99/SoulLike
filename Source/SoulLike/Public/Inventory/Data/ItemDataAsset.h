@@ -32,29 +32,13 @@ class SOULLIKE_API UItemDataAsset : public UDataAsset
 	GENERATED_BODY()
 
 public:
-
-	//UItemData* FindItemDataFromIndexAndItemType(FGameplayTag ItemType, FName ItemID) const;
-	UItemData* FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID);
+	
+	UItemData* FindItemDataFromIndexAndItemType(const UObject* Outer, const FGameplayTag& ItemType, const FName& ItemID);
 
 	FString FindTagNameFromGameplayTag(const FGameplayTag& Tag) const;
 	FString FindItemTypeFromGameplayTag(const FGameplayTag& Tag) const;
 	FString FindWeaponTypeFromGameplayTag(const FGameplayTag& Tag) const;
 	FString FindToolTypeFromGameplayTag(const FGameplayTag& Tag) const;
-	
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	// TArray<FItemTypeMapping> ItemTypeMappings;
-
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	// TObjectPtr<UDataTable> ItemDataTable;
-	//
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	// TObjectPtr<UDataTable> WeaponDataTable;
-	//
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	// TObjectPtr<UDataTable> GearDataTable;
-	//
-	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	// TObjectPtr<UDataTable> ToolDataTable;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TMap<FGameplayTag, FString> StringToEquipSlot;

@@ -5,7 +5,7 @@
 
 #include "SoulLikeGameplayTags.h"
 
-UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGameplayTag ItemType, FName ItemID)
+UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(const UObject* Outer, const FGameplayTag& ItemType, const FName& ItemID)
 {
 	for(const FItemDataTable& ItemDataTableStruct : ItemDataTables)
 	{
@@ -25,7 +25,7 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(UObject* Outer, FGam
 					ItemDataToItemID.Remove(ItemData->ItemID);
 				}
 				
-				UItemData* ItemDataObject = NewObject<UItemData>(Outer, ItemDataTableStruct.ItemDataClass.Get());
+				UItemData* ItemDataObject = NewObject<UItemData>(const_cast<UObject*>(Outer), ItemDataTableStruct.ItemDataClass.Get());
 				ItemDataObject->Init(ItemData);
 
 				ItemDataToItemID.Add(ItemData->ItemID, ItemDataObject);
