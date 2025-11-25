@@ -9,16 +9,21 @@ void UInventoryWidgetController::BindToInventoryComponent(UInventoryComponent* I
 {
 	InventoryComponent = InInventoryComponent;
 	
-	OnRegistedItemToInventoryComponent.AddDynamic(this, &UInventoryWidgetController::OnRegistedItemFunc);
+	//OnRegistedItemToInventoryComponent.AddDynamic(this, &UInventoryWidgetController::OnRegistedItemFunc);
 }
 
-void UInventoryWidgetController::BroadcastOnRegistedItem(URegisterableItemInstance* ItemInstance,
+void UInventoryWidgetController::RegistedItemFromWidget(URegisterableItemInstance* ItemInstance,
 	const FGameplayTag& SlotTag, int32 Index)
 {
-	OnRegistedItemToInventoryComponent.Broadcast(ItemInstance, SlotTag, Index);
+	//OnRegistedItemToInventoryComponent.Broadcast(ItemInstance, SlotTag, Index);
+	if(InventoryComponent.IsValid())
+	{
+		InventoryComponent->RegistItem(ItemInstance, SlotTag, Index);
+	}
+	OnRegistedItemToWidget.Broadcast(ItemInstance, SlotTag, Index);
 }
 
-void UInventoryWidgetController::BroadcastUpgrade(URegisterableItemInstance* ItemInstance)
+void UInventoryWidgetController::UpgradeItemFromWidget(URegisterableItemInstance* ItemInstance)
 {
 	//OnUpgradedItem.Broadcast(ItemInstance);
 	if(InventoryComponent.IsValid())
@@ -27,13 +32,13 @@ void UInventoryWidgetController::BroadcastUpgrade(URegisterableItemInstance* Ite
 	}
 }
 
-void UInventoryWidgetController::OnRegistedItemFunc(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag,
-                                                    int32 Index)
-{
-	OnRegistedItem.Broadcast(ItemInstance, SlotTag, Index);
-	if(InventoryComponent.IsValid())
-	{
-		InventoryComponent->RegistItem(ItemInstance, SlotTag, Index);
-	}
-	OnRegistedItemToWidget.Broadcast(ItemInstance, SlotTag, Index);
-}
+// void UInventoryWidgetController::OnRegistedItemFunc(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag,
+//                                                     int32 Index)
+// {
+// 	//OnRegistedItem.Broadcast(ItemInstance, SlotTag, Index);
+// 	if(InventoryComponent.IsValid())
+// 	{
+// 		InventoryComponent->RegistItem(ItemInstance, SlotTag, Index);
+// 	}
+// 	OnRegistedItemToWidget.Broadcast(ItemInstance, SlotTag, Index);
+// }

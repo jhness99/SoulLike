@@ -25,10 +25,10 @@ public:
 	void BindToInventoryComponent(UInventoryComponent* InInventoryComponent);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void BroadcastOnRegistedItem(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
+	void RegistedItemFromWidget(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void BroadcastUpgrade(URegisterableItemInstance* ItemInstance);
+	void UpgradeItemFromWidget(URegisterableItemInstance* ItemInstance);
 	
 	UPROPERTY(BlueprintAssignable)
 	FOnChangedInventorySignature OnChangedInventory;
@@ -51,11 +51,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	FInventoryList InventoryList;
-
-protected:
-
-	UFUNCTION()
-	void OnRegistedItemFunc(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
 
 private:
 	
