@@ -149,7 +149,6 @@ public:
 }
 ```
 
-
 ## WidgetController
 ![WidgetController](Images/WidgetControllerDiagram.png)   
 결합도를 낮추고 코드의 재사용성을 높이기 위해 WidgetController를 사용하여 Model(게임로직)과 View(UI)를 분리하여 설계.    

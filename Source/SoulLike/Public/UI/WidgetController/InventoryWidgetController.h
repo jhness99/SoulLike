@@ -22,7 +22,7 @@ class SOULLIKE_API UInventoryWidgetController : public USoulLikeWidgetController
 
 public:
 
-	void BindToInventoryComponent();
+	void BindToInventoryComponent(UInventoryComponent* InInventoryComponent);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void BroadcastOnRegistedItem(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
@@ -56,5 +56,8 @@ protected:
 
 	UFUNCTION()
 	void OnRegistedItemFunc(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
+
+private:
 	
+	TWeakObjectPtr<UInventoryComponent> InventoryComponent;
 };

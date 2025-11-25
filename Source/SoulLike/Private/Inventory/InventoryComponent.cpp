@@ -33,9 +33,9 @@ void UInventoryComponent::BindToWidgetController()
 	UInventoryWidgetController* InventoryWC = USoulLikeFunctionLibrary::GetInventoryWidgetController(this);
 	if(InventoryWC)
 	{
-		InventoryWC->BindToInventoryComponent();
-		InventoryWC->OnRegistedItem.AddDynamic(this, &UInventoryComponent::RegistItem);
-		InventoryWC->OnUpgradedItem.AddDynamic(this, &UInventoryComponent::UpgradeItem);
+		InventoryWC->BindToInventoryComponent(this);
+		// InventoryWC->OnRegistedItem.AddDynamic(this, &UInventoryComponent::RegistItem);
+		// InventoryWC->OnUpgradedItem.AddDynamic(this, &UInventoryComponent::UpgradeItem);
 	}
 
 	UOverlayWidgetController* OverlayWC = USoulLikeFunctionLibrary::GetOverlayWidgetController(this);
@@ -86,11 +86,11 @@ void UInventoryComponent::LoadInventoryListFromSavedItems(const TArray<FSavedIte
 		if(URegisterableItemInstance* RegisterableItemInstance = Cast<URegisterableItemInstance>(ItemInstance))
 		{
 			RegistItem(RegisterableItemInstance, RegistInfo.SlotTag, RegistInfo.Index);
-
-			if(UInventoryWidgetController* InventoryWidgetController = USoulLikeFunctionLibrary::GetInventoryWidgetController(this))
-			{
-				InventoryWidgetController->OnRegistedItemToWidget.Broadcast(RegisterableItemInstance, RegistInfo.SlotTag, RegistInfo.Index);
-			}
+		
+			// if(UInventoryWidgetController* InventoryWidgetController = USoulLikeFunctionLibrary::GetInventoryWidgetController(this))
+			// {
+			// 	InventoryWidgetController->OnRegistedItemToWidget.Broadcast(RegisterableItemInstance, RegistInfo.SlotTag, RegistInfo.Index);
+			// }
 		}
 	}
 }
@@ -594,6 +594,7 @@ void UInventoryComponent::UpdateRegistSlotToWidgetController() const
 		
 		if(RegistInfo.Index == -1) continue;
 		InventoryWidgetController->OnRegistedItemToWidget.Broadcast(EquipmentItemInstance, RegistInfo.SlotTag, RegistInfo.Index);
+		RefreshRegistSlotAtOverlay.Broadcast(EquipmentItemInstance, RegistInfo.SlotTag, RegistInfo.Index);
 	}
 }
 
