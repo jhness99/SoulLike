@@ -49,7 +49,11 @@ GAS 기반의 전투 시스템, 동적 키 바인딩, FastArray 기반 인벤토
 
 중복적인 `UItemData` 생성을 막기 위해 `UItemDataAsset` 데이터애셋 객체에서 관리     
 
-### ItemDataAsset.cpp
+### ItemDataAsset.cpp       
+
+<details>
+    <summary>구현 코드 보기</summary>
+
 ```c++
 //ItemDataTable을 저장하는 구조체. 해당 DataTable에 맞는 UItemData의 Class를 저장
 USTRUCT(BlueprintType)
@@ -105,6 +109,7 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(const UObject* Outer
     return nullptr;
 }
 ```
+</details>      
 
 ### 아이템 데이터를 UObject화 하는 이유
 언리얼 엔진의 DataTable은 기본적으로 **FStruct**(`FTableRowBase`) 구조를 사용한다.       
@@ -129,6 +134,9 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(const UObject* Outer
   3. 탐색한 `FSL_ItemData`로 `UItemData`를 생성, 생성한 **ItemData**를 **ItemInstance**에 저장
 
 ### SoulLikeItemTypes.h
+<details>
+    <summary>구현 코드 보기</summary>
+
 ```c++
 UCLASS(BlueprintType)
 class UWeaponData : public UEquipmentData
@@ -148,39 +156,50 @@ public:
     }
 }
 ```
+</details>
 
-## WidgetController
-![WidgetController](Images/WidgetControllerDiagram.png)   
-결합도를 낮추고 코드의 재사용성을 높이기 위해 WidgetController를 사용하여 Model(게임로직)과 View(UI)를 분리하여 설계.    
-클라이언트를 조작중인 PlayerController는 한개만 존재할 수 있고, 해당 PlayerController에서만 HUD가 생성. 따라서 HUD는 해당 로컬 플레이어 기준 싱글톤 처럼 동작.
-- 현재 클라이언트를 조종하는 Controller는 싱글톤처럼 한개의 객체만 존재하고 HUD또한 한개만 존재
-- 클라이언트에 하나만 존재하는 Controller의 HUD에 WidgetController를 생성
-- UBlueprintFunctionLibrary를 재정의 한 Static Helper Function을 사용해서 HUD의 WidgetController를 사용
+## UI
+![WidgetController](Images/WidgetControllerDiagram-2.png)       
+UI와 게임간의 상호작용 구현을 위해 MVC패턴을 채용      
+각 기능의 Widget에 따라 WidgetController를 생성해 관리
+
+### WidgetController        
+- 게임 로직과 UI 사이를 중계해 주는 Controller
+- Model은 Widget을 대상으로 명령을 내리지 않고 Broadcast를 통해 동시에 Widget에 메세지를 보냄
+- Widget에서 WidgetController를 통해 Model의 Logic을 실행
+- 싱글톤 패턴으로 구현
+
+WidgetController는 AHUD에서 생성하고 관리.       
+UBlueprintFunctionLibrary를 재정의 한 Static Helper Function을 사용해서 생성하거나 사용 가능
 
 ### SoulLikeFunctionLibrary.cpp
+<details>
+    <summary>구현 코드 보기</summary>
+
 ```c++
 //WidgetController를 초기화 하기 위한 FWidgetControllerParams 생성 함수
 bool USoulLikeFunctionLibrary::MakeWidgetControllerParams(const UObject* WorldContextObject,
                                                           ASoulLikeHUD*& OutSoulLikeHUD, FWidgetControllerParams& OutWCParams)
 {
-    if(APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
-    {
-        OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
-        if(OutSoulLikeHUD != nullptr)
-        {
-            ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
-            UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-            UAttributeSet* AS = PS->GetAttributeSet();
-            OutWCParams.PlayerController = PC;
-            OutWCParams.PlayerState = PS;
-            OutWCParams.AbilitySystemComponent = ASC;
-            OutWCParams.AttributeSet = AS;
-            return true;
-        }
-    }
-    return false;
+	APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0);
+	if(PC == nullptr) return false;
+	
+	OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
+	if(OutSoulLikeHUD == nullptr) return false;
+
+	ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
+	if(PS == nullptr) return false;
+
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	UAttributeSet* AS = PS->GetAttributeSet();
+	OutWCParams.PlayerController = PC;
+	OutWCParams.PlayerState = PS;
+	OutWCParams.AbilitySystemComponent = ASC;
+	OutWCParams.AttributeSet = AS;
+	
+	return true;
 }
-    
+
 UInventoryWidgetController* USoulLikeFunctionLibrary::GetInventoryWidgetController(const UObject* WorldContextObject)
 {
     FWidgetControllerParams Params;
@@ -193,7 +212,12 @@ UInventoryWidgetController* USoulLikeFunctionLibrary::GetInventoryWidgetControll
     return nullptr;
 }
 ```
+</details>
+
 ### SoulLikeHUD.cpp
+<details>
+    <summary>구현 코드 보기</summary>
+
 ```c++
 UInventoryWidgetController* ASoulLikeHUD::GetInventoryWidgetController(const FWidgetControllerParams& WCParams)
 {
@@ -206,14 +230,25 @@ UInventoryWidgetController* ASoulLikeHUD::GetInventoryWidgetController(const FWi
     return InventoryWidgetController;
 }
 ```
-WidgetController와 Widget, Model들과 WidgetController는 Delegate를 통해 통신     
-단방향으로 작동하며 View와 Model간의 의존성을 줄임
+</details>
 
->![WidgetControllerSequenceDiagram](Images/WidgetControllerSequenceDiagram.png)     
-> 인벤토리 갱신 시퀀스와 장비장착 시퀀스
+### WidgetController 상호작용 시퀀스
 
-* InventoryList에 변화가 생긴다면, InventoryWidgetController의 Delegate에 의해 SoulLikeUserWidget에 Bind된 Callback함수로 InventoryWidget 갱신
-* Widget의 Button을 상호작용 했다면, InventoryWidgetController를 통해 InventoryComponent에 Bind 된 아이템 장착 함수를 호출한다.
+>![WidgetControllerSequenceDiagram](Images/WidgetControllerSequenceDiagram-2.png)     
+> 장착으로 인한 MVC 상호작용 시퀀스
+
+결합도를 낮추고 코드의 재사용성을 높이기 위해 MVC 패턴을 기반으로 한 단방향 데이터 흐름 구조를 설계      
+Model(InventoryComponent)과 View(Widget)는 서로를 전혀 모르며, WidgetController를 통해 소통   
+- 데이터 흐름 (Data Flow)
+   - Input (Control): View → Controller → Model
+   - 유저 입력은 **함수 호출(Function Call)**을 통해 명확한 명령으로 전달됩니다.<br/>
+     Ex) 아이템 장착 요청 (RequestEquip), 스탯 포인트 투자
+   - Output (Update): Model → Controller → View
+   - 데이터 변경은 Delegate(Broadcast)를 통해 전파<br/>
+     Ex) 인벤토리 슬롯 변경, 스탯 값 변화 등.
+
+이로 인해 InventoryComponent와 Widget은 서로의 존재를 몰라도 상호작용이 가능      
+또한 Widget과 InventoryComponent가 변경 되더라도 서로 의존성을 분리 했기 때문에 코드를 추가적으로 수정할 필요가 없음
 
 ## KeyBind
 
