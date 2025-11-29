@@ -4,17 +4,17 @@
 
 # 목차
 1. [프로젝트 개요](#프로젝트-개요)
-1. [InventorySystem](#InventorySystem)
-1. [WidgetController](#widgetcontroller)
-1. [KeyBind](#keybind)
-1. [ObjectPoolingSubsystem](#ObjectPoolingSubsystem)
-1. [GameplayAbilitySystem](#gameplayabilitysystem)       
+2. [InventorySystem](#InventorySystem)
+3. [UI](#UI)
+4. [KeyBind](#keybind)
+5. [ObjectPoolingSubsystem](#ObjectPoolingSubsystem)
+6. [GameplayAbilitySystem](#gameplayabilitysystem)       
     6.1 [FSoulLikeGameplayTags](#FSoulLikeGameplayTags)              
     6.2 [AbilityState](#AbilityState)       
     6.3 [AttackMontage](#AttackMontage)               
     6.4 [TargetLock](#TargetLock)              
     6.5 [InteractionAbility](#InteractionAbility)
-1. [플레이 영상](#플레이-영상)
+7. [플레이 영상](#플레이-영상)
 
 ## 프로젝트 개요
 Unreal Engine 5 Portfolio
@@ -49,7 +49,12 @@ GAS 기반의 전투 시스템, 동적 키 바인딩, FastArray 기반 인벤토
 
 중복적인 `UItemData` 생성을 막기 위해 `UItemDataAsset` 데이터애셋 객체에서 관리     
 
-### ItemDataAsset.cpp
+### 구현 코드
+
+#### ItemDataAsset.cpp
+<details>
+    <summary>코드 보기</summary>
+
 ```c++
 //ItemDataTable을 저장하는 구조체. 해당 DataTable에 맞는 UItemData의 Class를 저장
 USTRUCT(BlueprintType)
@@ -105,6 +110,7 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(const UObject* Outer
     return nullptr;
 }
 ```
+</details>      
 
 ### 아이템 데이터를 UObject화 하는 이유
 언리얼 엔진의 DataTable은 기본적으로 **FStruct**(`FTableRowBase`) 구조를 사용한다.       
@@ -128,7 +134,12 @@ UItemData* UItemDataAsset::FindItemDataFromIndexAndItemType(const UObject* Outer
   2. **ItemID**와 **ItemTag**로 `FSL_ItemData`를 탐색
   3. 탐색한 `FSL_ItemData`로 `UItemData`를 생성, 생성한 **ItemData**를 **ItemInstance**에 저장
 
-### SoulLikeItemTypes.h
+### 구현 코드
+
+#### SoulLikeItemTypes.h
+<details>
+    <summary>코드 보기</summary>
+
 ```c++
 UCLASS(BlueprintType)
 class UWeaponData : public UEquipmentData
@@ -148,40 +159,52 @@ public:
     }
 }
 ```
+</details>
 
+## UI
+![WidgetController](Images/WidgetControllerDiagram-2.png)       
+UI와 게임간의 상호작용 구현을 위해 MVC패턴을 채용      
+각 기능의 Widget에 따라 WidgetController를 생성해 관리
 
-## WidgetController
-![WidgetController](Images/WidgetControllerDiagram.png)   
-결합도를 낮추고 코드의 재사용성을 높이기 위해 WidgetController를 사용하여 Model(게임로직)과 View(UI)를 분리하여 설계.    
-클라이언트를 조작중인 PlayerController는 한개만 존재할 수 있고, 해당 PlayerController에서만 HUD가 생성. 따라서 HUD는 해당 로컬 플레이어 기준 싱글톤 처럼 동작.
-- 현재 클라이언트를 조종하는 Controller는 싱글톤처럼 한개의 객체만 존재하고 HUD또한 한개만 존재
-- 클라이언트에 하나만 존재하는 Controller의 HUD에 WidgetController를 생성
-- UBlueprintFunctionLibrary를 재정의 한 Static Helper Function을 사용해서 HUD의 WidgetController를 사용
+### WidgetController        
+- 게임 로직과 UI 사이를 중계해 주는 Controller
+- Model은 Widget을 대상으로 명령을 내리지 않고 Broadcast를 통해 동시에 Widget에 메세지를 보냄
+- Widget에서 WidgetController를 통해 Model의 Logic을 실행
+- 싱글톤 패턴으로 구현
 
-### SoulLikeFunctionLibrary.cpp
+WidgetController는 AHUD에서 생성하고 관리.       
+UBlueprintFunctionLibrary를 재정의 한 Static Helper Function을 사용해서 생성하거나 사용 가능
+
+### 구현 코드
+
+#### SoulLikeFunctionLibrary.cpp
+<details>
+    <summary>코드 보기</summary>
+
 ```c++
 //WidgetController를 초기화 하기 위한 FWidgetControllerParams 생성 함수
 bool USoulLikeFunctionLibrary::MakeWidgetControllerParams(const UObject* WorldContextObject,
                                                           ASoulLikeHUD*& OutSoulLikeHUD, FWidgetControllerParams& OutWCParams)
 {
-    if(APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
-    {
-        OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
-        if(OutSoulLikeHUD != nullptr)
-        {
-            ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
-            UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-            UAttributeSet* AS = PS->GetAttributeSet();
-            OutWCParams.PlayerController = PC;
-            OutWCParams.PlayerState = PS;
-            OutWCParams.AbilitySystemComponent = ASC;
-            OutWCParams.AttributeSet = AS;
-            return true;
-        }
-    }
-    return false;
+	APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0);
+	if(PC == nullptr) return false;
+	
+	OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
+	if(OutSoulLikeHUD == nullptr) return false;
+
+	ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
+	if(PS == nullptr) return false;
+
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	UAttributeSet* AS = PS->GetAttributeSet();
+	OutWCParams.PlayerController = PC;
+	OutWCParams.PlayerState = PS;
+	OutWCParams.AbilitySystemComponent = ASC;
+	OutWCParams.AttributeSet = AS;
+	
+	return true;
 }
-    
+
 UInventoryWidgetController* USoulLikeFunctionLibrary::GetInventoryWidgetController(const UObject* WorldContextObject)
 {
     FWidgetControllerParams Params;
@@ -194,7 +217,12 @@ UInventoryWidgetController* USoulLikeFunctionLibrary::GetInventoryWidgetControll
     return nullptr;
 }
 ```
-### SoulLikeHUD.cpp
+</details>
+
+#### SoulLikeHUD.cpp
+<details>
+    <summary>코드 보기</summary>
+
 ```c++
 UInventoryWidgetController* ASoulLikeHUD::GetInventoryWidgetController(const FWidgetControllerParams& WCParams)
 {
@@ -207,64 +235,96 @@ UInventoryWidgetController* ASoulLikeHUD::GetInventoryWidgetController(const FWi
     return InventoryWidgetController;
 }
 ```
-WidgetController와 Widget, Model들과 WidgetController는 Delegate를 통해 통신     
-단방향으로 작동하며 View와 Model간의 의존성을 줄임
+</details>
 
->![WidgetControllerSequenceDiagram](Images/WidgetControllerSequenceDiagram.png)     
-> 인벤토리 갱신 시퀀스와 장비장착 시퀀스
+### WidgetController 상호작용 시퀀스
 
-* InventoryList에 변화가 생긴다면, InventoryWidgetController의 Delegate에 의해 SoulLikeUserWidget에 Bind된 Callback함수로 InventoryWidget 갱신
-* Widget의 Button을 상호작용 했다면, InventoryWidgetController를 통해 InventoryComponent에 Bind 된 아이템 장착 함수를 호출한다.
+>![WidgetControllerSequenceDiagram](Images/WidgetControllerSequenceDiagram-2.png)     
+> 장착 시, MVC 상호작용 시퀀스
+
+결합도를 낮추고 코드의 재사용성을 높이기 위해 MVC 패턴을 기반으로 한 단방향 데이터 흐름 구조를 설계      
+Model(InventoryComponent)과 View(Widget)는 서로를 전혀 모르며, WidgetController를 통해 소통   
+- 데이터 흐름 (Data Flow)
+   - Input (Control): View → Controller → Model
+   - 유저 입력은 **함수 호출(Function Call)**을 통해 명확한 명령으로 전달됩니다.<br/>
+     Ex) 아이템 장착 요청 (RequestEquip), 스탯 포인트 투자
+   - Output (Update): Model → Controller → View
+   - 데이터 변경은 Delegate(Broadcast)를 통해 전파<br/>
+     Ex) 인벤토리 슬롯 변경, 스탯 값 변화 등.
+
+이로 인해 InventoryComponent와 Widget은 서로의 존재를 몰라도 상호작용이 가능      
+또한 Widget과 InventoryComponent가 변경 되더라도 서로 의존성을 분리 했기 때문에 코드를 추가적으로 수정할 필요가 없음
 
 ## KeyBind
 
 >![KeyBindChangeScreenShot](Images/KeyBindChangeScreenShot.png)      
 Input을 대기하는 상태(InputMode_KeyBind)
 
-![KeyBind](Images/KeyBindFlow.png)      
-FGameplayTag(InputTag)를 식별자로 사용하여 InputAction과 Ability활성화를 바인드 하는 구조  
-- EnhancedInput의 InputAction 기반 구조를 확장하여 Ability의 InputTag 변경을 통해, 각 Ability의 단축키등록을 동적으로 변경 할 수 있도록 설계        
-- InputTag를 InputAction과 Ability에 각각 매칭. Ability의 매칭된 InputTag를 변경하는 것으로 InputAction과 Ability의 매칭을 유저가 게임내에서 UI를 통해 변경가능
-### SoulLikeInputComponent.h
-```c++
-template <class UserClass, typename PressedFuncType, typename HeldFuncType, typename ReleasedFuncType>
-inline void USoulLikeInputComponent::BindAbilityActions(const USL_InputConfig* InputConfig, UserClass* Object,
-	PressedFuncType PressedFunc, HeldFuncType HeldFunc, ReleasedFuncType ReleasedFunc)
-{
-    check(InputConfig);
-  
-    //해당하는 Event에 맞는 InputTag를 매개변수로 Callback함수를 Bind
-    for(const FSL_InputAction& InputAction : InputConfig->InputActions)
-    {
-        if(PressedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Started, Object, PressedFunc, InputAction.InputTag);
-        if(HeldFunc) BindAction(InputAction.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, InputAction.InputTag);
-        if(ReleasedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, InputAction.InputTag);
-    }
-}
-```
-### SoulLikeInputComponent.h
-```c++
-template <class UserClass, typename PressedFuncType, typename HeldFuncType, typename ReleasedFuncType>
-inline void USoulLikeInputComponent::BindAbilityActions(const USL_InputConfig* InputConfig, UserClass* Object,
-	PressedFuncType PressedFunc, HeldFuncType HeldFunc, ReleasedFuncType ReleasedFunc)
-{
-    check(InputConfig);
-  
-    //해당하는 Event에 맞는 InputTag를 매개변수로 Callback함수를 Bind
-    for(const FSL_InputAction& InputAction : InputConfig->InputActions)
-    {
-        if(PressedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Started, Object, PressedFunc, InputAction.InputTag);
-        if(HeldFunc) BindAction(InputAction.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, InputAction.InputTag);
-        if(ReleasedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, InputAction.InputTag);
-    }
-}
-```
-- EnhancedInput의 InputAction을 GameplayTag(InputTag)와 매핑       
-- InputTag를 캐릭터의 어빌리티에 매핑해서 Ability의 TriggerInput을 동적으로 전환할 수 있도록 구현
+![KeyBindFlow](Images/KeyBindFlow-2.png)      
 
->![InputSequenceDiagram](Images/Inputsequencediagram.png)      
-InputAction이 Trigger 된다면, Execute()를 통해 Callback Function을 호출하고 InputTag로 입력을 구분 하고 해당하는 Abilityspec을 활성화
-### SoulLikeAbilitySystemComponent.cpp
+EnhancedInput과 GameplayTag를 결합하여, 하드코딩 없는 유연한 입력 시스템 구현          
+플레이어의 입력을 InputTag(FGameplayTag)로 정의해서, Ability에 대한 입력을 InputTag를 통해 동적으로 할당할 수 있도록 구현 
+
+### 입력 파이프라인
+입력별로 별도의 함수를 만들지 않고, 공통 함수가 InputTag를 전달받아 처리하는 구조를 설계
+1. Input Action 트리거 
+   - InputComponent에 Bind 할 때, InputAction에 해당하는 InputTag 매핑
+   - 키 입력 시, 해당 Action에 매핑된 Tag를 파라미터(Payload)로 전달
+
+2. InputTag 확인
+    - PlayerController와 ASC(AbilitySystemComponent)는 전달받은 Tag를 트리거된 함수에 전달
+    - 함수 흐름: IA_Trigger → PC::AbilityInputTagPressed(InputTag) → ASC::AbilityInputTagPressed(InputTag)
+
+3. Ability 활성화
+    - ASC는 현재 부여된 어빌리티 중, 전달받은 Tag를 DynamicTags로 가지고 있는 어빌리티를 찾아 활성화(TryActivateAbility)
+
+![KeyBindBeforeAfter](Images/KeyBindBeforeAfter.png)     
+InputAction에 Ability가 고정적으로 매핑되어 활성화 되는 하드코딩에서
+런타임에 Ability의 키 바인딩이 변경 가능한 유연성있는 동적 바인딩으로 개선
+
+### 구현 코드
+
+#### SoulLikeInputComponent.h, SoulLikePlayerController.h
+<details>
+    <summary>코드 보기</summary>
+
+```c++
+template <class UserClass, typename PressedFuncType, typename HeldFuncType, typename ReleasedFuncType>
+inline void USoulLikeInputComponent::BindAbilityActions(const USL_InputConfig* InputConfig, UserClass* Object,
+	PressedFuncType PressedFunc, HeldFuncType HeldFunc, ReleasedFuncType ReleasedFunc)
+{
+    check(InputConfig);
+  
+    //InputAction에 맞는 InputTag를 매개변수로 Callback함수를 Bind
+    for(const FSL_InputAction& InputAction : InputConfig->InputActions)
+    {
+        if(PressedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Started, Object, PressedFunc, InputAction.InputTag);
+        if(HeldFunc) BindAction(InputAction.InputAction, ETriggerEvent::Triggered, Object, HeldFunc, InputAction.InputTag);
+        if(ReleasedFunc) BindAction(InputAction.InputAction, ETriggerEvent::Completed, Object, ReleasedFunc, InputAction.InputTag);
+    }
+}
+
+void ASoulLikePlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	USoulLikeInputComponent* SL_InputComponent = Cast<USoulLikeInputComponent>(InputComponent);
+
+    ...
+    //Event에 해당하는 3가지 Callback 함수 호출
+	SL_InputComponent->BindAbilityActions(InputConfig, this,
+		&ASoulLikePlayerController::AbilityInputTagPressed,
+		&ASoulLikePlayerController::AbilityInputTagHeld,
+		&ASoulLikePlayerController::AbilityInputTagReleased);
+	
+}
+```
+</details>
+
+#### SoulLikeAbilitySystemComponent.cpp
+<details>
+    <summary>코드 보기</summary>
+
 ```c++
 void USoulLikeAbilitySystemComponent::AbilityInputTagHeld(FGameplayTag InputTag)
 {
@@ -286,10 +346,33 @@ void USoulLikeAbilitySystemComponent::AbilityInputTagHeld(FGameplayTag InputTag)
     }
 }
 ```
+InputAction에 해당하는 InputTag를 바인드해서, InputAction이 트리거 될 때 InputTag를 기반으로 Ability를 활성화
+</details>
 
->![KeybindChangeFlow](Images/InputChangeSequenceDiagram.png)      
-InputAction과 Ability는 InputTag로 매핑 되어 있기 때문에 Ability의 InputTag를 변경한다면, 매칭된 InputAction 변경 가능
-### SoulLikePlayerController.cpp
+### 단축키 런타임 동적 바인딩
+![KeyRebindDiagram](Images/KeyRebindDiagram.png)        
+어빌리티에 대해 입력 매핑을 하드코딩 하지 않고, FGameplayTag를 통해 동적으로 구현하여      
+AbilitySpec의 DynamicAbilityTag에 InputTag를 넣고 빼는 가벼운 연산만으로 키 바인딩을 변경 가능 하도록 구현        
+
+* 바인딩<br/>
+    바인딩   : 특정 어빌리티가 InputTag.Q를 가지고 있다면, Q키를 눌렀을 때 그 어빌리티가 활성화<br/>
+    리바인딩 : Q키를 E키로 바꾸고 싶다면, 어빌리티의 태그 컨테이너에서 InputTag.Q를 제거하고 InputTag.E를 추가<br/>
+
+* InputTag변경 알고리즘<br/>
+   기존에 어빌리티가 InputTag를 가지고 있다면, 키 충돌을 방지하기 위해 기존 연결을 자동으로 정리하는 로직을 구현
+
+* 바인딩 변경 로직
+  1. Search (검색): 변경하려는 키(InputTag)를 이미 사용 중인 어빌리티가 있는지 탐색   
+  2. Unbind (해제): 만약 있다면, 해당 어빌리티에서 태그를 제거하여 연결 해제 (중복 방지)       
+  3. Bind   (연결): 내가 선택한 어빌리티에 새로운 태그를 추가    
+  4. Sync (동기화): MarkAbilitySpecDirty를 호출하여 변경된 태그 정보를 서버와 동기화     
+
+### 구현 코드
+
+#### SoulLikePlayerController.cpp
+<details>
+    <summary>코드 보기</summary>
+
 ```c++
 void ASoulLikePlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
@@ -360,28 +443,54 @@ void USoulLikeAbilitySystemComponent::ChangeAbilityInputTag(UKeybindMenuWidgetCo
 	}
 }
 ```
+</details>
 
 ## ObjectPoolingSubsystem
-![ObjectPoolingSubsystem](Images/ObjectPooling.png)      
-Enemy를 스폰할 때 SpawnActor를 사용해서 매번 Enemy를 Spawn하면 최적화에 영향을 끼치기 때문에 ObjectPool로 EnemySpawn을 구현.    
-Enemy가 비활성화(죽음, 휴식으로 인한 레벨 내 적 초기화)시 Pool에 반환하고, Spawn할 때 Pool 안의 Enemy를 활성화하여 사용.
-### Enemy 동적 초기화
-![EnemyData](Images/EnemyData.png)
-```c++
-void ASoulLikeEnemy::Init(AActor* InSpawnerActor, FEnemyData Data)
-{
-	EnemyData = Data;
-	SpawnerActor = InSpawnerActor;
-	//EnemyData로 ASoulLikeEnmey를 초기화
-	SetupActorWithEnmeyData();
-	...
-}
-```
-Pool에서 Enemy를 활성화하고 사용하려면 활성화 할 때 동적으로 Enemy를 초기화 필요.   
-따라서 FEnemyData를 DataTable에 정의하여 초기화 할 때 EnemyData를 사용하여 Enemy를 초기화.
+![ObjectPoolingSubsystem](Images/ObjectPoolingSystem.png)   
 
->![ObjectPoolingSubsystem_EnemySpawn](Images/ObjectPooling_EnemySpawn.png)     
-EnemySpawn Sequence
+적 생성 시스템을 데이터 기반 패턴(Data-Driven)으로 설계해서 공통된 Enemy 객체가 데이터 주입(Data Injection)을 통해 다양한 적을 생성할 수 있도록 구현     
+또한 ObjectPool을 통해 공통된 Enemy 객체를 재활용 하여 최적화 할 수 있도록 구현
+
+### 데이터 주입(Data Injection) 식 생성
+![SpawnActorRequire](Images/SpawnActorRequire.png)      
+- 적 객체와 데이터의 분리
+    - 적 객체를 특정개체에 한정하지 않고, 초기화 되지 않은 기본 Enemy 클래스로 생성
+    - 생성 후 `SpawnActorDeferred`를 통해 생성이 완료하기 전, 적 데이터 주입을 통해 먼저 적의 외형과 능력치를 제공.
+
+>#### Enemy Data Table
+>![EnemyData](Images/EnemyData.png)
+>```c++
+>void ASoulLikeEnemy::Init(AActor* InSpawnerActor, FEnemyData Data)
+>{
+>	EnemyData = Data;
+>	SpawnerActor = InSpawnerActor;
+>	//EnemyData로 ASoulLikeEnmey를 초기화
+>	SetupActorWithEnmeyData();
+>	...
+>}
+>```
+>DataTable에 EnemyData를 정의하여 생성할 때 사용
+
+이러한 구현으로 인해 코드를 추가하거나 수정하지 않고 데이터 테이블을 추가하는 방식으로 적의 종류를 자유롭게 확장 가능
+ObjectPoolSequenceDiagram
+### OjbectPool을 통한 최적화
+![ObjectPoolSequenceDiagram](Images/ObjectPoolSequenceDiagram.png)      
+
+적의 생성과 소멸이 빈번하게 발생하므로, ObjectPool을 사용해 재사용 로직 구현
+또한 적 데이터를 설정하는 로직과 생성 함수의 실행 순서를 고정하여 발생할 수 있는 오류 차단
+
+- **ObjectPool을 활용한 Generic Enemy Instance 재사용**
+  - 적이 스폰해야 할 때, 비활성화 되어있는 적 객체를 Dequeue해서 데이터 주입 후 활성화 해서 재사용
+  - 스폰 시 ObjectPool의 크기를 넘어서는 생성을 하게 될 때, Pool에서 꺼내서 재사용 할 수 있도록 구현
+
+- Enemy 생성 주기 수동 제어
+  - SpawnActorDeffered 를 통해 액터 생성시 호출되는 초기화 함수의 순서를 직접 제어
+  - Racd Condition을 방지하고 명확한 순서로 인해 버그 발생시 디버그 용이
+
+#### ObjectPoolingSubsystem.h
+<details>
+    <summary>코드 보기</summary>
+
 ```c++
 ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEnemy(AActor* SpawnerActor, const TSubclassOf<ASoulLikeEnemy>& SpawnActorClass, FName RowName)
 {
@@ -438,8 +547,25 @@ ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEnemy(AActor* SpawnerActor, const 
 	return nullptr;
 }
 ```
+</details>
+
 ### Enemy Pool반환
-Enemy가 Disable 될 때, Broadcast를 통해 PoolQueue에 Enemy를 반환.
+![ObjectPoolDeathEnemy](Images/ObjectPoolDeathEnemy.png)      
+적 객체가 체력이 0이 되어서 처지 되었을 경우, Broadcast를 통해 다시 Pool로 반환       
+- Delegate를 사용한 반환
+    - ObjectPoolingSubsystem 이 모든 적의 상태를 Tick마다 확인하지 않고 Broadcast를 통해 반환
+    - 적 캐릭터가 초기화 될 때, Bind 유무를 확인하고 죽었을 때 Pool에 반환시키는 함수 Bind
+
+Enemy가 직접 ObjectPoolingSubsystem을 참조 하지 않고, 메세지를 통해 반환되므로 결합도를 낮춤
+
+### Pool ScopeLock
+![ObjectPoolingSubsystem_EnemySpawn](Images/ScopeLock.png)     
+여러개의 오브젝트가 동시에 하나의 Subsystem의 객체에 접근, 관여할 수 있기 때문에    
+ScopeLock을 통해 PoolQueue를 사용하는 동안에 다른 접근을 차단
+
+<details>
+    <summary>코드 보기</summary>
+
 ```c++
 ASoulLikeEnemy* UObjectPoolingSubsystem::SpawnEnemy(AActor* SpawnerActor, const TSubclassOf<ASoulLikeEnemy>& SpawnActorClass, FName RowName)
 {
@@ -459,13 +585,7 @@ void UObjectPoolingSubsystem::OnEnemyDisabledObject(AActor* Actor)
 }
 
 ```
-### Pool ScopeLock
-![ObjectPoolingSubsystem_EnemySpawn](Images/ScopeLock.png)     
-여러개의 오브젝트가 동시에 하나의 Subsystem의 객체에 접근, 관여할 수 있기 때문에    
-ScopeLock을 통해 PoolQueue를 사용하는 동안에 다른 접근을 차단.
-```c++
-FScopeLock Lock(&PoolLock);
-```
+</details>
 
 ## MeleeTrace
 ![MeleeTrace](Images/MeleeTrace.png)        

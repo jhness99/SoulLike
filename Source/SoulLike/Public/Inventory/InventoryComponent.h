@@ -78,12 +78,12 @@ public:
 	//Save Interface
 	FMarkAsDirtyDelegate MarkAsDirtyDelegate;
 
+	UFUNCTION(Server, Reliable)
+	void RegistItem(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
+
 protected:
 	
 	virtual bool ReplicateSubobjects(UActorChannel *Channel, FOutBunch *Bunch, FReplicationFlags *RepFlags) override;
-	
-	UFUNCTION(Server, Reliable)
-	void RegistItem(URegisterableItemInstance* ItemInstance, const FGameplayTag& SlotTag, int32 Index);
 	
 	UFUNCTION(Server, Reliable)
 	void UnRegistItem(URegisterableItemInstance* ItemInstance);

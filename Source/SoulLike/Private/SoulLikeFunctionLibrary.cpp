@@ -33,23 +33,23 @@ class UCameraComponent;
 bool USoulLikeFunctionLibrary::MakeWidgetControllerParams(const UObject* WorldContextObject,
                                                           ASoulLikeHUD*& OutSoulLikeHUD, FWidgetControllerParams& OutWCParams)
 {
-	if(APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
-	{
-		OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
-		if(OutSoulLikeHUD != nullptr)
-		{
-			ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
-			if(PS == nullptr) return false;
-			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-			UAttributeSet* AS = PS->GetAttributeSet();
-			OutWCParams.PlayerController = PC;
-			OutWCParams.PlayerState = PS;
-			OutWCParams.AbilitySystemComponent = ASC;
-			OutWCParams.AttributeSet = AS;
-			return true;
-		}
-	}
-	return false;
+	APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0);
+	if(PC == nullptr) return false;
+	
+	OutSoulLikeHUD = Cast<ASoulLikeHUD>(PC->GetHUD());
+	if(OutSoulLikeHUD == nullptr) return false;
+
+	ASoulLikePlayerState* PS = PC->GetPlayerState<ASoulLikePlayerState>();
+	if(PS == nullptr) return false;
+
+	UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+	UAttributeSet* AS = PS->GetAttributeSet();
+	OutWCParams.PlayerController = PC;
+	OutWCParams.PlayerState = PS;
+	OutWCParams.AbilitySystemComponent = ASC;
+	OutWCParams.AttributeSet = AS;
+	
+	return true;
 }
 
 UOverlayWidgetController* USoulLikeFunctionLibrary::GetOverlayWidgetController(const UObject* WorldContextObject)
