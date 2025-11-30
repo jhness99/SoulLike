@@ -369,11 +369,8 @@ void ASoulLikeEnemy::OnOverlapMeleeTraceCollision(UPrimitiveComponent* Overlappe
 	
 	FTransform TipStartTransform = GetMesh()->GetSocketTransform(TipStart);
 	FTransform TipEndTransform = GetMesh()->GetSocketTransform(TipEnd);
-	FTransform ParentWorldTransform = GetActorTransform();  // AActor2는 AttachParent
-	FTransform TipStartRelativeToParent = TipStartTransform.GetRelativeTransform(ParentWorldTransform);
-	FTransform TipEndRelativeToParent = TipEndTransform.GetRelativeTransform(ParentWorldTransform);
 	
-	MeleeTrace_Implementation(TipStartRelativeToParent, TipEndRelativeToParent, Radius);
+	MeleeTrace_Implementation(TipStartTransform, TipEndTransform, Radius, false);
 }
 
 void ASoulLikeEnemy::SetupActorWithEnmeyData()

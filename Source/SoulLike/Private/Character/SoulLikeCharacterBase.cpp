@@ -157,15 +157,15 @@ void ASoulLikeCharacterBase::NextSlot_Implementation(const FGameplayTag& SlotTag
 	InventoryComponent->NextSlot(SlotTag);
 }
 
-void ASoulLikeCharacterBase::MeleeTrace_Implementation(const FTransform& TraceStart, const FTransform& TraceEnd, float Radius)
+void ASoulLikeCharacterBase::MeleeTrace_Implementation(const FTransform& TraceStart, const FTransform& TraceEnd, float Radius, bool bRelativeLoc)
 {
 	if(HasAuthority())
 	{
-		TryMeleeTrace(TraceStart, TraceEnd, Radius);
+		TryMeleeTrace(TraceStart, TraceEnd, Radius, bRelativeLoc);
 	}
 	else
 	{
-		ServerMeleeTrace(TraceStart, TraceEnd, Radius);
+		ServerMeleeTrace(TraceStart, TraceEnd, Radius, bRelativeLoc);
 	}
 }
 
@@ -459,18 +459,24 @@ void ASoulLikeCharacterBase::SetupDamageParams(FDamageEffectParams& DamageEffect
 	}
 }
 
-void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartRelativeTransform,
-	const FTransform& TraceEndRelativeTransform, float Radius)
+void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartTransform,
+	const FTransform& TraceEndTransform, float Radius, bool bRelativeLoc)
 {       
 	const bool bDebug = static_cast<bool>(CVarShowAttackTrace.GetValueOnAnyThread());
 
 	TArray<FHitResult> HitResults;
 
-	FTransform TraceStartTransform = TraceStartRelativeTransform * GetActorTransform();
-	FTransform TraceEndTransform = TraceEndRelativeTransform * GetActorTransform();
-
 	FVector TraceStart = TraceStartTransform.GetLocation();
 	FVector TraceEnd = TraceEndTransform.GetLocation();
+
+	if(bRelativeLoc)
+	{
+		FTransform RelativeTraceStartTransform = TraceStartTransform * GetActorTransform();
+		FTransform RelativeTraceEndTransform = TraceEndTransform * GetActorTransform();
+
+		TraceStart = RelativeTraceStartTransform.GetLocation();
+		TraceEnd = RelativeTraceEndTransform.GetLocation();
+	}
 	
 	FRotator Direction = (TraceEnd - TraceStart).Rotation();
 	FCollisionQueryParams Params = FCollisionQueryParams();
@@ -528,12 +534,13 @@ void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartRelativeT
 }
 
 void ASoulLikeCharacterBase::ClientMeleeTrace_Implementation(const FTransform& TraceStartRelativeTransform,
-                                                             const FTransform& TraceEndRelativeTransform, float Radius)
+                                                             const FTransform& TraceEndRelativeTransform, float Radius, bool bRelativeLoc)
 {
 	TryMeleeTrace(TraceStartRelativeTransform, TraceEndRelativeTransform, Radius);
 }
 
-void ASoulLikeCharacterBase::ServerMeleeTrace_Implementation(const FTransform& TraceStartRelativeTransform, const FTransform& TraceEndRelativeTransform, float Radius)
+void ASoulLikeCharacterBase::ServerMeleeTrace_Implementation(const FTransform& TraceStartRelativeTransform,
+															 const FTransform& TraceEndRelativeTransform, float Radius, bool bRelativeLoc)
 {
 	TryMeleeTrace(TraceStartRelativeTransform, TraceEndRelativeTransform, Radius);
 }

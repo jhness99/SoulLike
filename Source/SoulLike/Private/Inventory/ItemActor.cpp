@@ -125,11 +125,18 @@ void AItemActor::OnOverlap(UPrimitiveComponent* OverlappedComponent,
 	// const FVector TipEnd = MeshComponent->GetSocketLocation(FName("TipEnd"));
 
 	// 클라이언트에서의 무기와 Owner와의 상대적인 Transform을 보내서 서버에서 캐릭터의 위치를 기반으로 socket의 Transform을 다시계산해서 검증
+	
 	FTransform TipStartTransform = MeshComponent->GetSocketTransform("TipStart", RTS_World);
 	FTransform TipEndTransform = MeshComponent->GetSocketTransform("TipEnd", RTS_World);
-	FTransform ParentWorldTransform = GetOwner()->GetActorTransform();  // AActor2는 AttachParent
-	FTransform TipStartRelativeToParent = TipStartTransform.GetRelativeTransform(ParentWorldTransform);
-	FTransform TipEndRelativeToParent = TipEndTransform.GetRelativeTransform(ParentWorldTransform);
+
+	bool bRelative = false;
+	if(GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
+	{
+		bRelative = true;
+		FTransform ParentWorldTransform = GetOwner()->GetActorTransform();  // AActor2는 AttachParent
+		TipStartTransform = TipStartTransform.GetRelativeTransform(ParentWorldTransform);
+		TipEndTransform = TipEndTransform.GetRelativeTransform(ParentWorldTransform);
+	}
 	
 	UWeaponData* WeaponData = Cast<UWeaponData>(ItemData);
 
@@ -137,7 +144,7 @@ void AItemActor::OnOverlap(UPrimitiveComponent* OverlappedComponent,
 		
 	if(GetOwner()->Implements<UCombatInterface>())
 	{
-		ICombatInterface::Execute_MeleeTrace(GetOwner(), TipStartRelativeToParent, TipEndRelativeToParent, Radius);
+		ICombatInterface::Execute_MeleeTrace(GetOwner(), TipStartTransform, TipEndTransform, Radius, bRelative);
 	}
 }
 

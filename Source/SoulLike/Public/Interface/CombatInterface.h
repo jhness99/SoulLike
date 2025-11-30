@@ -69,7 +69,7 @@ public:
 	UAnimMontage* EvaluateRollingMontage();
 
 	UFUNCTION(BlueprintNativeEvent, Category = "ComabatInterface|Combat")
-	void MeleeTrace(const FTransform& TipStartRelativeToParent, const FTransform& TipEndRelativeToParent, float Radius);
+	void MeleeTrace(const FTransform& TipStartRelativeToParent, const FTransform& TipEndRelativeToParent, float Radius, bool bRelativeLoc);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "ComabatInterface|Combat")
 	void ApplyDamageToTarget(AActor* Target, float  DamageBoost = 1.f);

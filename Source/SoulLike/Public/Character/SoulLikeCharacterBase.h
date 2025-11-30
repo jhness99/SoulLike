@@ -50,7 +50,7 @@ public:
 	virtual void UsingTool_Implementation(URegisterableItemInstance* ItemInstance) override;
 
 	virtual void NextSlot_Implementation(const FGameplayTag& SlotTag) override;
-	virtual void MeleeTrace_Implementation(const FTransform& TipStartRelativeToParent, const FTransform& TipEndRelativeToParent, float Radius) override;
+	virtual void MeleeTrace_Implementation(const FTransform& TipStartRelativeToParent, const FTransform& TipEndRelativeToParent, float Radius, bool bRelativeLoc) override;
 	virtual void ApplyDamageToTarget_Implementation(AActor* Target, float DamageBoost) override;
 	virtual void ClearIgnoreActors_Implementation() override;
 	virtual bool TryBackstab_Implementation() override;
@@ -151,12 +151,12 @@ protected:
 	virtual void SetupDamageParams(FDamageEffectParams& DamageEffectParams, float DamageBoost = 1.f);
 
 	UFUNCTION(Client, Reliable)
-	void ClientMeleeTrace(const FTransform& TraceStartRelativeTransform, const FTransform& TraceEndRelativeTransform, float Radius);
+	void ClientMeleeTrace(const FTransform& TraceStartRelativeTransform, const FTransform& TraceEndRelativeTransform, float Radius, bool bRelativeLoc);
 
 	UFUNCTION(Server, Reliable)
-	void ServerMeleeTrace(const FTransform& TraceStartRelativeTransform, const FTransform& TraceEndRelativeTransform, float Radius);
+	void ServerMeleeTrace(const FTransform& TraceStartRelativeTransform, const FTransform& TraceEndRelativeTransform, float Radius, bool bRelativeLoc);
 	
-	void TryMeleeTrace(const FTransform& TraceStartRelativeTransform, const FTransform& TraceEndRelativeTransform, float Radius);
+	void TryMeleeTrace(const FTransform& TraceStartTransform, const FTransform& TraceEndTransform, float Radius, bool bRelativeLoc = true);
 	
 	UFUNCTION(Server, Reliable)
 	void Server_ApplyDamageToTarget(AActor* Target, float  DamageBoost = 1.f);

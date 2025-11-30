@@ -473,7 +473,7 @@ void USoulLikeAbilitySystemComponent::ChangeAbilityInputTag(UKeybindMenuWidgetCo
 
 이러한 구현으로 인해 코드를 추가하거나 수정하지 않고 데이터 테이블을 추가하는 방식으로 적의 종류를 자유롭게 확장 가능
 ObjectPoolSequenceDiagram
-### OjbectPool을 통한 최적화
+### ObjectPool을 통한 최적화
 ![ObjectPoolSequenceDiagram](Images/ObjectPoolSequenceDiagram.png)      
 
 적의 생성과 소멸이 빈번하게 발생하므로, ObjectPool을 사용해 재사용 로직 구현
@@ -484,8 +484,8 @@ ObjectPoolSequenceDiagram
   - 스폰 시 ObjectPool의 크기를 넘어서는 생성을 하게 될 때, Pool에서 꺼내서 재사용 할 수 있도록 구현
 
 - Enemy 생성 주기 수동 제어
-  - SpawnActorDeffered 를 통해 액터 생성시 호출되는 초기화 함수의 순서를 직접 제어
-  - Racd Condition을 방지하고 명확한 순서로 인해 버그 발생시 디버그 용이
+  - SpawnActorDefered 를 통해 액터 생성시 호출되는 초기화 함수의 순서를 직접 제어
+  - Race Condition을 방지하고 명확한 순서로 인해 버그 발생시 디버그 용이
 
 #### ObjectPoolingSubsystem.h
 <details>
@@ -560,7 +560,7 @@ Enemy가 직접 ObjectPoolingSubsystem을 참조 하지 않고, 메세지를 통
 
 ### Pool ScopeLock
 ![ObjectPoolingSubsystem_EnemySpawn](Images/ScopeLock.png)     
-여러개의 오브젝트가 동시에 하나의 Subsystem의 객체에 접근, 관여할 수 있기 때문에    
+여러개의 SpawnPoint가 동시에 하나의 Subsystem(싱글톤 객체)의 Pool Queue에 접근, 사용할 경우 Race Condition이 발생할 수 있기 때문에     
 ScopeLock을 통해 PoolQueue를 사용하는 동안에 다른 접근을 차단
 
 <details>
@@ -588,141 +588,266 @@ void UObjectPoolingSubsystem::OnEnemyDisabledObject(AActor* Actor)
 </details>
 
 ## MeleeTrace
-![MeleeTrace](Images/MeleeTrace.png)        
-근접 공격은 클라이언트에서 Montage 재생 중 무기 Collision이 적과 Overlap되면 발생  
-이 때 서버에 캐릭터에 대한 무기의 소켓의 상대적인 위치를 전달하고,        
-서버에서는 다시 한번 해당 위치에서 Trace를 수행하여 공격이 유효한지 검증
-```c++
-void AItemActor::OnOverlap(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
-	const FHitResult& SweepResult)
-{
-	if(OtherActor == GetOwner()) return;
- 	
-	// 서버에서 검증하지 않는 단순한 방법
-	// const FVector TipStart = MeshComponent->GetSocketLocation(FName("TipStart"));
-	// const FVector TipEnd = MeshComponent->GetSocketLocation(FName("TipEnd"));
+전투의 핵심인 공격판정을 Collision Overlap후 SweepTrace으로 검증하고 NetRole과 서버환경에 따른 3가지 분기로 나눠 지도록 구현      
 
-	// 클라이언트에서의 무기와 Owner와의 상대적인 Transform을 보내서 서버에서 캐릭터의 위치를 기반으로 socket의 Transform을 다시 계산
-	FTransform TipStartTransform = MeshComponent->GetSocketTransform("TipStart", RTS_World);
-	FTransform TipEndTransform = MeshComponent->GetSocketTransform("TipEnd", RTS_World);
-	FTransform ParentWorldTransform = GetOwner()->GetActorTransform();
-	FTransform TipStartRelativeToParent = TipStartTransform.GetRelativeTransform(ParentWorldTransform);
-	FTransform TipEndRelativeToParent = TipEndTransform.GetRelativeTransform(ParentWorldTransform);
-	
-	...
+### MeleeTrace구현
+![MeleeTraceOverlap](Images/MeleeTraceOverlap.png)        
+
+- Montage와 AnimNotifyState를 사용하여 공격 구간 정의
+- 무기의 공격판정 콜리전을 활성화 되었을 때 Overlap이벤트 감지 시, Collision 양 쪽 끝을 SweepTrace로 최종 검증 진행
+- 검증이 완료됬다면, 피격 대상에게 판정 적용(데미지, 경직 Montage)
+
+### 네트워크 및 캐릭터 별 구현
+공격판정시 본 트랜스폼 새로고침의 최소화와 치팅감지를 위해 MeleeTrace의 구현을 3가지로 분리
+
+- Case 1: Authority(Host/Listen Server)
+    - 자기자신이 서버이므로 즉시 판정
+    - 별도의 추가 로직 없이 Overlap후 Trace로 공격판정
+  
+- Case 2: Autonomous Proxy(Client/Host or Dedicated Server)
+    - 캐릭터 상대 좌표 계산으로 치팅방지
+    - 데디케이티드 서버는 렌더링 하지 않으므로 Bone Transform을 갱신하지 않고, <br/> 
+  만약 클라이언트가 치팅을 통해 불가능한 판정을 시도할 수 있음
+    - 서버에게 ServerRPC로 클라이언트 캐릭터의 상대적인 공격판정 콜리전의 시작과 끝 위치를 전송,<br/>
+    서버에선 서버의 캐릭터를 기준으로 다시 월드 트랜스폼으로 계산 후 Trace판정 진행
+    - 만약 판정에 성공한다면, 서버에서 판정 적용(데미지, 경직 Montage)
+  
+- Case 3: AI Enemy(SimulatedProxy/Dedicated Server)
+    - 렌더링 된 Client에서 초기 Overlap판정을 진행해야 하는데,<br/> AI Character는 ServerRPC를 사용할 수 없음
+    - 즉, 데디케이티드 서버에서 적AI의 공격판정을 독자적으로 판정해야 함.
+
+
+| 구분 | 대상 | 네트워크 권한 (Role)     | 로직            | 상세                                                                                                   |
+| :--- | :--- |:-------------------|:--------------|:-----------------------------------------------------------------------------------------------------|
+| **Case 1** | **Host / Authority** | `Authority`        | **즉시 판정**<br> | 자기 자신이 서버이므로 별도의 보정 없이<br>Overlap 즉시 Trace를 수행하여 판정                                                  |
+| **Case 2** | **Client Player** | `Autonomous Proxy` | **서버 검증**<br> | 클라이언트가 타격 시점의 상대 좌표(Relative Transform)를 ServerRPC로 전송<br>서버는 이를 서버 캐릭터 기준 월드 좌표로 재구성하여 검증 Trace 수행  |
+| **Case 3** | **AI Enemy** | `Simulated Proxy`  | **서버 최적화**    | [RPC 불가 해결] AI는 Client 소유가 아니므로 ServerRPC 사용 불가<br>서버가 독자적으로 판정하되, MontagePlay중 일때만 Bone을 갱신하여 성능 확보 |
+
+<details>
+    <summary>코드 보기</summary>
+
+#### ItemActor.h
+```c++
+    void AItemActor::OnOverlap(UPrimitiveComponent* OverlappedComponent,
+    AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+    const FHitResult& SweepResult)
+    {
+    if(OtherActor == GetOwner()) return;
+    
+    
+    FTransform TipStartTransform = MeshComponent->GetSocketTransform("TipStart", RTS_World);
+    FTransform TipEndTransform = MeshComponent->GetSocketTransform("TipEnd", RTS_World);
+    
+    bool bRelative = false;
+    if(GetOwner()->GetLocalRole() == ROLE_AutonomousProxy)
+    {
+        // 클라이언트에서의 무기와 Owner와의 상대적인 Transform을 보내서 서버에서 캐릭터의 위치를 기반으로 socket의 Transform을 다시계산해서 검증
+        bRelative = true;
+        FTransform ParentWorldTransform = GetOwner()->GetActorTransform();
+        TipStartTransform = TipStartTransform.GetRelativeTransform(ParentWorldTransform);
+        TipEndTransform = TipEndTransform.GetRelativeTransform(ParentWorldTransform);
+    }
+    
+    UWeaponData* WeaponData = Cast<UWeaponData>(ItemData);
+    
+    const float Radius = WeaponData ? WeaponData->Radius : 5.f;
+        
+    if(GetOwner()->Implements<UCombatInterface>())
+    {
+        ICombatInterface::Execute_MeleeTrace(GetOwner(), TipStartTransform, TipEndTransform, Radius, bRelative);
+    }
 }
 ```
+
+#### SoulLikeCharacterBase.h
 ```c++
-void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartRelativeTransform,
-	const FTransform& TraceEndRelativeTransform, float Radius)
-{
-	const bool bDebug = static_cast<bool>(CVarShowAttackTrace.GetValueOnAnyThread());
+void ASoulLikeCharacterBase::TryMeleeTrace(const FTransform& TraceStartTransform,
+	const FTransform& TraceEndTransform, float Radius, bool bRelativeLoc)
+{       
+    const bool bDebug = static_cast<bool>(CVarShowAttackTrace.GetValueOnAnyThread());
+    
+    TArray<FHitResult> HitResults;
+    
+    FVector TraceStart = TraceStartTransform.GetLocation();
+    FVector TraceEnd = TraceEndTransform.GetLocation();
+    
+    //상대처리가 필요 여부에 따라 추가 로직
+    if(bRelativeLoc)
+    {
+        FTransform RelativeTraceStartTransform = TraceStartTransform * GetActorTransform();
+        FTransform RelativeTraceEndTransform = TraceEndTransform * GetActorTransform();
+    
+        TraceStart = RelativeTraceStartTransform.GetLocation();
+        TraceEnd = RelativeTraceEndTransform.GetLocation();
+    }
+    ...
+    
+    //SweepMultiTrace 진행 후 피격 판정 검사
+    
+    ...
+    
+    //DamageEffect 적용
+    FDamageEffectParams DamageEffectParams;
 
-	TArray<FHitResult> HitResults;
+	DamageEffectParams.WorldContextObject = this;
+	DamageEffectParams.DamageGameplayEffectClass = DamageGameplayEffectClass;
+	DamageEffectParams.SourceAbilitySystemComponent = GetAbilitySystemComponent();
 
-	FTransform TraceStartTransform = TraceStartRelativeTransform * GetActorTransform();
-	FTransform TraceEndTransform = TraceEndRelativeTransform * GetActorTransform();
+	SetupDamageParams(DamageEffectParams);
 
-	FVector TraceStart = TraceStartTransform.GetLocation();
-	FVector TraceEnd = TraceEndTransform.GetLocation();
-	
-	...
+	for(FHitResult& HitResult : HitResults)
+	{
+		if(HitResult.GetActor() == nullptr) continue;
+		
+		IgnoreActors.Add(HitResult.GetActor());
+
+		USoulLikeAbilitySystemComponent* TargetASC = Cast<USoulLikeAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(HitResult.GetActor()));
+		if(TargetASC && TargetASC->HasAnyMatchingGameplayTags(HitImmunityStateTags)) return;
+		
+		DamageEffectParams.TargetAbilitySystemComponent = TargetASC;
+		DamageEffectParams.KnockbackForce = (HitResult.GetActor()->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+		
+		TargetASC->Server_ApplyDamageEffect(DamageEffectParams);
+	}
 }
 ```
+</details>
+
+### AI공격 판정과 데디케이티드 서버 최적화(트러블 슈팅)      
+* 발생 문제 :  
+    - 적 AI 캐릭터는 ServerRPC를 사용할 수 없음
+    - 데디케이티드 서버는 렌더링 하지 않으므로, 기본적으로 Bone Transform을 갱신하지 않음
+* 해결 :
+    - 평상시에는 서버에서 Bone Transform을 새로고침 하지 않다가 Montage가 재생중일 때만 Bone Tranform을 갱신<br/>
+      (VisibilityBasedAnimTickOption : OnlyTickMontagesAndRefreshBonesWhenPlayingMontages)
+    - 이를 통해 서버의 부하를 최소한으로 하면서 서버에서 AI의 공격판정 구현할 수 있어짐
+
 
 ## GameplayAbilitySystem
 GAS는 캐릭터의 액션/상태 구현을 위해 사용한 프레임워크
-공격, 상호작용, 스테이터스, 아이템 사용, 타겟고정, 구르기등의 핵심기능 구현
+공격, 상호작용, 스테이터스, 아이템 사용, 타겟고정, 구르기등의 전투 기능 구현
 
-### FSoulLikeGameplayTags
-FGameplayTag는 문자열을 "."로 구분하여 계층을 나누어 분류하는 계층형 식별자
-
-```c++
-struct FSoulLikeGameplayTags
-{
-public:
-
-	static const FSoulLikeGameplayTags& Get();
-	
-	static void InitializeNativeGameplayTags();
-
-	/**
-	 * Primary Attribute
-	 * 기본 Attribute
-	 */
-	FGameplayTag Attributes_Primary_Vigor;
-        ...	
-}
-
-FSoulLikeGameplayTags FSoulLikeGameplayTags::GameplayTags;
-
-const FSoulLikeGameplayTags& FSoulLikeGameplayTags::Get()
-{
-        if(!GameplayTags.bInit)
-        {
-             InitializeNativeGameplayTags();
-        }
-        return GameplayTags;
-}
-
-void FSoulLikeGameplayTags::InitializeNativeGameplayTags()
-{
-        if(GameplayTags.bInit) return;
-
-	const FGameplayTag CheckTag = FGameplayTag::RequestGameplayTag(FName("Attributes.Primary.Vigor"), false);
-	if (CheckTag.IsValid())
-	{
-		// 이미 태그가 등록되어 있으면 초기화 생략
-		GameplayTags.bInit = true;
-		return;
-	}
-	/**
-	 * Primary Attribute
-	 */
-
-	GameplayTags.Attributes_Primary_Vigor = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("Attributes.Primary.Vigor"),
-		FString("Increase Health Point")
-	);
-}
-```
-FSoulLikeGameplayTags는 정적 싱글톤 객체
-* FGameplayTag를 간편하게 사용할 수 있도록 정적 싱글톤 객체에서 FGameplayTag들을 초기화 한다.     
-* 초기화 한 FGameplayTag는 변수로써 싱글톤 객체에서 접근할 수 있다.
-
-### AbilityState
+### AbilityState(Combo & Input Buffering)
 ![AbilityState](Images/AbilityState.png) 
 ```c++
 UENUM(BlueprintType)
 enum class EAbilityState : uint8
 {   
-    EAS_None UMETA(DisplayName = "None"),
-    EAS_WaitInput UMETA(DisplayName = "Input Wait"),
-    EAS_NextAction UMETA(DisplayName = "Next Action")
+    EAS_None        UMETA(DisplayName = "None"),
+    EAS_WaitInput   UMETA(DisplayName = "Input Wait"),
+    EAS_NextAction  UMETA(DisplayName = "Next Action")
 };
 ```
-액션 선입력과 다음 액션 활성화를 위해 CombatAbility에 Montage 진행에 따른 상태를 저장.   
-Ability State
-- None       : 기본 상태
-- WaitInput  : 입력을 받는 상태 
-- NextAction : 다음 액션을 활성활 할 수 있는 상태
 
-상태를 나눠서 모든 액션에 선입력, 액션 후 딜레이를 Montage의 Notify를 통해 설정 가능.
+부드러운 콤보 연계를 위해 공격 몽타주 구간을 3단계 상태로 나누어 관리하는 **선입력 시스템** 을 구현
 
-### AttackMontage
-![WeaponData](Images/WeaponData.png)
+EAbilityState
+- None: 입력 불가 구간 
+- WaitInput (선입력 구간): 유저의 입력을 받아 **버퍼(Buffer)**에 저장해두는 구간.
+- NextAction (분기 구간): 다음 콤보로 넘어갈지 결정하는 구간.
+
+콤보 로직
+- Input Buffering: WaitInput 구간에 입력이 들어오면 InputTag를 Ability에 저장
+- Combo Branching: 몽타주에서 NextAction 구간에 진입하면 로직을 수행
+  - 선입력 있음: 버퍼를 확인하여 현재 어빌리티를 종료하고 다음 콤보 어빌리티를 활성화
+    - 해당 어빌리티가 현재 활성화 중인 어빌리티일 경우, 다음 Section 재생
+  - 선입력 없음: 입력을 대기하며, 입력 시 즉시 다음 콤보 활성화
+
+<details>
+    <summary>코드 보기</summary>
+
+#### 1. 어빌리티 활성화 시 AnimNotify_MontageEvent 수신 대기
 ```c++
-void USoulLikeComboAbility::SetupMontage()
+void USoulLikeComboAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+                                            const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+                                            const FGameplayEventData* TriggerEventData)
 {
-	if(GetAvatarActorFromActorInfo()->Implements<UCombatInterface>())
-	{
-		Montage = ICombatInterface::Execute_GetCurrentWeaponAttackMontage(GetAvatarActorFromActorInfo());
-	}
+	
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	
+	...
+	
+	WaitInputEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FSoulLikeGameplayTags::Get().Event_Montage_WaitInput);
+	WaitInputEventTask->EventReceived.AddDynamic(this, &USoulLikeComboAbility::ReceiveWaitInputEvent);
+	WaitInputEventTask->Activate();
+	
+	NextActionEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, FSoulLikeGameplayTags::Get().Event_Montage_NextAction);
+	NextActionEventTask->EventReceived.AddDynamic(this, &USoulLikeComboAbility::ReceiveNextActionEvent);
+	NextActionEventTask->Activate();
 }
 ```
-ComboAbility는 현재 객체가 장착한 Weapon의 Montage를 재생
-Weapon의 데이터는 DataTable에서 정의하므로, DataTable을 통해 각 무기의 공격 애니메이션 변경 가능
+#### 2. 이벤트 수신 시 Callback 함수 호출
+```c++
+void USoulLikeComboAbility::ReceiveWaitInputEvent(FGameplayEventData Payload)
+{	
+    ...
+    //AbilityState 변경
+    AbilityState = EAbilityState::EAS_WaitInput;
+    
+    //InputTag의 수신대기 Task
+    WaitInputTask = UWaitInputTask::WaitInputTag(GetAbilitySystemComponentFromActorInfo());
+    WaitInputTask->WaitInputTagDelegate.AddDynamic(this, &USoulLikeComboAbility::ReceiveInputTag);
+    //활성화 된 어빌리티 InputPress 수신대기하는 Task
+    InputPressTask = UAbilityTask_WaitInputPress::WaitInputPress(this);
+    InputPressTask->OnPress.AddDynamic(this, &USoulLikeComboAbility::ReceiveInputPress);
+    InputPressTask->Activate();
+}
+```
+#### 3. Callback함수를 통해 분기 관리
+```c++
+void USoulLikeComboAbility::ReceiveInputPress(float TimeWaited)
+{
+    switch(AbilityState)
+    {
+        case EAbilityState::EAS_NextAction:
+            //바로 다음 액션이 가능하다면, 다음 섹션 재생
+            MontageJumpToNextCombo();
+            break;
+        case EAbilityState::EAS_WaitInput:
+            //다음 콤보를 재생한다는 플래그
+            bNextCombo = true;
+            break;
+        default:
+            break;
+    }
+}
+
+void USoulLikeComboAbility::ReceiveInputTag(const FGameplayTag& InInputTag)
+{
+    //InputTag Buffer
+    InputTag = InInputTag;
+}
+```
+#### 4. 
+```c++
+void USoulLikeComboAbility::ReceiveNextActionEvent(FGameplayEventData Payload)
+{
+    //AbilityState 변경
+    AbilityState = EAbilityState::EAS_NextAction;
+    
+    //만약 같은 입력으로 인해 다음 섹션을 재생해야 한다면
+    if(bNextCombo)
+    {
+        MontageJumpToNextCombo();
+    }
+    else
+    {
+        if(CheckAvatarInput()) return;
+    
+        //저장한 InputTag가 올바른 Tag라면
+        if(InputTag.IsValid())
+        {
+            EndAbility(GetCurrentAbilitySpec()->Handle, CurrentActorInfo, CurrentActivationInfo, true, true);
+    
+            if(USoulLikeAbilitySystemComponent* SL_ASC = Cast<USoulLikeAbilitySystemComponent>(GetAbilitySystemComponentFromActorInfo()))
+            {
+                SL_ASC->TryActivateAbilityFromInputTag(InputTag);
+            }
+        }
+    }
+}
+```
+</details>
 
 ### TargetLock
 타겟방향으로 카메라를 회전시키는 어빌리티. 비동기 작업인 AbilityTask를 사용   
