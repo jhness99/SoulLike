@@ -930,7 +930,7 @@ bool USoulLikeFunctionLibrary::SingleTraceFromCameraLocation(const AActor* Insti
 ```
 </details>
 
->![SwapTargetEnemy](Images/SwapTargetEnemy.gif)
+>![SwapTargetEnemy](Images/SwapTargetEnemy.gif)     
 >2. 현재 타겟 고정이 되어있는 상태에서 다른 타겟으로 타겟을 변경
 <details>
     <summary>코드 보기</summary>
@@ -1065,12 +1065,84 @@ void UAbilityTask_TargetLock::OnDeathTargetActor()
 </details>
 
 ### InteractionAbility
-![InteractionTask](Images/InteractionClassDiagram.png)
-캐릭터와 오브젝트가 상호작용 동작을 처리하는 어빌리티       
-* 상호 작용은 FGameplayTag로 분류     
-* IInteractionInterface를 구현하여 각각 캐릭터와 액터의 상호 작용 구현  
+![InteractionAbility](Images/InteractionAbility.png)      
 
->![InteractionTask](Images/AbilityInfoInteractionTask.png)
+여러 상호작용(사다리, 보물상자, NPC 대화 등)을 하나의 bility에서 효율적으로 처리하기 위해, AbilityTask를 활용한 전략 패턴 구조로 설계     
+PreActivate에서 상호작용 오브젝트의 InteractionTag를 통해 FInteractionTaskInfo를 가져오고, 해당하는 Task를 실행함으로써, 
+
+#### 설계 구조
+- 발생 문제 : 각각 다른 InteractionAbility를 추가하는 것은 비효율적이고 확장성이 떨어지게 됨
+- 해결 방안 : InteractionAbility는 매니저가 되어 InteractionObject가 가진 InteractionTag에 따라 적절한 Task가 Interaction 로직을 수행(전략 패턴)
+- Interaction마다 Ability를 추가하는 방법보다 쉽고 코드 수정없이 확장할 수 있는 구조. 확장성 증가
+
+#### Interaction Interface
+![InteractionInterface](Images/InteractionInterface.png)        
+
+상호작용 기능이 필요한 클래스에 상속하여 구현해야 하는 인터페이스
+- Interaction을 구분하는 GameplayTag를 저장시켜서 구분
+- Ineraction() 함수를 각 InteractionObject에 구현하여 해당 클래스에 각각 다른 상호작용 구현
+- InteractionObject이 Character와 Overlap된다면, Character에 InteractionActor 저장 하고 상호작용 어빌리티 작동시,<br/>
+    저장된 InteractionActor을 Interaction 함수 호출하고 해당하는 FInteractionTaskInfo 가져옴
+
+<details>
+    <summary>코드 보기</summary>
+
+1. InteractionInterface 
+```c++
+class SOULLIKE_API IInteractionInterface
+{
+	GENERATED_BODY()
+
+public:
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FGameplayTag GetInteractionTag() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FString GetActorName() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FVector GetWarpingLocation() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FRotator GetWarpingRotation() const;
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Interaction(AActor* InteractionActor);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	const FInteractionTaskInfo GetInteractionActorInfo() const;
+};
+```
+2. InteractionAbility 활성화 전 FInteractionTaskInfo 가져오기
+```c++
+void UInteractionGameplayAbility::PreActivate(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+	FOnGameplayAbilityEnded::FDelegate* OnGameplayAbilityEndedDelegate, const FGameplayEventData* TriggerEventData)
+{
+	if(GetAvatarActorFromActorInfo()->Implements<UInteractionInterface>())
+	{
+		InteractionTaskInfo = IInteractionInterface::Execute_GetInteractionActorInfo(GetAvatarActorFromActorInfo());
+		ActivationOwnedTags = FGameplayTagContainer(InteractionTaskInfo.StatusTag);
+	}
+	
+	Super::PreActivate(Handle, ActorInfo, ActivationInfo, OnGameplayAbilityEndedDelegate, TriggerEventData);
+}
+
+const FInteractionTaskInfo ASoulLikeCharacter::GetInteractionActorInfo_Implementation() const
+{
+	if(SelectedInteractionActor == nullptr) return FInteractionTaskInfo();
+	if(SelectedInteractionActor->Implements<UInteractionInterface>())
+	{
+		return Execute_GetInteractionActorInfo(SelectedInteractionActor);
+	}
+	
+	return FInteractionTaskInfo();
+}
+```
+</details>
+
+>![InteractionTask](Images/AbilityInfoInteractionTask.png)      
 > DataAsset "DA_AbilityInfo"에서 관리
 > ```c++
 > if(InteractionTaskInfo.InteractionTag.MatchesTagExact(FSoulLikeGameplayTags::Get().Interaction_Ladder))
@@ -1084,13 +1156,15 @@ void UAbilityTask_TargetLock::OnDeathTargetActor()
 > ```
 > FGameplayTag로 구분해서 Interaction 실행
 
-* 각 상호 작용은 별도의 InteractionAbility를 만들지 않고, 비동기 작업 AbilityTask를 통해 추가, 구현     
+각 상호 작용은 별도의 InteractionAbility를 만들지 않고, 비동기 작업 AbilityTask를 통해 추가, 구현     
 
 #### InteractionTask_Ladder
-> ![InteractionTask_Ladder](Images/InteractionTask_Ladder.gif)
+> ![InteractionTask_Ladder](Images/InteractionTask_Ladder.gif)      
 > 사다리타기 상호작용
 
-비동기 작업 AbilityTask_Interaction에서 Tick마다 캐릭터의 Controller의 위, 아래 InputValue을 가져와 LadderClimbMontageTask를 실행
+1. 구현
+- AbilityTask_Interaction에서 Tick마다 위, 아래 InputValue을 가져와 LadderClimbMontageTask를 실행
+- ClimbMontage에 각 상황별 Section으로 구분해 Section이동으로 자연스러운 움직임 구현 
 
 <details>
     <summary>코드 보기</summary>
@@ -1168,10 +1242,20 @@ void UAbilityTask_Ladder::TickTask(float DeltaTime)
 ```
 </details>
 
-※ 데디케이티드 서버에서의 작동       
-Standalone에서 컨트롤러의 LocalRole이 Authority이지만, 데디케이디트에선 AutonomousProxy이다.     
-InteractionAbility는 Server, Client 두 곳에서 모두 활성화 되지만, InputValue는 Client에만 존재하게 된다.      
-따라서 ServerRPC를 통해 Client의 InputValue를 Server에도 동기화 시켜야한다.       
+2. **[트러블 슈팅]** 멀티플레이에서 사다리 이동 입력과 동기화
+    - 발생 문제 :
+        - Ladder의 경우, 추가적인 입력을 받아 위/아래로 움직여야 함
+        - 클라이언트의 입력은 자동으로 서버에 전송 되지 않음
+        - 결과적으로, 클라이언트와 서버사이에 위치 불일치가 발생
+
+    - 해결 :
+        - ServerRPC를 통해 클라이언트의 입력값을 전송
+        - 단순하게 RPC를 통해 전송하면, 수많은 RPC로 인해 네트워크 오버헤드가 발생하므로, 입력값이 변하거나, 임계값 이상일 때만 전송
+
+![InteractionLadderTrableShotting](Images/InteractionLadderTrableShotting.png)
+
+<details>
+    <summary>코드 보기</summary>
 
 #### SoulLikePlayerController.cpp
 ```c++
@@ -1191,7 +1275,8 @@ void ASoulLikePlayerController::LadderMove(const FInputActionValue& InputActionV
 		Server_SetLadderMoveInput(InputValue);
 	}
 }
-
 ```
+</details>
+
 ## 플레이 영상
 https://www.youtube.com/watch?v=HrCWYucMnuY
