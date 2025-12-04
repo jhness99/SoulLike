@@ -751,7 +751,7 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* Sa
 
 **3.[트러블 슈팅]자동 저장 병목 현상 최적화**</br>
 
-![beforeInsight](images/beforeInsight.png)
+![beforeInsight](Images/beforeInsight.png)
 - **문제 발생**:
   - 2000개 이상의 액터를 배치해 자동저장 로직을 테스트 해 보니, **Hitching** 발생
   - 자동 저장이 계속 될 수록 프리징 시간이 길어짐
@@ -810,7 +810,7 @@ void ASoulLikeGameModeBase::SaveInGameProgressData(USoulLikeSaveGame *SaveObject
 </details>
 
 3. **직렬화 비용 절감**<br/>
-![BeforeSerialize](images/BeforeSerialize.png)      
+![BeforeSerialize](Images/BeforeSerialize.png)      
 - **문제 발생** : 모든 세이브 가능 객체가 직렬화 진행
 - **원인** : 데이터가 변하지 않은 객체까지 저장하게 되어서 직렬화가 필요 이상으로 진행
 - **해결** : 데이터가 변화한 객체만 직렬화를 시키도록 `SaveInterface`를 통해 구현
@@ -881,13 +881,13 @@ public:
     - 자동 저장 주기는 5초, 게임 시작 후 1분 후 기준
 - **결과** :  
     최적화 전
-    ![beforeInsight](images/beforeInsight.png)    
+    ![beforeInsight](Images/beforeInsight.png)    
     최적화 후
-    ![BeforeSerialize](images/BeforeSerialize.png)
+    ![BeforeSerialize](Images/BeforeSerialize.png)
 
 ## Multiplayer Session (Sign-Based Summoning)
 
-![MultiplayerSession](images/MultiplayerSession.png)        
+![MultiplayerSession](Images/MultiplayerSession.png)        
 
 **OnlineSubsystemSteam**을 활용해서 Listen Server에서 다크소울의 협력플레이를 구현     
 
