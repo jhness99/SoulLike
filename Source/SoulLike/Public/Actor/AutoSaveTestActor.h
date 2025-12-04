@@ -21,6 +21,6 @@ public:
 	virtual void MarkAsDirty() override;
 	virtual void MarkAsClean() override;
 	
-	UPROPERTY(BlueprintReadWrite, Transient, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bIsDirty = true;
 };

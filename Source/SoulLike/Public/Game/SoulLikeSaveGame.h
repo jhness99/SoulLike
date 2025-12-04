@@ -131,6 +131,9 @@ public:
 	UPROPERTY()
 	TArray<FSavedAbility> SavedAbilities;
 
+	// UPROPERTY()
+	// TArray<FSavedActor> SavedActorsMap;
+	
 	UPROPERTY()
 	TMap<FName, FSavedActor> SavedActorsMap;
 

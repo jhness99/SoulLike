@@ -5,6 +5,7 @@
 
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
+#include "OnlineSubsystemSteam.h"
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Online/OnlineSessionNames.h"
 
@@ -45,6 +46,7 @@ void UOnlineSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         // }
 
         SummonSignSessionInterface = Subsystem->GetSessionInterface();
+
         if (SummonSignSessionInterface.IsValid())
         {
             SummonSignSessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UOnlineSessionSubsystem::OnCreateSummonSignSessionComplete);
@@ -92,6 +94,7 @@ void UOnlineSessionSubsystem::Deinitialize()
         SummonSignSessionInterface->ClearOnCreateSessionCompleteDelegates(this);
         SummonSignSessionInterface->ClearOnFindSessionsCompleteDelegates(this);
         SummonSignSessionInterface->ClearOnSessionUserInviteAcceptedDelegates(this);
+        SummonSignSessionInterface->ClearOnSessionInviteReceivedDelegates(this);
         SummonSignSessionInterface->ClearOnJoinSessionCompleteDelegates(this);
         
         FNamedOnlineSession* ExistingSession = SummonSignSessionInterface->GetNamedSession(FName("SummonSignLobby"));

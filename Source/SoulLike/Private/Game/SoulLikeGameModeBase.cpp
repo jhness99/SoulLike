@@ -88,12 +88,8 @@ void ASoulLikeGameModeBase::SaveWorldObject(UWorld* World, USoulLikeSaveGame* Sa
 			}
 			
 			SaveGame->SavedActorsMap.Add(SavedActor.ActorName, SavedActor);
+			//SaveGame->SavedActorsMap.Add(SavedActor);
 		}
-		// {
-		// 	TRACE_CPUPROFILER_EVENT_SCOPE(TEXT("GameMode::SaveInGameProgressData"));
-		// 	SaveInGameProgressData(SaveGame);
-		// }
-		
 	}
 }
 
@@ -124,14 +120,29 @@ void ASoulLikeGameModeBase::LoadWorldObject(UWorld* World) const
 			if(const FSavedActor* FoundData = SaveGame->SavedActorsMap.Find(Actor->GetFName()))
 			{
 				ISaveInterface::Execute_SetIsUsedObject(Actor, FoundData->bIsUsedObject);
-
+			
 				FMemoryReader MemoryReader(FoundData->Bytes);
 				FObjectAndNameAsStringProxyArchive Archive(MemoryReader, true);
 				Archive.ArIsSaveGame = true;
 				Actor->Serialize(Archive);
-
+			
 				ISaveInterface::Execute_LoadActor(Actor);
 			}
+
+			// for(const FSavedActor& SavedActor : SaveGame->SavedActorsMap)
+			// {
+			// 	if(SavedActor.ActorName == Actor->GetFName())
+			// 	{
+			// 		ISaveInterface::Execute_SetIsUsedObject(Actor, SavedActor.bIsUsedObject);
+			//
+			// 		FMemoryReader MemoryReader(SavedActor.Bytes);
+			// 		FObjectAndNameAsStringProxyArchive Archive(MemoryReader, true);
+			// 		Archive.ArIsSaveGame = true;
+			// 		Actor->Serialize(Archive);
+			//
+			// 		ISaveInterface::Execute_LoadActor(Actor);
+			// 	}
+			// }
 		}
 	}
 }
